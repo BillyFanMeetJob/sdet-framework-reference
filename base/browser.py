@@ -1,4 +1,4 @@
-# toolkit/browser.py
+# base/browser.py
 from toolkit.web_toolkit import create_driver
 
 class Browser:

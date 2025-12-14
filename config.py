@@ -10,7 +10,7 @@
 
 import os
 from dataclasses import dataclass
-
+from toolkit.datatable import DataTable
 
 # === 通用設定（所有環境共用） ===
 DEFAULT_TIMEOUT = 10
@@ -19,6 +19,7 @@ HEADLESS = False
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 SCREENSHOT_ROOT = os.path.join(ROOT_DIR, "screenshots")
 
+
 @dataclass(frozen=True)
 class EnvConfig:
     """單一環境的設定結構"""
@@ -26,6 +27,8 @@ class EnvConfig:
     BASE_URL: str
     USERNAME: str
     PASSWORD: str
+    TESTPLANPATH: str
+    
 
 
 # === 各環境個別設定 ===
@@ -34,6 +37,7 @@ DEV_CONFIG = EnvConfig(
     BASE_URL="https://www.saucedemo.com/",  # 這裡先都用同一個，之後你有真的 DEV/UAT 再改
     USERNAME="standard_user",
     PASSWORD="secret_sauce",
+    TESTPLANPATH= os.path.join(ROOT_DIR, "DemoData", "TestPlan.xlsx"),
 )
 
 SIT_CONFIG = EnvConfig(
@@ -41,6 +45,7 @@ SIT_CONFIG = EnvConfig(
     BASE_URL="https://www.saucedemo.com/",
     USERNAME="standard_user",
     PASSWORD="secret_sauce",
+    TESTPLANPATH= os.path.join(ROOT_DIR, "DemoData", "TestPlan.xlsx"),
 )
 
 UAT_CONFIG = EnvConfig(
@@ -48,6 +53,7 @@ UAT_CONFIG = EnvConfig(
     BASE_URL="https://www.saucedemo.com/",
     USERNAME="standard_user",
     PASSWORD="secret_sauce",
+    TESTPLANPATH= os.path.join(ROOT_DIR, "DemoData", "TestPlan.xlsx"),
 )
 
 PROD_CONFIG = EnvConfig(
@@ -55,6 +61,7 @@ PROD_CONFIG = EnvConfig(
     BASE_URL="https://www.saucedemo.com/",
     USERNAME="standard_user",
     PASSWORD="secret_sauce",
+    TESTPLANPATH= os.path.join(ROOT_DIR, "DemoData", "TestPlan.xlsx"),
 )
 
 
