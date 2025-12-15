@@ -14,10 +14,12 @@ logger = get_logger(__name__)
 
 def execute_step(step: Step, translator: StepTranslator) -> None:
     flow_name = normalize(step.get("FlowName"))
+    if not flow_name:
+        raise ValueError("TestPlan異常,FlowName不可為空")
     params = step.get("Params") or {}
     step_no = step.get("StepNo")
-
-    logger.info(f"StepNo: {step_no}; FlowName: {flow_name};")
+    test_name = step.get("TestName")
+    logger.info(f"TestName: {test_name}; StepNo: {step_no}; FlowName: {flow_name};")
     logger.info(f"Params: {params}")
     logger.info("Start execution")
 

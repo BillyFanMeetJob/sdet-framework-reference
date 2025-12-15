@@ -1,0 +1,66 @@
+name: CI - Pytest (Excel-driven Test Engine)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+    inputs:
+      test_names:
+        description: 'Comma-separated TestName list (order matters), e.g. 正常購物流程,流程B'
+        required: false
+        default: '正常購物流程'
+      test_env:
+        description: 'TEST_ENV (DEV/SIT/UAT/PROD)'
+        required: false
+        default: 'DEV'
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+
+    env:
+      # tests/test_execution.py 會吃這個
+      TEST_NAMES: ${{ github.event.inputs.test_names || '正常購物流程' }}
+      TEST_ENV: ${{ github.event.inputs.test_env || 'DEV' }}
+
+      # CI 上要 headless
+      HEADLESS: 'true'
+
+      # 可選：pytest 額外參數（可視需求開啟）
+      # PYTEST_ADDOPTS: "-q"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            pip install pytest selenium webdriver-manager openpyxl
+          fi
+
+      - name: Run pytest
+        run: |
+          python -m pytest -q
+
+      # 不管成功/失敗都上傳（方便看 log/截圖）
+      - name: Upload logs and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts
+          path: |
+            logs/
+            screenshots/
+          if-no-files-found: ignore

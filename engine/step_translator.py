@@ -1,7 +1,7 @@
 # engine/step_translator.py
 from __future__ import annotations
 from typing import Callable
-
+from toolkit.types import ActionFunc
 from base.browser import Browser
 from actions.login_actions import LoginActions
 from actions.inventory_actions import InventoryActions
@@ -47,7 +47,7 @@ class StepTranslator:
 
         return mapping
 
-    def get_action(self, flow_name: str):
+    def get_action(self, flow_name: str)->ActionFunc:
         flow_name = normalize(flow_name)
         if flow_name not in self._mapping:
             raise ValueError(f"未知的流程名稱：{flow_name}")

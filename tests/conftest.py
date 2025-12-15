@@ -7,13 +7,8 @@ from toolkit.logger import get_logger
 from toolkit.web_toolkit import take_screenshot
 from toolkit.datatable import DataTable
 from base.browser import Browser
-from pages.login_page import LoginPage
-
-import config
 
 logger = get_logger(__name__)
-C = config.ACTIVE_CONFIG
-
 
 @pytest.fixture(scope="function")
 def browser() -> Generator[Browser, None, None]:
@@ -23,35 +18,19 @@ def browser() -> Generator[Browser, None, None]:
     - 測試結束後自動呼叫 browser.quit() 關閉瀏覽器
     """
     browser = Browser()
-    logger.info("🟢 建立 Browser 實體")
+    logger.info("建立 Browser 實體")
     try:
         yield browser
     finally:
-        logger.info("🔴 關閉 Browser")
+        logger.info("關閉 Browser")
         # Browser 類別應該要統一提供 quit() 介面
         browser.quit()
 
 
-@pytest.fixture(scope="function")
-def logged_in_browser(browser: Browser) -> Browser:
-    """
-    已登入狀態的 Browser：
-    - 使用 LoginPage 完成登入流程
-    - 回傳已登入的 browser 物件
-    """
-    login_page = LoginPage(browser)
-    login_page.open(C.BASE_URL).login(
-        username=C.USERNAME,
-        password=C.PASSWORD,
-    )
-    logger.info("✅ logged_in_browser fixture 完成登入")
-    return browser
-
-
+# 單元測試用
 @pytest.fixture(scope="function")
 def datatable():
     return DataTable()
-
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -72,5 +51,5 @@ def pytest_runtest_makereport(item, call):
         browser = item.funcargs.get("logged_in_browser") or item.funcargs.get("browser")
 
         if browser and getattr(browser, "driver", None):
-            logger.error(f"❌ 測試失敗，自動截圖：{item.name}")
+            logger.error(f"測試失敗，自動截圖：{item.name}")
             take_screenshot(browser.driver, name_prefix=f"FAIL_{item.name}")

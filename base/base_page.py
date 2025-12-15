@@ -61,7 +61,7 @@ class BasePage:
         """
         return tool.find_all_visible_elements(self.wait, locator)
 
-    def get_all_texts(self, items_locator, text_locator=None) -> List[str]:
+    def get_all_texts(self, items_locator:Locator, text_locator=None) -> List[str]:
         """
         取得一組元素（例如列表列、卡片）的文字清單。
         - items_locator: 外層列表元素的 locator

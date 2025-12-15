@@ -67,6 +67,7 @@ class DataTable:
         從 Excel 載入指定 sheet，並以 alias 存入 DataTable。
         - 第一列視為欄位名稱
         - 第二列開始為資料列
+        alias 重複載入将直接覆盖原本资料
         """
         wb = load_workbook(file_path, data_only=True)
         if sheet_name not in wb.sheetnames:

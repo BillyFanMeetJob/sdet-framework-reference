@@ -87,7 +87,7 @@ def nth_item_in_list(container_xpath: str, index: int) -> Locator:
     return (By.XPATH, xpath)
 
 
-def table_cell_by_header(header_text: str, row_index: int = 1) -> Locator:
+def table_cell_by_header(table_xpath: str|None,header_text: str, row_index: int = 1) -> Locator:
     """
     根據表頭文字 + 資料列索引，取得對應 <td> 的 Locator。
 
@@ -95,7 +95,10 @@ def table_cell_by_header(header_text: str, row_index: int = 1) -> Locator:
     - row_index: 第幾筆資料列（1 = 第一筆資料列，即第二個 tr）
     """
     literal = _xpath_literal(header_text)
-    table_locator = table_by_header(header_text)
+    if table_xpath:
+        table_locator = (By.XPATH, table_xpath)
+    else:
+        table_locator = table_by_header(header_text)
     table_xpath = table_locator[1]  # 例如: //table[.//tr[1]/th[normalize-space()='文件類型']]
 
     xpath = (
@@ -113,11 +116,11 @@ def table_cell_by_header(header_text: str, row_index: int = 1) -> Locator:
     return (By.XPATH, xpath)
 
 
-def table_input_by_header(table_xpath: str, header_text: str, row_index: int = 1) -> Locator:
+def table_input_by_header(table_xpath: str|None, header_text: str, row_index: int = 1) -> Locator:
     """
     根據表頭文字 + 資料列索引，取得該格 <td> 底下的第一個 <input>。
     """
-    td_locator = table_cell_by_header(table_xpath, header_text, row_index)
+    td_locator = table_cell_by_header( table_xpath,header_text, row_index)
     # 直接在原 td XPath 後面加上 //input
     td_xpath = td_locator[1]
     input_xpath = td_xpath + "//input"

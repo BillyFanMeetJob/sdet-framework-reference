@@ -16,7 +16,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from toolkit.types import Locator
 import tempfile
 
-import config as C  # 直接整個模組 import
+import config as C  
 
 def create_driver(timeout: Optional[int] = None) -> tuple[webdriver.Chrome, WebDriverWait]:
     if timeout is None:
@@ -24,11 +24,11 @@ def create_driver(timeout: Optional[int] = None) -> tuple[webdriver.Chrome, WebD
 
     chrome_options = Options()
 
-    # 乾淨 profile（避免讀到你本機 Chrome 的登入/同步/密碼庫）
+    # 乾淨 profile（避免讀到本機 Chrome 的登入/同步/密碼庫）
     profile_dir = tempfile.mkdtemp(prefix="chrome-profile-")
     chrome_options.add_argument(f"--user-data-dir={profile_dir}")
 
-    # 訪客模式（再加一層保險）
+    # 訪客模式
     chrome_options.add_argument("--guest")
 
     # 關閉密碼管理相關提示
@@ -40,6 +40,8 @@ def create_driver(timeout: Optional[int] = None) -> tuple[webdriver.Chrome, WebD
 
     if C.HEADLESS:
         chrome_options.add_argument("--headless=new")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)

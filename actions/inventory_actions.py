@@ -19,8 +19,8 @@ class InventoryActions(BaseAction):
         item_count = self.inventory_page.get_item_count()
         item_names = self.inventory_page.get_all_item_names()
 
-        self.logger.info(f"⚾ 商品數量：{item_count}")
-        self.logger.info(f"📋 商品名稱列表：{item_names}")
+        self.logger.info(f"商品數量：{item_count}")
+        self.logger.info(f"商品名稱列表：{item_names}")
 
         # Assert
         assert item_count > 0, "登入後商品數量應大於 0"
@@ -29,13 +29,14 @@ class InventoryActions(BaseAction):
         self.logger.info("✅ test_inventory_has_items 通過")
 
 
-    def add_item_to_cart(self,index:int) -> None:
+    def add_item_to_cart(self,index:int=0) -> None:
         """
         測試二：加入一個商品到購物車，徽章數量應為 1。
 
         說明：
         - logged_in_browser fixture 會為每個測試建立全新的瀏覽器與登入狀態（scope=function）
         - 因此本測試可以假設購物車一開始為空
+        - 默認加入第一個商品
         """
         # Arrange
         # Act：加入商品
@@ -51,5 +52,3 @@ class InventoryActions(BaseAction):
         self.logger.info("✅ test_add_first_item_to_cart 通過")
 
 
-
-        

@@ -10,11 +10,11 @@
 
 import os
 from dataclasses import dataclass
-from toolkit.datatable import DataTable
 
 # === 通用設定（所有環境共用） ===
 DEFAULT_TIMEOUT = 10
-HEADLESS = False
+HEADLESS = os.environ.get("HEADLESS", "false").lower() == "true"#本機跑有畫面，接CI無畫面
+
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 SCREENSHOT_ROOT = os.path.join(ROOT_DIR, "screenshots")
