@@ -1,0 +1,97 @@
+================================================================================
+æ¸¬è©¦æ¡ˆä¾‹: å›žæ”¾éŒ„å½±äº‹ä»¶å¾Œåœæ­¢
+åŸ·è¡Œæ™‚é–“: 2026-01-21 01:58:33
+åŸ·è¡Œå‘½ä»¤: C:\Python314\python.exe -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name å›žæ”¾éŒ„å½±äº‹ä»¶å¾Œåœæ­¢ -v -s --tb=short
+å·¥ä½œç›®éŒ„: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+tests/test_runner.py::test_main_flow[\u56de\u653e\u9304\u5f71\u4e8b\u4ef6\u5f8c\u505c\u6b62-steps0] >>> [DEBUG] ÀË¬dµn¿ýª¬ºA¡]¥Ø¼Ð¦øªA¾¹: LAPTOP-QRJN5735¡^
+>>> [OK] ÅçÃÒ¦¨¥\¡G§ä¨ì¹w´Á¤¸¯À desktop_main/server_icon.png
+>>> [OK] ¤w¦b¥Dµe­±¡AµL»Ý­«·sµn¿ý¡]¤w³q¹L¥Dµe­±¤¸¯ÀÅçÃÒ¡^
+>>> [CASE_1-5] °õ¦æ Case 1-5: ¦^©ñ¿ý¼v¨Æ¥ó«á°±¤î¡]¼½©ñ«ùÄò®É¶¡: 7 ¬í¡^
+>>> [CASE_1-5] ¨BÆJ 1: ÂIÀ»¥k¤U¨¤¤é¾ä¹Ï¼Ð...
+================================================================================
+[CLICK_CALENDAR_ICON] ========== click_calendar_icon() ¤èªk³Q½Õ¥Î¡I==========
+================================================================================
+>>> [CLICK_CALENDAR_ICON] ¤èªk¶}©l°õ¦æ
+>>> [CALENDAR] ÂIÀ»¥k¤U¨¤¤é¾ä¹Ï¼Ð...
+>>> [DEBUG] ÀË¬d VLM ±ø¥ó: vlm_enabled=True, vlm_priority=2, target_text='¤é¾ä'
+[SMART_CLICK] [DEBUG] ÀË¬d VLM ±ø¥ó: vlm_enabled=True, vlm_priority=2, target_text='¤é¾ä'
+>>> [VLM] Àu¥ý¨Ï¥Î LLM ¿ëÃÑ¤å¦r: '¤é¾ä'
+>>> [DEBUG] _try_vlm_recognition ³Q½Õ¥Î: target_text='¤é¾ä', region=(0, 0, 1920, 1200)
+>>> [DEBUG] VLM ±Ò¥Îª¬ºA: True
+>>> [DEBUG] ªì©l¤Æ VLM: backend=ollama, model=llava
+>>> [OK] VLM ¤ÞÀºªì©l¤Æ¦¨¥\ (ollama/llava)
+>>> [DEBUG] Ollama ¥i¥Î¡A¤w¦w¸Ë¼Ò«¬: ["model='llava:latest' modified_at=datetime.datetime(2026, 1, 17, 17, 11, 23, 171732, tzinfo=TzInfo(28800)) digest='8dd30f6b0cb19f555f2c7a7ebda861449ea2cc76bf1f44e262931f45fc81d081' size=4733363377 details=ModelDetails(parent_model='', format='gguf', family='llama', families=['llama', 'clip'], parameter_size='7B', quantization_level='Q4_0')"]
+>>> [DEBUG] _get_vlm_engine() ªð¦^: <base.vlm_recognizer.VLMRecognizer object at 0x000001F3CFA3C590> (Ãþ«¬: <class 'base.vlm_recognizer.VLMRecognizer'>)
+>>> [VLM] ¥¿¦b¨Ï¥Î LLM ·j´M¤¸¯À: '¤é¾ä'
+>>> [OK] VLM ªì©l¤Æ¦¨¥\: ollama/llava
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: success=True, confidence=0.7, x=968, y=1065
+>>> [VLM] ¿ëÃÑ¦¨¥\: «Ì¹õµ´¹ï®y¼Ð=(968, 1065), confidence=0.70
+>>> [VLM] region=(0, 0, 1920, 1200)
+>>> [VLM] µ¡¤f¦ì¸m: left=0, top=0, width=1920, height=1200
+>>> [CLICK_COORD] ­ì©l®y¼Ð: (968, 1065), °¾²¾: (offset_x=5, offset_y=-3), ³Ì²×®y¼Ð: (973, 1062), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ­ì©l®y¼Ð: (968, 1065), °¾²¾: (offset_x=5, offset_y=-3), ³Ì²×®y¼Ð: (973, 1062), °Ê§@=³æÀ»
+[CLICK_COORD] ­ì©l®y¼Ð: (968, 1065), °¾²¾: (offset_x=5, offset_y=-3), ³Ì²×®y¼Ð: (973, 1062), °Ê§@=³æÀ»
+>>> [VLM] VLM ¿ëÃÑ¦¨¥\¨ÃÂIÀ»: ¤é¾ä («H¤ß: 0.70, ¯Ó®É: 3103ms)
+>>> [STAT] [®y¼Ð®w] ¤ñ¨Ò®y¼Ð: x_ratio=0.5068, y_ratio=0.8850 | µ´¹ï®y¼Ð: (973, 1062)
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: True
+>>> [CALENDAR] ¦¨¥\ÂIÀ»¤é¾ä¹Ï¼Ð
+>>> [CASE_1-5] ¨BÆJ 2: ¦b¤é¾ä¤¤¿ï¾Ü¦³ºñ¦â¼Ð°Oªº¤é´Á...
+================================================================================
+[SELECT_DATE_WITH_RECORDING] ========== select_date_with_recording() ¤èªk³Q½Õ¥Î¡I==========
+================================================================================
+>>> [SELECT_DATE_WITH_RECORDING] ¤èªk¶}©l°õ¦æ
+>>> [CALENDAR] ¿ï¾Ü¦³¿ý¼v¨Æ¥óªº¤é´Á...
+>>> [CALENDAR] ¹Á¸Õ´M§ä¤é´Á 20...
+>>> [DEBUG] ÀË¬d VLM ±ø¥ó: vlm_enabled=True, vlm_priority=2, target_text='20'
+[SMART_CLICK] [DEBUG] ÀË¬d VLM ±ø¥ó: vlm_enabled=True, vlm_priority=2, target_text='20'
+>>> [VLM] Àu¥ý¨Ï¥Î LLM ¿ëÃÑ¤å¦r: '20'
+>>> [DEBUG] _try_vlm_recognition ³Q½Õ¥Î: target_text='20', region=(0, 0, 1920, 1200)
+>>> [DEBUG] _get_vlm_engine() ªð¦^: <base.vlm_recognizer.VLMRecognizer object at 0x000001F3CFA3C590> (Ãþ«¬: <class 'base.vlm_recognizer.VLMRecognizer'>)
+>>> [VLM] ¥¿¦b¨Ï¥Î LLM ·j´M¤¸¯À: '20'
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: success=True, confidence=0.85, x=1541, y=566
+>>> [VLM] ¿ëÃÑ¦¨¥\: «Ì¹õµ´¹ï®y¼Ð=(1541, 566), confidence=0.85
+>>> [VLM] region=(0, 0, 1920, 1200)
+>>> [VLM] µ¡¤f¦ì¸m: left=0, top=0, width=1920, height=1200
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1541, 566), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1541, 566), °Ê§@=³æÀ»
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1541, 566), °Ê§@=³æÀ»
+>>> [VLM] VLM ¿ëÃÑ¦¨¥\¨ÃÂIÀ»: 20 («H¤ß: 0.85, ¯Ó®É: 4604ms)
+>>> [STAT] [®y¼Ð®w] ¤ñ¨Ò®y¼Ð: x_ratio=0.8026, y_ratio=0.4717 | µ´¹ï®y¼Ð: (1541, 566)
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: True
+>>> [CALENDAR] ¦¨¥\¿ï¾Ü¤é´Á 20
+>>> [CASE_1-5] ¨BÆJ 3: ¦b©³³¡¶i«×±ø¤¤ÂIÀ»ºñ¦âªº¿ý¼v®É¬q...
+================================================================================
+[CLICK_GREEN_TIMELINE_SEGMENT] ========== click_green_timeline_segment() ¤èªk³Q½Õ¥Î¡I==========
+================================================================================
+>>> [CLICK_GREEN_TIMELINE_SEGMENT] ¤èªk¶}©l°õ¦æ
+>>> [TIMELINE] ÂIÀ»¶i«×±ø¤¤ªººñ¦â¿ý¼v®É¬q...
+>>> [TIMELINE] ¹Á¸Õ´M§ä®É¶¡¼Ð°O '3¤U¤È'...
+>>> [DEBUG] _try_vlm_recognition ³Q½Õ¥Î: target_text='3¤U¤È', region=(0, 0, 1152, 360)
+>>> [DEBUG] _get_vlm_engine() ªð¦^: <base.vlm_recognizer.VLMRecognizer object at 0x000001F3CFA3C590> (Ãþ«¬: <class 'base.vlm_recognizer.VLMRecognizer'>)
+>>> [VLM] ¥¿¦b¨Ï¥Î LLM ·j´M¤¸¯À: '3¤U¤È'
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: success=True, confidence=0.8, x=1045, y=197
+>>> [VLM] ¿ëÃÑ¦¨¥\: «Ì¹õµ´¹ï®y¼Ð=(1045, 197), confidence=0.80
+>>> [VLM] region=(0, 0, 1152, 360)
+>>> [VLM] µ¡¤f¦ì¸m: left=0, top=0, width=1920, height=1200
+>>> [CLICK_COORD] ­ì©l®y¼Ð: (1045, 197), °¾²¾: (offset_x=0, offset_y=25), ³Ì²×®y¼Ð: (1045, 222), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ­ì©l®y¼Ð: (1045, 197), °¾²¾: (offset_x=0, offset_y=25), ³Ì²×®y¼Ð: (1045, 222), °Ê§@=³æÀ»
+[CLICK_COORD] ­ì©l®y¼Ð: (1045, 197), °¾²¾: (offset_x=0, offset_y=25), ³Ì²×®y¼Ð: (1045, 222), °Ê§@=³æÀ»
+>>> [VLM] VLM ¿ëÃÑ¦¨¥\¨ÃÂIÀ»: 3¤U¤È («H¤ß: 0.80, ¯Ó®É: 2870ms)
+>>> [STAT] [®y¼Ð®w] ¤ñ¨Ò®y¼Ð: x_ratio=0.5443, y_ratio=0.1850 | µ´¹ï®y¼Ð: (1045, 222)
+>>> [TIMELINE] ¦¨¥\§ä¨ì®É¶¡¼Ð°O '3¤U¤È' ¨ÃÂIÀ»ºñ¦â±ø¡]offset_y=25¡^
+>>> [CASE_1-5] ¨BÆJ 4: µ¥«Ý¼½©ñ 7 ¬í«á¼È°±...
+================================================================================
+[PAUSE_PLAYBACK] ========== pause_playback() ¤èªk³Q½Õ¥Î¡I==========
+[PAUSE_PLAYBACK] ¼½©ñ«ùÄò®É¶¡: 7 ¬í
+================================================================================
+>>> [PAUSE_PLAYBACK] ¤èªk¶}©l°õ¦æ
+>>> [PLAYBACK] µ¥«Ý¼½©ñ 7 ¬í«á¼È°±...

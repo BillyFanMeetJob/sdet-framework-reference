@@ -1,4 +1,36 @@
-pytest
-selenium
-webdriver-manager
-openpyxl
+# ==================== Core Testing ====================
+pytest>=7.4.0
+pytest-html>=3.2.0  # 測試報告
+
+# ==================== Data Handling ====================
+pandas>=2.0.0
+openpyxl>=3.1.0
+
+# ==================== Desktop Automation ====================
+pyautogui>=0.9.54
+pygetwindow>=0.0.9
+Pillow>=10.0.0
+numpy>=1.24.0
+pywinauto>=0.6.8  # Windows UI Automation (for UI tree dumping)
+
+# ==================== Web Automation ====================
+selenium>=4.15.0
+webdriver-manager>=4.0.0
+
+# ==================== Android/iOS Automation (Optional) ====================
+# 安裝 Appium: pip install Appium-Python-Client
+# Appium-Python-Client>=2.11.0
+
+# ==================== OCR ====================
+paddleocr>=2.7.0
+
+# ==================== VLM (視覺語言模型) - 可選 ====================
+# 本地 VLM (推薦，無 API 費用)
+# ollama>=0.3.0  # Ollama Python client (需先安裝 Ollama: https://ollama.com)
+
+# Cloud VLM APIs (需要 API Key)
+# openai>=1.0.0  # GPT-4V / GPT-4o Vision
+# anthropic>=0.30.0  # Claude 3.5 Vision
+
+# ==================== Image Recognition Enhancement ====================
+opencv-python>=4.8.0  # OpenCV for template matching (OK Script fallback)

@@ -52,7 +52,7 @@ def load_testplan_dir(test_name: str) -> str:
 
     # TestDir 只需要載一次即可
     if not dt.has_sheet("TestDir"):
-        dt.add_sheet_from_excel("TestDir", C.TESTPLANPATH, "TestDir")
+        dt.add_sheet_from_excel("TestDir", C.TEST_PLAN_PATH, "TestDir")
 
     sheet = dt.get_sheet("TestDir")
 
@@ -76,7 +76,7 @@ def load_test_plan(test_name: str) -> StepList:
     # 關鍵：FunctionalClassification 不同就不能共用同一個 alias
     alias = f"TestPlan:{sheet_name}"
     if not dt.has_sheet(alias):
-        dt.add_sheet_from_excel(alias, C.TESTPLANPATH, sheet_name)
+        dt.add_sheet_from_excel(alias, C.TEST_PLAN_PATH, sheet_name)
 
     sheet = dt.get_sheet(alias)
 

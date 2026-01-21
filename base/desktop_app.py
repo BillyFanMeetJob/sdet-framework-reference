@@ -1,0 +1,2409 @@
+# 相對路徑: base/desktop_app.py
+
+import pyautogui
+import time
+import os
+import pygetwindow as gw
+from toolkit.logger import get_logger
+from config import EnvConfig
+from PIL import Image
+import numpy as np
+
+class DesktopApp:
+    _last_x, _last_y = 0, 0
+    _reporter = None  # 用於自動截圖的測試報告器
+
+    def __init__(self):
+        self.logger = get_logger(self.__class__.__name__)
+        self._ocr_engine = None
+        self._vlm_engine = None
+    
+    def _safe_log(self, level, message):
+        """
+        安全輸出日誌，自動清理 emoji 避免 cp950 編碼錯誤
+        :param level: 日誌級別 ('info', 'warning', 'error', 'debug')
+        :param message: 日誌內容
+        """
+        # 替換常見 emoji 為 ASCII 等效字符
+        safe_message = message.replace("🔍", "[DEBUG]").replace("🤖", "[VLM]").replace("📝", "[OCR]").replace("🎯", "[OK]").replace("📸", "[IMG]").replace("📊", "[STAT]").replace("❌", "[ERROR]").replace("✅", "[OK]").replace("⚠️", "[WARN]").replace("⏳", "[WAIT]").replace("🚀", "[START]").replace("💡", "[TIP]")
+        getattr(self.logger, level)(safe_message)
+    
+    @classmethod
+    def set_reporter(cls, reporter):
+        """
+        設置測試報告器（用於自動截圖）
+        :param reporter: TestReporter 實例
+        """
+        cls._reporter = reporter
+    
+    @classmethod
+    def get_reporter(cls):
+        """
+        獲取當前設置的測試報告器
+        :return: TestReporter 實例或 None
+        """
+        return cls._reporter
+    
+    def _get_ocr_engine(self):
+        """延遲載入 OCR 引擎，只在需要時初始化"""
+        if self._ocr_engine is None:
+            try:
+                from paddleocr import PaddleOCR
+                import logging
+                import os
+                
+                # 禁用模型源檢查，加快初始化速度
+                os.environ['DISABLE_MODEL_SOURCE_CHECK'] = 'True'
+                
+                # 設置 PaddleOCR 的日誌級別為 ERROR，減少輸出
+                logging.getLogger("ppocr").setLevel(logging.ERROR)
+                
+                self._ocr_engine = PaddleOCR(
+                    use_angle_cls=False,  # 關閉角度分類器（桌面文字都是水平的）
+                    lang="ch"
+                )
+                self._safe_log("info", "[OK] OCR 引擎初始化成功")
+            except Exception as e:
+                self._safe_log("warning", f"[WARN] OCR 引擎初始化失敗: {e}")
+                self._ocr_engine = False  # 標記為失敗，避免重複嘗試
+        return self._ocr_engine if self._ocr_engine else None
+    
+    def _get_vlm_engine(self):
+        """延遲載入 VLM (視覺語言模型) 引擎，只在需要時初始化"""
+        if self._vlm_engine is None:
+            try:
+                # 檢查是否啟用 VLM
+                vlm_enabled = getattr(EnvConfig, 'VLM_ENABLED', False)
+                self._safe_log("info", f"[DEBUG] VLM 啟用狀態: {vlm_enabled}")
+                if not vlm_enabled:
+                    self._vlm_engine = False
+                    self._safe_log("info", "[DEBUG] VLM 未啟用，跳過初始化")
+                    return None
+                
+                from base.vlm_recognizer import get_vlm_recognizer
+                
+                backend = getattr(EnvConfig, 'VLM_BACKEND', 'ollama')
+                model = getattr(EnvConfig, 'VLM_MODEL', None)
+                
+                self._safe_log("info", f"[DEBUG] 初始化 VLM: backend={backend}, model={model}")
+                self._vlm_engine = get_vlm_recognizer(backend=backend, model=model)
+                self._vlm_engine.set_logger(self.logger)
+                
+                # 測試 VLM 是否可以正常工作
+                try:
+                    # 檢查 Ollama 是否運行（如果是 ollama 後端）
+                    if backend == "ollama":
+                        import ollama
+                        try:
+                            # 嘗試列出模型，驗證 Ollama 是否可用
+                            models = ollama.list()
+                            model_names = []
+                            if hasattr(models, 'models'):
+                                model_names = [m.name if hasattr(m, 'name') else str(m) for m in models.models]
+                            elif isinstance(models, dict) and 'models' in models:
+                                model_names = [m.get('name', str(m)) for m in models['models']]
+                            self._safe_log("info", f"[OK] VLM 引擎初始化成功 ({backend}/{model or 'default'})")
+                            self._safe_log("info", f"[DEBUG] Ollama 可用，已安裝模型: {model_names}")
+                        except Exception as e:
+                            self._safe_log("warning", f"[WARN] Ollama 可能未運行或模型未安裝: {e}")
+                            self._safe_log("warning", "[TIP] 請確認 Ollama 已啟動並已拉取 llava 模型: ollama pull llava")
+                    else:
+                        self._safe_log("info", f"[OK] VLM 引擎初始化成功 ({backend}/{model or 'default'})")
+                except Exception as e:
+                    self._safe_log("warning", f"[WARN] VLM 測試失敗: {e}")
+            except Exception as e:
+                self._safe_log("warning", f"[WARN] VLM 引擎初始化失敗: {e}")
+                import traceback
+                self.logger.debug(f"詳細錯誤: {traceback.format_exc()}")
+                self._vlm_engine = False  # 標記為失敗，避免重複嘗試
+        return self._vlm_engine if self._vlm_engine else None
+
+    def get_nx_window(self):
+        """
+        獲取 Nx Witness 視窗物件，並驗證視窗是否有效
+        
+        :return: 視窗物件或 None
+        """
+        # 🎯 擴展窗口標題列表，包含更多可能的標題
+        window_titles = [
+            "警告",
+            "Nx Witness Client",
+            "本地設置",
+            "Nx Witness",
+            "Nx Witness Client - Nx Witness Client",  # 完整標題
+            "Nx Witness - Nx Witness Client",
+        ]
+        
+        for t in window_titles:
+            try:
+                wins = [w for w in gw.getWindowsWithTitle(t) if w.visible]
+                if wins:
+                    # 🎯 選擇最大的可見窗口（避免選到小窗口）
+                    win = max(wins, key=lambda w: w.width * w.height if w.width > 0 and w.height > 0 else 0)
+                    # 驗證視窗物件是否有效（嘗試訪問屬性）
+                    try:
+                        _ = win.left, win.top, win.width, win.height
+                        # 🎯 過濾掉太小的窗口（可能是錯誤的窗口）
+                        if win.width > 800 and win.height > 600:
+                            # 🎯 額外驗證：確保窗口標題確實包含 Nx Witness 關鍵字
+                            title_lower = win.title.lower()
+                            has_nx_keyword = (
+                                "nx witness" in title_lower or 
+                                "nxwitness" in title_lower or
+                                "警告" in win.title or
+                                "本地設置" in win.title
+                            )
+                            # 排除編輯器和文本編輯器窗口
+                            is_editor = any(keyword in title_lower for keyword in [
+                                "cursor", "editor", "code", "vscode", "visual studio", 
+                                "pycharm", "sublime", "notepad", "notepad++", "mark.txt"
+                            ])
+                            
+                            if has_nx_keyword and not is_editor:
+                                self.logger.debug(f"[WINDOW] 找到 Nx Witness 視窗: '{t}' ({win.width}x{win.height})")
+                                return win
+                            else:
+                                self.logger.debug(f"[WINDOW] 跳過非 Nx Witness 窗口: '{win.title}' (has_nx={has_nx_keyword}, is_editor={is_editor})")
+                        else:
+                            self.logger.debug(f"[WINDOW] 跳過小窗口: '{t}' ({win.width}x{win.height})")
+                    except Exception:
+                        # 視窗物件無效（可能正在初始化），跳過
+                        continue
+            except Exception as e:
+                self.logger.debug(f"[WINDOW] 查找窗口 '{t}' 時發生異常: {e}")
+                continue
+        
+        # 🎯 如果找不到，嘗試查找包含 "Nx Witness" 的窗口（更嚴格的匹配）
+        self.logger.warning("[WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...")
+        try:
+            all_wins = [w for w in gw.getAllWindows() if w.visible]
+            # 🎯 更嚴格的匹配：必須包含 "Nx Witness" 或 "NxWitness"（不區分大小寫）
+            # 排除包含 "Cursor"、"Editor"、"Code"、"Notepad" 等編輯器關鍵字的窗口
+            nx_wins = []
+            for w in all_wins:
+                title_lower = w.title.lower()
+                # 必須包含 "nx witness" 或 "nxwitness"
+                has_nx_witness = "nx witness" in title_lower or "nxwitness" in title_lower
+                # 排除編輯器和文本編輯器窗口
+                is_editor = any(keyword in title_lower for keyword in [
+                    "cursor", "editor", "code", "vscode", "visual studio", 
+                    "pycharm", "sublime", "notepad", "notepad++", "mark.txt"
+                ])
+                
+                if has_nx_witness and not is_editor:
+                    # 額外驗證：窗口必須足夠大（避免選到小彈窗）
+                    try:
+                        if w.width > 800 and w.height > 600:
+                            nx_wins.append(w)
+                    except:
+                        pass
+            
+            if nx_wins:
+                # 選擇最大的窗口
+                win = max(nx_wins, key=lambda w: w.width * w.height if w.width > 0 and w.height > 0 else 0)
+                try:
+                    _ = win.left, win.top, win.width, win.height
+                    if win.width > 800 and win.height > 600:
+                        self.logger.info(f"[WINDOW] 通過模糊匹配找到視窗: '{win.title}' ({win.width}x{win.height})")
+                        return win
+                except Exception:
+                    pass
+        except Exception as e:
+            self.logger.debug(f"[WINDOW] 模糊匹配時發生異常: {e}")
+        
+        # 🎯 最後嘗試：列出所有可見窗口供調試
+        try:
+            all_wins = [w for w in gw.getAllWindows() if w.visible]
+            if all_wins:
+                self.logger.warning(f"[WINDOW] 當前所有可見窗口列表（共 {len(all_wins)} 個）:")
+                for w in all_wins[:10]:  # 只列出前10個
+                    try:
+                        self.logger.warning(f"[WINDOW]   - '{w.title}' ({w.width}x{w.height})")
+                    except:
+                        pass
+        except:
+            pass
+        
+        return None
+
+    def launch_app(self, exe_path):
+        """
+        啟動程式，如果已經運行則將視窗置頂
+        """
+        # 🔍 先檢查軟件是否已經運行（通過檢查視窗是否存在）
+        win = self.get_nx_window()
+        if win:
+            try:
+                # 驗證視窗是否有效
+                _ = win.left, win.top, win.width, win.height
+                if win.width > 0 and win.height > 0:
+                    # 🎯 額外驗證：確保窗口標題確實是 Nx Witness（避免誤匹配）
+                    title_lower = win.title.lower()
+                    is_nx_witness = (
+                        "nx witness" in title_lower or 
+                        "nxwitness" in title_lower or
+                        "警告" in win.title or
+                        "本地設置" in win.title
+                    )
+                    is_editor = any(keyword in title_lower for keyword in ["cursor", "editor", "code", "vscode", "visual studio", "pycharm", "sublime"])
+                    
+                    if is_nx_witness and not is_editor:
+                        self.logger.info(f"✅ 軟件已在運行，將視窗置頂（視窗: '{win.title}', 尺寸: {win.width}x{win.height}）")
+                        # 將視窗置頂
+                        try:
+                            win.activate()
+                            time.sleep(0.3)  # 等待視窗置頂
+                            self.logger.info("✅ 視窗已置頂")
+                        except Exception as e:
+                            self.logger.warning(f"⚠️ 置頂視窗失敗: {e}")
+                        return self
+                    else:
+                        self.logger.warning(f"[WINDOW] 找到的窗口不是 Nx Witness: '{win.title}'，將啟動新實例")
+            except Exception as e:
+                # 視窗無效，繼續啟動流程
+                self.logger.debug(f"[WINDOW] 驗證窗口時發生異常: {e}")
+        
+        # 如果視窗不存在或不是 Nx Witness，啟動程式
+        self.logger.info(f"[START] 啟動程式: {exe_path}")
+        if not os.path.exists(exe_path):
+            self.logger.error(f"[ERROR] 程式路徑不存在: {exe_path}")
+            raise FileNotFoundError(f"程式路徑不存在: {exe_path}")
+        
+        try:
+            os.startfile(exe_path)
+            self.logger.info("[OK] 已執行啟動命令，等待程式啟動...")
+        except Exception as e:
+            self.logger.error(f"[ERROR] 啟動程式失敗: {e}")
+            raise
+        
+        # 🎯 智能等待視窗出現並完全初始化（最多 15 秒，給程序更多啟動時間）
+        self.logger.info("[WAIT] 等待 Nx Witness 視窗出現...")
+        win = self.wait_for_window(timeout=15)
+        
+        if not win:
+            # 如果 wait_for_window 返回 None，嘗試使用 get_nx_window 再次查找
+            self.logger.warning("[WARN] wait_for_window 未找到視窗，嘗試使用 get_nx_window 再次查找...")
+            time.sleep(2)  # 額外等待 2 秒
+            win = self.get_nx_window()
+            if win:
+                self.logger.info(f"[OK] 通過 get_nx_window 找到視窗: '{win.title}' ({win.width}x{win.height})")
+            else:
+                self.logger.error("[ERROR] 啟動程式後無法找到 Nx Witness 視窗，請檢查程式是否正常啟動")
+                raise RuntimeError("無法找到 Nx Witness 視窗，程式可能啟動失敗")
+        
+        # 額外等待視窗完全初始化（確保可以訪問視窗屬性）
+        max_wait = 5
+        waited = 0
+        while waited < max_wait:
+            win = self.get_nx_window()
+            if win:
+                try:
+                    # 驗證視窗物件是否有效
+                    _ = win.left, win.top, win.width, win.height
+                    if win.width > 0 and win.height > 0:
+                        self.logger.info(f"✅ 軟件已完全啟動（視窗尺寸: {win.width}x{win.height}）")
+                        # 將視窗置頂
+                        try:
+                            win.activate()
+                            time.sleep(0.3)
+                        except Exception:
+                            pass
+                        return self
+                except Exception:
+                    pass
+            time.sleep(0.2)
+            waited += 0.2
+        
+        self.logger.warning("⚠️ 軟件可能尚未完全啟動，繼續執行...")
+        return self
+    
+    def wait_for_window(self, window_titles=None, timeout=3):
+        """
+        智能等待視窗出現並完全初始化
+        :param window_titles: 要等待的視窗標題列表，None 則使用預設
+        :param timeout: 超時時間（秒）
+        :return: 找到的視窗物件或 None
+        """
+        if window_titles is None:
+            window_titles = ["警告", "Nx Witness Client", "本地設置", "Nx Witness", "Server Settings"]
+        
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            for title in window_titles:
+                wins = [w for w in gw.getWindowsWithTitle(title) if w.visible]
+                if wins:
+                    win = wins[0]
+                    # 驗證視窗物件是否有效（確保視窗已完全初始化）
+                    try:
+                        _ = win.left, win.top, win.width, win.height
+                        if win.width > 0 and win.height > 0:
+                            self.logger.info(f"✅ 視窗已出現並完全初始化: {title} ({win.width}x{win.height})")
+                            return win
+                    except Exception:
+                        # 視窗尚未完全初始化，繼續等待
+                        pass
+            time.sleep(0.1)  # 短暫等待避免 CPU 過載
+        
+        self.logger.warning(f"⚠️ 等待 {timeout} 秒後未找到視窗或視窗尚未完全初始化")
+        return None
+    
+    def wait_for_condition(self, condition_func, timeout=3, check_interval=0.1):
+        """
+        通用條件等待函數
+        :param condition_func: 返回 True/False 的函數
+        :param timeout: 超時時間（秒）
+        :param check_interval: 檢查間隔（秒）
+        :return: 條件是否滿足
+        """
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            try:
+                if condition_func():
+                    return True
+            except Exception:
+                pass
+            time.sleep(check_interval)
+        return False
+    
+    def verify_element_exists(
+        self,
+        image_path=None,
+        target_text=None,
+        window_titles=None,
+        timeout=3,
+        raise_on_failure=True,
+        error_message="驗證失敗：未找到預期的 UI 元素"
+    ):
+        """
+        🔍 驗證 UI 元素是否存在（用於點擊後驗證）
+        
+        :param image_path: 要驗證的圖片路徑（相對於 res/）
+        :param target_text: 要驗證的文字（OCR/VLM）
+        :param window_titles: 要驗證的視窗標題列表
+        :param timeout: 超時時間（秒）
+        :param raise_on_failure: 驗證失敗時是否拋出異常（預設 True）
+        :param error_message: 驗證失敗時的錯誤訊息
+        :return: 是否驗證成功
+        """
+        start_time = time.time()
+        
+        while time.time() - start_time < timeout:
+            win = self.get_nx_window()
+            if not win:
+                time.sleep(0.1)
+                continue
+            
+            # 驗證視窗標題
+            if window_titles:
+                window_found = False
+                # 🎯 改進：使用部分匹配，而不只是完全匹配
+                all_wins = [w for w in gw.getAllWindows() if w.visible]
+                for win in all_wins:
+                    # 檢查窗口標題是否包含任何關鍵字
+                    if any(keyword in win.title for keyword in window_titles):
+                        # 驗證窗口尺寸合理（不是太小的彈窗）
+                        if win.width > 400 and win.height > 300:
+                            window_found = True
+                            self.logger.info(f"✅ 找到目標視窗: {win.title} ({win.width}x{win.height})")
+                            break
+                
+                if not window_found:
+                    time.sleep(0.1)
+                    continue  # 繼續等待視窗出現
+            
+            # 驗證圖片元素
+            if image_path:
+                if image_path.startswith("res/") or image_path.startswith("res\\"):
+                    image_path = image_path[4:]
+                full_img = os.path.normpath(os.path.join(EnvConfig.RES_PATH, image_path))
+                
+                if os.path.exists(full_img):
+                    region = (win.left, win.top, win.width, win.height)
+                    try:
+                        # 優先使用 OK Script
+                        from base.ok_script_recognizer import get_recognizer
+                        recognizer = get_recognizer()
+                        result = recognizer.locate_on_screen(full_img, region=region, confidence=0.75)  # 降低信心度
+                        if result and result.success:
+                            self.logger.info(f"✅ 驗證成功：找到預期元素 {image_path}")
+                            return True
+                    except Exception:
+                        pass
+                    
+                    # 回退到 pyautogui
+                    try:
+                        loc = pyautogui.locateOnScreen(full_img, confidence=0.7, region=region)  # 降低信心度
+                        if loc:
+                            self.logger.info(f"✅ 驗證成功：找到預期元素 {image_path}")
+                            return True
+                    except Exception:
+                        pass
+            
+            # 驗證文字元素（優先使用 VLM，然後 OCR）
+            if target_text:
+                # 嘗試使用 VLM 驗證
+                vlm = self._get_vlm_engine()
+                if vlm:
+                    try:
+                        region = (win.left, win.top, win.width, win.height)
+                        vlm_result = vlm.find_element(target_text, region=region)
+                        if vlm_result and vlm_result.success:
+                            self.logger.info(f"✅ 驗證成功（VLM）：找到預期文字 '{target_text}' (信心: {vlm_result.confidence:.2f})")
+                            return True
+                    except Exception as e:
+                        self.logger.debug(f"VLM 驗證異常: {e}")
+                
+                # 回退到 OCR
+                try:
+                    ocr_result = self._find_text_by_ocr(target_text, region=(win.left, win.top, win.width, win.height))
+                    if ocr_result:
+                        self.logger.info(f"✅ 驗證成功（OCR）：找到預期文字 '{target_text}'")
+                        return True
+                except Exception:
+                    pass
+            
+            # 如果所有驗證都通過（視窗標題驗證通過，且沒有圖片/文字驗證要求），返回成功
+            if window_titles and not image_path and not target_text:
+                self.logger.info(f"✅ 驗證成功：找到預期視窗 {window_titles}")
+                return True
+            
+            time.sleep(0.1)
+        
+        # 驗證失敗
+        if raise_on_failure:
+            raise AssertionError(f"{error_message}（超時: {timeout}秒）")
+        return False
+    
+    def _perform_click(self, x, y, clicks=1, click_type='left', offset_x=0, offset_y=0):
+        """
+        🖱️ 統一的點擊執行方法（base 層核心方法）
+        :param x: X 座標（原始座標）
+        :param y: Y 座標（原始座標）
+        :param clicks: 點擊次數（1=單擊，2=雙擊）
+        :param click_type: 點擊類型（'left'=左鍵, 'right'=右鍵）
+        :param offset_x: X 軸偏移量（像素，預設 0）
+        :param offset_y: Y 軸偏移量（像素，預設 0）
+        :return: (final_x, final_y) 加上偏移後的最終座標
+        """
+        # 🎯 套用偏移量
+        final_x = x + offset_x
+        final_y = y + offset_y
+        
+        # 🎯 記錄原始座標和最終座標（用於調試）
+        click_action = "右鍵" if click_type == 'right' else ("雙擊" if clicks == 2 else "單擊")
+        if offset_x != 0 or offset_y != 0:
+            self.logger.info(f"[CLICK_COORD] 原始座標: ({x}, {y}), 偏移: (offset_x={offset_x}, offset_y={offset_y}), 最終座標: ({final_x}, {final_y}), 動作={click_action}")
+            self._safe_log("info", f"[CLICK_COORD] 原始座標: ({x}, {y}), 偏移: (offset_x={offset_x}, offset_y={offset_y}), 最終座標: ({final_x}, {final_y}), 動作={click_action}")
+            print(f"[CLICK_COORD] 原始座標: ({x}, {y}), 偏移: (offset_x={offset_x}, offset_y={offset_y}), 最終座標: ({final_x}, {final_y}), 動作={click_action}")
+        else:
+            self.logger.info(f"[CLICK_COORD] 實際點擊座標: ({final_x}, {final_y}), 動作={click_action}")
+            self._safe_log("info", f"[CLICK_COORD] 實際點擊座標: ({final_x}, {final_y}), 動作={click_action}")
+            print(f"[CLICK_COORD] 實際點擊座標: ({final_x}, {final_y}), 動作={click_action}")
+        
+        # 🎯 使用最終座標執行點擊
+        if click_type == 'right':
+            # 右鍵只支持單擊
+            pyautogui.rightClick(final_x, final_y)
+        elif clicks == 2:
+            pyautogui.doubleClick(final_x, final_y, interval=0.1)
+        else:
+            pyautogui.click(final_x, final_y)
+        
+        # 🎯 返回最終座標，用於記錄
+        return (final_x, final_y)
+    
+    def drag_select_range(self, start_x, start_y, end_x, end_y, duration=0.5, button='left'):
+        """
+        🖱️ 拖拽框選範圍（base 層核心方法）
+        按住鼠標左鍵從起始位置拖拽到結束位置，用於框選區域
+        
+        :param start_x: 起始位置 X 座標
+        :param start_y: 起始位置 Y 座標
+        :param end_x: 結束位置 X 座標
+        :param end_y: 結束位置 Y 座標
+        :param duration: 拖拽持續時間（秒，預設 0.5）
+        :param button: 按鈕類型（'left'=左鍵, 'right'=右鍵，預設 'left'）
+        :return: 是否成功
+        """
+        try:
+            # 🎯 驗證座標有效性
+            import pyautogui
+            screen_width, screen_height = pyautogui.size()
+            
+            # 確保座標在屏幕範圍內
+            start_x = max(0, min(start_x, screen_width - 1))
+            start_y = max(0, min(start_y, screen_height - 1))
+            end_x = max(0, min(end_x, screen_width - 1))
+            end_y = max(0, min(end_y, screen_height - 1))
+            
+            self.logger.info(f"[DRAG] 拖拽座標（已驗證）: 起始=({start_x}, {start_y}), 結束=({end_x}, {end_y})")
+            self.logger.info(f"[DRAG] 屏幕尺寸: {screen_width}x{screen_height}")
+            
+            # 確保視窗是活動的（如果可能）
+            win = self.get_nx_window()
+            if win:
+                try:
+                    if not win.isActive:
+                        win.activate()
+                        time.sleep(0.2)
+                    
+                    # 🎯 驗證座標是否在窗口內
+                    win_right = win.left + win.width
+                    win_bottom = win.top + win.height
+                    if (start_x < win.left or start_x > win_right or 
+                        start_y < win.top or start_y > win_bottom or
+                        end_x < win.left or end_x > win_right or
+                        end_y < win.top or end_y > win_bottom):
+                        self.logger.warning(f"[DRAG] ⚠️ 座標超出窗口範圍！窗口: ({win.left}, {win.top}, {win.width}, {win.height})")
+                        self.logger.warning(f"[DRAG] 起始: ({start_x}, {start_y}), 結束: ({end_x}, {end_y})")
+                except Exception:
+                    pass
+            
+            # 移動到起始位置
+            pyautogui.moveTo(start_x, start_y, duration=0.3)
+            time.sleep(0.2)
+            
+            # 按住鼠標按鈕
+            pyautogui.mouseDown(button=button)
+            self.logger.info(f"[DRAG] 在起始位置按下鼠標按鈕 ({button}): ({start_x}, {start_y})")
+            time.sleep(0.1)  # 短暫停頓確保按下
+            
+            # 拖拽到結束位置
+            pyautogui.moveTo(end_x, end_y, duration=duration)
+            self.logger.info(f"[DRAG] 拖拽到結束位置: ({end_x}, {end_y})")
+            time.sleep(0.1)
+            
+            # 釋放鼠標按鈕
+            pyautogui.mouseUp(button=button)
+            self.logger.info(f"[DRAG] ✅ 成功拖拽框選範圍: ({start_x}, {start_y}) -> ({end_x}, {end_y})")
+            
+            # 等待一下讓選中的區域生效
+            time.sleep(0.5)
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"[DRAG] ❌ 拖拽框選範圍失敗: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    def type_text(self, text, interval=0.05):
+        """
+        ⌨️ 鍵盤輸入文字（base 層核心方法）
+        :param text: 要輸入的文字
+        :param interval: 字元間隔時間（秒）
+        """
+        pyautogui.typewrite(text, interval=interval)
+    
+    def press_key(self, key):
+        """
+        ⌨️ 按下指定按鍵（base 層核心方法）
+        :param key: 按鍵名稱（如 'enter', 'esc', 'tab' 等）
+        """
+        pyautogui.press(key)
+    
+    def activate_window(self, window_obj):
+        """
+        🪟 啟動指定視窗（base 層核心方法）
+        :param window_obj: pygetwindow 視窗物件
+        :return: 是否成功
+        """
+        try:
+            window_obj.activate()
+            time.sleep(0.3)
+            return True
+        except Exception as e:
+            self.logger.warning(f"⚠️ 啟動視窗失敗: {e}")
+            return False
+    
+    def find_window(self, title_keywords=None, max_width=None, max_height=None, exclude_titles=None):
+        """
+        🔍 尋找符合條件的視窗（base 層核心方法）
+        :param title_keywords: 標題關鍵字列表（任一匹配即可）
+        :param max_width: 最大寬度（用於篩選小視窗）
+        :param max_height: 最大高度（用於篩選小視窗）
+        :param exclude_titles: 排除的標題關鍵字列表
+        :return: 找到的視窗物件或 None
+        """
+        wins = gw.getAllWindows()
+        
+        # 如果提供了標題關鍵字，優先匹配標題
+        if title_keywords:
+            for win in wins:
+                if not win.visible:
+                    continue
+                
+                # 檢查排除條件
+                if exclude_titles:
+                    if any(keyword in win.title for keyword in exclude_titles):
+                        continue
+                
+                # 檢查標題關鍵字匹配
+                if any(keyword in win.title for keyword in title_keywords):
+                    # 如果還有尺寸條件，驗證尺寸
+                    if max_width and max_height:
+                        if win.width < max_width and win.height < max_height:
+                            return win
+                    else:
+                        # 沒有尺寸條件，標題匹配就返回
+                        return win
+        
+        # 如果沒有提供標題關鍵字，或標題關鍵字沒有匹配到，檢查尺寸條件
+        if max_width and max_height and not title_keywords:
+            for win in wins:
+                if not win.visible:
+                    continue
+                
+                # 檢查排除條件
+                if exclude_titles:
+                    if any(keyword in win.title for keyword in exclude_titles):
+                        continue
+                
+                # 只檢查尺寸條件
+                if win.width < max_width and win.height < max_height:
+                    return win
+        
+        return None
+    
+    def wait_for_window_close(self, window_titles, timeout=2):
+        """
+        ⏳ 等待指定視窗關閉（base 層核心方法）
+        :param window_titles: 要等待關閉的視窗標題列表
+        :param timeout: 超時時間（秒）
+        :return: 是否成功關閉
+        """
+        def is_window_closed():
+            """檢查視窗是否已關閉"""
+            for title in window_titles:
+                wins = [w for w in gw.getWindowsWithTitle(title) if w.visible]
+                if wins:
+                    return False  # 視窗還在
+            return True  # 視窗已關閉
+        
+        if self.wait_for_condition(is_window_closed, timeout=timeout):
+            self.logger.debug(f"✅ 視窗已關閉: {window_titles}")
+            return True
+        else:
+            self.logger.debug(f"⏳ 視窗可能仍然開啟: {window_titles}")
+            return False
+    
+    def handle_password_popup(self, password, popup_title_keywords=None, input_x_ratio=0.5, input_y_ratio=0.45):
+        """
+        🔐 處理密碼確認彈窗（base 層核心方法）
+        :param password: 要輸入的密碼
+        :param popup_title_keywords: 彈窗標題關鍵字列表（預設：["需要再次確認", "確認密碼"]）
+        :param input_x_ratio: 輸入框 X 位置比例（相對視窗寬度）
+        :param input_y_ratio: 輸入框 Y 位置比例（相對視窗高度）
+        :return: 是否成功處理
+        """
+        if popup_title_keywords is None:
+            popup_title_keywords = ["需要再次確認", "確認密碼"]
+        
+        # 尋找密碼彈窗
+        self._safe_log("info", f"[DEBUG] 開始搜尋密碼確認彈窗，關鍵字: {popup_title_keywords}")
+        password_window = self.find_window(
+            title_keywords=popup_title_keywords,
+            max_width=600,
+            max_height=400,
+            exclude_titles=["伺服器設定", "Server Settings"]
+        )
+        
+        # 特殊處理：Nx Witness Client 標題的小視窗也可能是密碼彈窗
+        if not password_window:
+            self._safe_log("info", "[DEBUG] 嘗試搜尋標題為 'Nx Witness Client' 的小視窗...")
+            wins = gw.getAllWindows()
+            visible_wins = [w for w in wins if w.visible]
+            self._safe_log("info", f"[DEBUG] 當前所有可見窗口數量: {len(visible_wins)}")
+            for win in visible_wins:
+                win_info = f"標題='{win.title}', 尺寸={win.width}x{win.height}"
+                self._safe_log("info", f"[DEBUG]   - {win_info}")
+                if win.title == "Nx Witness Client" and win.width < 600 and win.height < 400:
+                    if "伺服器設定" not in win.title and "Server Settings" not in win.title:
+                        self._safe_log("info", f"[OK] 找到符合條件的小視窗: {win_info}")
+                        password_window = win
+                        break
+        
+        if not password_window:
+            self._safe_log("warning", "[WARN] 未檢測到密碼確認彈窗，可能彈窗尚未出現或標題不匹配")
+            # 列出所有可見窗口，方便調試
+            all_wins = [w for w in gw.getAllWindows() if w.visible]
+            if all_wins:
+                self._safe_log("info", "[DEBUG] 當前所有可見窗口列表：")
+                for win in all_wins:
+                    self._safe_log("info", f"[DEBUG]   - 標題: '{win.title}', 尺寸: {win.width}x{win.height}")
+            return True  # 沒有彈窗也算成功（可能不需要密碼）
+        
+        self._safe_log("info", "[OK] 檢測到密碼確認彈窗，準備輸入密碼...")
+        
+        # 輔助函數：保存調試截圖
+        def _save_debug_screenshot(step_name, password_window=None):
+            """保存調試截圖"""
+            try:
+                # 修復格式字符串：使用 datetime 獲取毫秒
+                import datetime
+                now = datetime.datetime.now()
+                timestamp = now.strftime("%Y%m%d_%H%M%S") + "_{:03d}".format(now.microsecond // 1000)
+                
+                debug_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs", "password_debug")
+                os.makedirs(debug_dir, exist_ok=True)
+                
+                # 截圖全屏
+                screenshot = pyautogui.screenshot()
+                screenshot_filename = "password_{}_{}_full.png".format(step_name, timestamp)
+                screenshot_path = os.path.join(debug_dir, screenshot_filename)
+                screenshot.save(screenshot_path)
+                self._safe_log("info", "[DEBUG_SCREENSHOT] {} - 全屏截圖已保存: {}".format(step_name, screenshot_path))
+                
+                # 如果提供了窗口，也截圖窗口區域
+                if password_window:
+                    try:
+                        win_region = (password_window.left, password_window.top, password_window.width, password_window.height)
+                        win_screenshot = pyautogui.screenshot(region=win_region)
+                        win_filename = "password_{}_{}_window.png".format(step_name, timestamp)
+                        win_path = os.path.join(debug_dir, win_filename)
+                        win_screenshot.save(win_path)
+                        self._safe_log("info", "[DEBUG_SCREENSHOT] {} - 窗口截圖已保存: {}".format(step_name, win_path))
+                    except Exception as e:
+                        self._safe_log("warning", "[DEBUG_SCREENSHOT] 窗口截圖失敗: {}".format(str(e)))
+            except Exception as e:
+                self._safe_log("warning", "[DEBUG_SCREENSHOT] 截圖失敗: {}".format(str(e)))
+        
+        # 輔助函數：檢查當前活動窗口
+        def _check_active_window():
+            """檢查當前活動窗口"""
+            try:
+                active_win = gw.getActiveWindow()
+                if active_win:
+                    self._safe_log("info", f"[DEBUG_FOCUS] 當前活動窗口: '{active_win.title}', 尺寸: {active_win.width}x{active_win.height}")
+                    return active_win.title
+                else:
+                    self._safe_log("info", "[DEBUG_FOCUS] 當前無活動窗口")
+                    return None
+            except Exception as e:
+                self._safe_log("warning", f"[DEBUG_FOCUS] 檢查活動窗口失敗: {e}")
+                return None
+        
+        try:
+            # 步驟 1: 初始狀態截圖
+            _save_debug_screenshot("01_initial", password_window)
+            initial_active = _check_active_window()
+            self._safe_log("info", "[DEBUG] 密碼彈窗信息: 標題='{}', 位置=({}, {}), 尺寸={}x{}".format(
+                password_window.title, password_window.left, password_window.top, password_window.width, password_window.height))
+            self._safe_log("info", "[DEBUG] 初始活動窗口: '{}'".format(initial_active))
+            
+            # 如果活動窗口不是密碼彈窗，記錄警告
+            if initial_active and initial_active != password_window.title:
+                self._safe_log("warning", "[WARN] 活動窗口 '{}' 與密碼彈窗標題 '{}' 不一致！".format(initial_active, password_window.title))
+            
+            # 啟動彈窗視窗（確保彈窗獲得焦點，避免在主窗口操作）
+            if not self.activate_window(password_window):
+                self.logger.warning("⚠️ 啟動密碼彈窗失敗")
+            
+            # 額外等待，確保彈窗完全激活並穩定
+            time.sleep(0.5)
+            
+            # 步驟 2: 激活窗口後
+            _save_debug_screenshot("02_after_activate", password_window)
+            active_title = _check_active_window()
+            self._safe_log("info", f"[DEBUG] 激活窗口後，活動窗口: '{active_title}'")
+            
+            # 重新激活彈窗，確保獲得焦點
+            try:
+                password_window.activate()
+                time.sleep(0.3)  # 等待彈窗完全激活
+                _check_active_window()
+            except Exception as e:
+                self._safe_log("warning", f"[DEBUG] 再次激活窗口失敗: {e}")
+            
+            # 計算輸入框位置（密碼輸入框通常在彈窗中間偏下位置）
+            input_x = password_window.left + int(password_window.width * input_x_ratio)
+            input_y = password_window.top + int(password_window.height * input_y_ratio)
+            self._safe_log("info", f"[DEBUG] 計算輸入框位置: 窗口=({password_window.left}, {password_window.top}, {password_window.width}, {password_window.height}), 比例=({input_x_ratio}, {input_y_ratio}), 絕對座標=({input_x}, {input_y})")
+            
+            # 重試機制：最多嘗試 2 次輸入密碼
+            max_attempts = 2
+            for attempt in range(1, max_attempts + 1):
+                self._safe_log("info", f"[DEBUG] ========== 第 {attempt} 次嘗試輸入密碼 ==========")
+                
+                # 1. 輸入之前先點擊密碼輸入框，確保焦點在輸入框中
+                _save_debug_screenshot(f"03_attempt{attempt}_before_click", password_window)
+                active_title = _check_active_window()
+                self._safe_log("info", f"[DEBUG] 點擊前活動窗口: '{active_title}'")
+                
+                # 再次激活窗口，確保彈窗在最前
+                try:
+                    password_window.activate()
+                    time.sleep(0.2)
+                    active_title = _check_active_window()
+                    self._safe_log("info", f"[DEBUG] 再次激活窗口後，活動窗口: '{active_title}'")
+                except Exception as e:
+                    self._safe_log("warning", f"[DEBUG] 激活窗口失敗: {e}")
+                
+                # 點擊輸入框，確保焦點在輸入框中
+                self._safe_log("info", f"[DEBUG] 執行點擊輸入框: ({input_x}, {input_y})")
+                final_x, final_y = self._perform_click(input_x, input_y, clicks=1, offset_x=0, offset_y=0)
+                DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
+                time.sleep(0.5)  # 等待輸入框獲得焦點
+                
+                # 步驟 3: 點擊後
+                _save_debug_screenshot(f"04_attempt{attempt}_after_click", password_window)
+                active_title = _check_active_window()
+                self._safe_log("info", f"[DEBUG] 點擊後活動窗口: '{active_title}'")
+                
+                # 輸入密碼
+                if password:
+                    self._safe_log("info", f"[DEBUG] 準備輸入密碼，長度: {len(password)}, 密碼前3字符: {password[:3]}***")
+                    
+                    # 步驟 4: 輸入前
+                    _save_debug_screenshot(f"05_attempt{attempt}_before_input", password_window)
+                    active_title = _check_active_window()
+                    self._safe_log("info", f"[DEBUG] 輸入前活動窗口: '{active_title}'")
+                    
+                    # 使用 typewrite 輸入密碼（模擬鍵盤輸入）
+                    try:
+                        self._safe_log("info", f"[DEBUG] 開始執行 pyautogui.typewrite，密碼長度: {len(password)}")
+                        pyautogui.typewrite(password, interval=0.1)
+                        self._safe_log("info", f"[DEBUG] pyautogui.typewrite 執行完成")
+                        
+                        # 步驟 5: 輸入中（立即截圖，可能在輸入過程中）
+                        time.sleep(0.1)  # 稍等片刻讓輸入開始
+                        _save_debug_screenshot(f"06_attempt{attempt}_during_input", password_window)
+                        active_title = _check_active_window()
+                        self._safe_log("info", f"[DEBUG] 輸入中活動窗口: '{active_title}'")
+                        
+                        time.sleep(0.4)  # 等待輸入完成（總共 0.5 秒）
+                        
+                        # 步驟 6: 輸入後
+                        _save_debug_screenshot(f"07_attempt{attempt}_after_input", password_window)
+                        active_title = _check_active_window()
+                        self._safe_log("info", f"[DEBUG] 輸入後活動窗口: '{active_title}', 密碼輸入完成: {len(password)} 個字符")
+                    except Exception as e:
+                        self.logger.warning(f"⚠️ 密碼輸入失敗: {e}")
+                        _save_debug_screenshot(f"error_attempt{attempt}_input_failed", password_window)
+                        # 嘗試逐個字符輸入
+                        self._safe_log("info", "[DEBUG] 嘗試逐個字符輸入密碼...")
+                        for i, char in enumerate(password):
+                            try:
+                                pyautogui.typewrite(char, interval=0.05)
+                                time.sleep(0.05)
+                                if i % 3 == 0:  # 每3個字符記錄一次
+                                    self._safe_log("info", f"[DEBUG] 已輸入 {i+1}/{len(password)} 個字符")
+                            except Exception as e:
+                                self._safe_log("warning", f"[DEBUG] 輸入字符 '{char}' 失敗: {e}")
+                        time.sleep(0.3)
+                else:
+                    self.logger.info("⌨️ 密碼為空，直接確認...")
+                
+                # 按 Enter 確認
+                self.logger.info("⌨️ 按 Enter 鍵確認...")
+                _save_debug_screenshot(f"08_attempt{attempt}_before_enter", password_window)
+                active_title = _check_active_window()
+                self._safe_log("info", f"[DEBUG] 按 Enter 前活動窗口: '{active_title}'")
+                
+                self.press_key('enter')
+                time.sleep(0.8)  # 等待彈窗關閉或更新
+                
+                # 步驟 9: 按 Enter 後
+                _save_debug_screenshot(f"09_attempt{attempt}_after_enter", password_window)
+                active_title = _check_active_window()
+                self._safe_log("info", f"[DEBUG] 按 Enter 後活動窗口: '{active_title}'")
+                
+                # 2. 輸入之後再檢測一次密碼視窗，如果還是存在，就再輸入一次
+                password_window_after = self.find_window(
+                    title_keywords=["需要再次確認", "確認密碼"],
+                    max_width=600,
+                    max_height=400,
+                    exclude_titles=["伺服器設定", "Server Settings"]
+                )
+                
+                # 特殊處理：Nx Witness Client 標題的小視窗也可能是密碼彈窗
+                if not password_window_after:
+                    wins = gw.getAllWindows()
+                    for win in wins:
+                        if not win.visible:
+                            continue
+                        if win.title == "Nx Witness Client" and win.width < 600 and win.height < 400:
+                            if "伺服器設定" not in win.title and "Server Settings" not in win.title:
+                                password_window_after = win
+                                break
+                
+                if password_window_after:
+                    # 密碼視窗還在，表示輸入失敗或密碼錯誤
+                    self._safe_log("info", f"[DEBUG] 密碼視窗仍存在，標題: '{password_window_after.title}', 尺寸: {password_window_after.width}x{password_window_after.height}")
+                    _save_debug_screenshot(f"10_attempt{attempt}_window_still_exists", password_window_after)
+                    
+                    if attempt < max_attempts:
+                        self._safe_log("warning", f"[WARN] 密碼視窗仍存在，準備第 {attempt + 1} 次輸入...")
+                        # 更新 password_window 引用，使用最新的視窗物件
+                        password_window = password_window_after
+                        # 重新計算輸入框位置
+                        input_x = password_window.left + int(password_window.width * input_x_ratio)
+                        input_y = password_window.top + int(password_window.height * input_y_ratio)
+                        self._safe_log("info", f"[DEBUG] 重新計算輸入框位置: ({input_x}, {input_y})")
+                        time.sleep(0.5)  # 等待一下再重試
+                        continue  # 繼續下一次嘗試
+                    else:
+                        self.logger.warning(f"⚠️ 嘗試 {max_attempts} 次後，密碼視窗仍存在，可能密碼錯誤")
+                        _save_debug_screenshot(f"11_final_failed", password_window_after)
+                        return False
+                else:
+                    # 密碼視窗已關閉，輸入成功
+                    self._safe_log("info", f"[DEBUG] 密碼輸入成功（第 {attempt} 次嘗試），視窗已關閉")
+                    _save_debug_screenshot(f"12_final_success", None)
+                    break
+            
+            self.logger.info("✅ 密碼確認彈窗已處理")
+            return True
+            
+        except Exception as e:
+            self.logger.warning(f"⚠️ 處理密碼確認彈窗時出錯: {e}")
+            return False
+    
+    def wait_for_screen_change(self, region, threshold=100000, max_wait=1.0):
+        """
+        🔍 智能等待螢幕變化（例如選單出現）
+        :param region: 檢測區域 (left, top, width, height)
+        :param threshold: 變化閾值（越大越敏感）
+        :param max_wait: 最大等待時間（秒）
+        :return: True (檢測到變化) / False (超時)
+        """
+        try:
+            # 截取初始螢幕
+            before = pyautogui.screenshot(region=(region[0], region[1], 200, 200))
+            before_array = np.array(before)
+            
+            start_time = time.time()
+            while time.time() - start_time < max_wait:
+                time.sleep(0.05)
+                after = pyautogui.screenshot(region=(region[0], region[1], 200, 200))
+                after_array = np.array(after)
+                
+                # 計算螢幕差異
+                diff = np.abs(after_array - before_array).sum()
+                if diff > threshold:
+                    self.logger.debug(f"✅ 檢測到螢幕變化（diff={diff}）")
+                    time.sleep(0.1)  # 短暫穩定
+                    return True
+            
+            self.logger.debug(f"⚠️ 等待 {max_wait}s 後未檢測到螢幕變化")
+            return False
+        except Exception as e:
+            self.logger.debug(f"螢幕變化檢測異常: {e}")
+            time.sleep(0.3)
+            return True
+    
+    def smart_checkbox(self, x_ratio, y_ratio, target_text=None, image_path=None, 
+                       checked_image=None, unchecked_image=None, 
+                       ensure_checked=True, force_verify=False, timeout=3):
+        """
+        🎯 智能 Checkbox 操作（base 層核心方法）
+        
+        功能：
+        1. 定位 checkbox（圖片辨識 > OCR > 座標保底）
+        2. 判斷當前狀態（已勾選 or 未勾選）
+        3. 根據 ensure_checked 參數決定是否點擊
+        4. 驗證操作結果
+        
+        :param x_ratio: X 軸比例（座標保底用）
+        :param y_ratio: Y 軸比例（座標保底用）
+        :param target_text: OCR 尋找文字（通常是 checkbox 旁邊的標籤文字）
+        :param image_path: Checkbox 圖片路徑（相對於 res/）
+        :param checked_image: 已勾選狀態的參考圖片（相對於 res/）
+        :param unchecked_image: 未勾選狀態的參考圖片（相對於 res/）
+        :param ensure_checked: True=確保勾選, False=確保不勾選
+        :param force_verify: True=強制驗證（即使初始狀態正確也會點擊兩次確保）
+        :param timeout: 定位超時時間（秒）
+        :return: True (操作成功) / False (操作失敗)
+        """
+        self.logger.info(f"🎯 智能 Checkbox 操作（目標狀態: {'已勾選' if ensure_checked else '未勾選'}{'，強制驗證模式' if force_verify else ''}）")
+        
+        # 步驟 1: 定位 checkbox
+        checkbox_pos = self._locate_checkbox(x_ratio, y_ratio, target_text, image_path, timeout)
+        if not checkbox_pos:
+            self.logger.error("❌ 找不到 checkbox")
+            return False
+        
+        click_x, click_y = checkbox_pos
+        
+        # 步驟 2: 判斷當前狀態
+        is_checked = self._is_checkbox_checked(click_x, click_y, checked_image, unchecked_image)
+        
+        # 步驟 3: 根據目標狀態決定是否點擊
+        if not force_verify:
+            # 正常模式：如果狀態已正確，跳過點擊
+            if ensure_checked and is_checked:
+                self.logger.info("✅ Checkbox 已經是勾選狀態，跳過")
+                return True
+            elif not ensure_checked and not is_checked:
+                self.logger.info("✅ Checkbox 已經是未勾選狀態，跳過")
+                return True
+        else:
+            # 強制驗證模式：不管初始狀態，都會點擊確保最終狀態正確
+            if ensure_checked and is_checked:
+                self.logger.warning("⚠️ Checkbox 判定為已勾選，但啟用強制驗證模式，將點擊兩次確保")
+            elif not ensure_checked and not is_checked:
+                self.logger.warning("⚠️ Checkbox 判定為未勾選，但啟用強制驗證模式，將點擊兩次確保")
+        
+        # 步驟 4: 執行點擊切換狀態
+        action = "勾選" if ensure_checked else "取消勾選"
+        
+        # 確保視窗是活動的
+        win = self.get_nx_window()
+        if win:
+            try:
+                if not win.isActive:
+                    win.activate()
+                    time.sleep(0.1)
+            except Exception:
+                pass
+        
+        # 在強制驗證模式下，如果初始狀態與目標相同，需要點擊兩次（先取消再設置）
+        if force_verify and ((ensure_checked and is_checked) or (not ensure_checked and not is_checked)):
+            self.logger.info(f"⚙️ 強制驗證模式：先點擊一次切換狀態...")
+            final_x, final_y = self._perform_click(click_x, click_y, clicks=1, click_type='left', offset_x=0, offset_y=0)
+            DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
+            self.logger.info(f"📍 第1次點擊 checkbox: ({final_x}, {final_y})")
+            time.sleep(0.5)
+            
+            self.logger.info(f"⚙️ 強制驗證模式：再點擊一次恢復到目標狀態...")
+            final_x, final_y = self._perform_click(click_x, click_y, clicks=1, click_type='left', offset_x=0, offset_y=0)
+            DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
+            self.logger.info(f"📍 第2次點擊 checkbox: ({final_x}, {final_y})")
+            time.sleep(0.5)
+        else:
+            # 正常點擊一次
+            self.logger.info(f"⚙️ 執行{action}操作...")
+            final_x, final_y = self._perform_click(click_x, click_y, clicks=1, click_type='left', offset_x=0, offset_y=0)
+            DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
+            self.logger.info(f"📍 點擊 checkbox: ({final_x}, {final_y})")
+            time.sleep(0.5)
+        
+        # 步驟 5: 驗證結果
+        is_checked_after = self._is_checkbox_checked(click_x, click_y, checked_image, unchecked_image)
+        if (ensure_checked and is_checked_after) or (not ensure_checked and not is_checked_after):
+            self.logger.info(f"✅ {action}成功")
+            return True
+        else:
+            self.logger.warning(f"⚠️ {action}後驗證失敗")
+            return False
+    
+    def _locate_checkbox(self, x_ratio, y_ratio, target_text=None, image_path=None, timeout=3):
+        """
+        🔍 定位 Checkbox 位置（base 層核心方法）
+        優先級：圖片辨識 > OCR 文字 > 座標保底
+        
+        :param x_ratio: X 軸比例（座標保底用）
+        :param y_ratio: Y 軸比例（座標保底用）
+        :param target_text: OCR 尋找文字（checkbox 旁邊的標籤）
+        :param image_path: Checkbox 圖片路徑（相對於 res/）
+        :param timeout: 超時時間（秒）
+        :return: (x, y) 座標或 None
+        """
+        win = self.get_nx_window()
+        if not win:
+            self.logger.error("❌ 找不到視窗")
+            return None
+        
+        try:
+            if not win.isActive:
+                win.activate()
+                time.sleep(0.1)
+        except Exception:
+            pass
+        
+        region = (win.left, win.top, win.width, win.height)
+        
+        # 【優先級 1】圖片辨識
+        if image_path:
+            if image_path.startswith("res/") or image_path.startswith("res\\"):
+                image_path = image_path[4:]
+            full_img = os.path.normpath(os.path.join(EnvConfig.RES_PATH, image_path))
+            
+            if os.path.exists(full_img):
+                try:
+                    loc = pyautogui.locateOnScreen(full_img, confidence=0.8, region=region)
+                    if loc:
+                        # ⚠️ 重要：不使用中心點，而是使用左側 checkbox 位置
+                        # 因為參考圖片可能包含文字，中心點會偏移
+                        checkbox_x = loc.left + 12  # checkbox 通常在圖片左側 12px 處
+                        checkbox_y = loc.top + (loc.height // 2)  # 垂直居中
+                        self.logger.info(f"📸 Checkbox 圖片辨識成功: 圖片區域={loc}, 點擊座標=({checkbox_x}, {checkbox_y})")
+                        return (checkbox_x, checkbox_y)
+                except Exception as e:
+                    self.logger.debug(f"圖片辨識異常: {e}")
+        
+        # 【優先級 2】OCR 文字辨識
+        if target_text and self._get_ocr_engine():
+            try:
+                result = self._find_text_by_ocr(target_text, region)
+                if result:
+                    text_x, text_y = result
+                    # Checkbox 通常在文字左側約 30 像素
+                    checkbox_x = text_x - 30
+                    checkbox_y = text_y
+                    self.logger.info(f"📝 OCR 找到文字「{target_text}」，推測 checkbox 位置: ({checkbox_x}, {checkbox_y})")
+                    return (checkbox_x, checkbox_y)
+            except Exception as e:
+                self.logger.debug(f"OCR 辨識異常: {e}")
+        
+        # 【優先級 3】座標保底
+        self.logger.warning("⚠️ 圖片/OCR 辨識失敗，使用座標保底")
+        checkbox_x = win.left + int(win.width * x_ratio)
+        checkbox_y = win.top + int(win.height * y_ratio)
+        self.logger.info(f"📍 使用保底座標: ({checkbox_x}, {checkbox_y})")
+        return (checkbox_x, checkbox_y)
+    
+    def _is_checkbox_checked(self, x, y, checked_image=None, unchecked_image=None, sample_size=80):
+        """
+        🔍 判斷 Checkbox 是否已勾選（base 層核心方法）
+        
+        方法：
+        1. 優先使用圖片辨識（比對已勾選/未勾選的參考圖片）
+        2. 降級為像素分析（不可靠，建議提供參考圖片）
+        
+        :param x: checkbox 中心 x 座標
+        :param y: checkbox 中心 y 座標
+        :param checked_image: 已勾選狀態的參考圖片（相對於 res/）
+        :param unchecked_image: 未勾選狀態的參考圖片（相對於 res/）
+        :param sample_size: 採樣區域大小（像素，預設 80）
+        :return: True (已勾選) / False (未勾選)
+        """
+        try:
+            # 計算截取區域（以 checkbox 為中心，擴展 sample_size）
+            half_size = sample_size // 2
+            region = (int(x - half_size), int(y - half_size), int(sample_size), int(sample_size))
+            
+            self.logger.debug(f"截取 checkbox 區域: 中心 ({x}, {y}), 區域 {region} ({sample_size}x{sample_size})")
+            
+            # 【優先級 1】圖片辨識判斷
+            if checked_image or unchecked_image:
+                if checked_image:
+                    if checked_image.startswith("res/") or checked_image.startswith("res\\"):
+                        checked_image = checked_image[4:]
+                    checked_img_path = os.path.normpath(os.path.join(EnvConfig.RES_PATH, checked_image))
+                else:
+                    checked_img_path = os.path.join(EnvConfig.RES_PATH, "desktop_settings/checkbox_checked.png")
+                
+                if unchecked_image:
+                    if unchecked_image.startswith("res/") or unchecked_image.startswith("res\\"):
+                        unchecked_image = unchecked_image[4:]
+                    unchecked_img_path = os.path.normpath(os.path.join(EnvConfig.RES_PATH, unchecked_image))
+                else:
+                    unchecked_img_path = os.path.join(EnvConfig.RES_PATH, "desktop_settings/checkbox_unchecked.png")
+                
+                self.logger.debug(f"使用參考圖片判斷狀態:")
+                self.logger.debug(f"  已勾選: {checked_img_path} (存在: {os.path.exists(checked_img_path)})")
+                self.logger.debug(f"  未勾選: {unchecked_img_path} (存在: {os.path.exists(unchecked_img_path)})")
+                self.logger.debug(f"  截取區域: {region}")
+                
+                try:
+                    # 嘗試匹配「已勾選」圖片
+                    if os.path.exists(checked_img_path):
+                        try:
+                            loc = pyautogui.locateOnScreen(checked_img_path, confidence=0.8, region=region)
+                            if loc:
+                                self.logger.info(f"📸 圖片辨識：找到已勾選狀態 → 判定: 已勾選 ✓")
+                                return True
+                            else:
+                                self.logger.debug("  未匹配到已勾選狀態")
+                        except Exception as e1:
+                            self.logger.debug(f"  匹配已勾選圖片時異常: {e1}")
+                    
+                    # 嘗試匹配「未勾選」圖片
+                    if os.path.exists(unchecked_img_path):
+                        try:
+                            loc = pyautogui.locateOnScreen(unchecked_img_path, confidence=0.8, region=region)
+                            if loc:
+                                self.logger.info(f"📸 圖片辨識：找到未勾選狀態 → 判定: 未勾選 ☐")
+                                return False
+                            else:
+                                self.logger.debug("  未匹配到未勾選狀態")
+                        except Exception as e2:
+                            self.logger.debug(f"  匹配未勾選圖片時異常: {e2}")
+                    
+                    self.logger.warning("⚠️ 圖片辨識無法匹配已勾選/未勾選狀態，降級為像素分析")
+                except Exception as e:
+                    self.logger.warning(f"⚠️ 圖片辨識異常: {e}")
+            else:
+                self.logger.warning("⚠️ 未提供參考圖片，直接使用像素分析")
+            
+            # 【優先級 2】像素分析（保底 - 不可靠）
+            screenshot = pyautogui.screenshot(region=region)
+            
+            # 保存截圖供除錯（使用當前的 sample_size 區域）
+            debug_path = f"debug_checkbox_{int(time.time())}.png"
+            screenshot.save(debug_path)
+            
+            # 額外保存大圖（含上下文，200x60 像素）
+            large_region = (int(x - 100), int(y - 30), 200, 60)
+            large_screenshot = pyautogui.screenshot(region=large_region)
+            large_debug_path = f"debug_checkbox_large_{int(time.time())}.png"
+            large_screenshot.save(large_debug_path)
+            
+            self.logger.warning(f"⚠️ 無法使用圖片辨識，改用像素分析（不可靠）")
+            self.logger.info(f"💾 已保存 checkbox 截圖: {debug_path} ({sample_size}x{sample_size} 像素)")
+            self.logger.info(f"💾 已保存 checkbox 大圖: {large_debug_path} (200x60 像素，含上下文)")
+            self.logger.info(f"💡 建議：將截圖複製到 res/desktop_settings/ 作為參考圖片")
+            
+            # 保守策略：假設為未勾選
+            self.logger.warning(f"⚠️ 像素分析無法準確判斷，假設為未勾選")
+            return False
+            
+        except Exception as e:
+            self.logger.warning(f"⚠️ 判斷 checkbox 狀態時出錯: {e}，假設為未勾選")
+            return False
+
+    def _try_vlm_recognition(self, target_text, region, win, clicks=1, click_type='left', offset_x=0, offset_y=0):
+        """
+        🤖 嘗試使用 VLM (視覺語言模型) 進行 UI 元素辨識
+        
+        :param target_text: 要尋找的元素描述（支援自然語言）
+        :param region: 搜尋區域 (left, top, width, height)
+        :param win: 視窗物件
+        :param clicks: 點擊次數
+        :param click_type: 點擊類型
+        :param offset_x: X 軸偏移量（像素，預設 0）
+        :param offset_y: Y 軸偏移量（像素，預設 0）
+        :return: True (成功點擊) / False (辨識失敗)
+        """
+        self._safe_log("info", f"[DEBUG] _try_vlm_recognition 被調用: target_text='{target_text}', region={region}")
+        vlm = self._get_vlm_engine()
+        self._safe_log("info", f"[DEBUG] _get_vlm_engine() 返回: {vlm} (類型: {type(vlm)})")
+        if not vlm:
+            self._safe_log("warning", f"[VLM] VLM 引擎未初始化或未啟用，跳過 VLM 辨識")
+            return False
+        
+        try:
+            from base.ok_script_recognizer import get_recognizer
+            recognizer = get_recognizer()
+            
+            self._safe_log("info", f"[VLM] 正在使用 LLM 搜尋元素: '{target_text}'")
+            result = vlm.find_element(target_text, region=region)
+            self._safe_log("info", f"[DEBUG] VLM 辨識結果: success={result.success if result else None}, confidence={result.confidence if result else None}, x={result.x if result else None}, y={result.y if result else None}")
+            
+            if result and result.success and result.confidence > 0.5:
+                # 🎯 VLM 返回的座標已經加上了 region 偏移（在 find_element 中處理）
+                # 此時 result.x, result.y 應該是屏幕絕對座標
+                click_x = result.x
+                click_y = result.y
+                
+                # 🎯 調試：記錄座標信息
+                self._safe_log("info", f"[VLM] 辨識成功: 屏幕絕對座標=({click_x}, {click_y}), confidence={result.confidence:.2f}")
+                if region:
+                    self._safe_log("info", f"[VLM] region=({region[0]}, {region[1]}, {region[2]}, {region[3]})")
+                if win:
+                    self._safe_log("info", f"[VLM] 窗口位置: left={win.left}, top={win.top}, width={win.width}, height={win.height}")
+                
+                # 🎯 座標合理性檢查和自動修正
+                screen_width, screen_height = pyautogui.size()
+                
+                # 自動修正稍微超出螢幕範圍的座標（允許 20px 的誤差）
+                if click_y >= screen_height:
+                    if click_y <= screen_height + 20:  # 只超出 20px 以內，自動修正
+                        click_y = screen_height - 1
+                        self._safe_log("info", f"[VLM] y 座標超出螢幕範圍，自動修正: {click_y + 1} -> {click_y}")
+                    else:
+                        self._safe_log("warning", f"[VLM] y 座標超出螢幕範圍過大 ({click_y}/{screen_height})，拒絕點擊")
+                        return False
+                
+                if click_x >= screen_width:
+                    if click_x <= screen_width + 20:  # 只超出 20px 以內，自動修正
+                        click_x = screen_width - 1
+                        self._safe_log("info", f"[VLM] x 座標超出螢幕範圍，自動修正: {click_x + 1} -> {click_x}")
+                    else:
+                        self._safe_log("warning", f"[VLM] x 座標超出螢幕範圍過大 ({click_x}/{screen_width})，拒絕點擊")
+                        return False
+                
+                # 確保座標在視窗範圍內（允許稍微超出視窗範圍，自動修正）
+                win_left = win.left
+                win_top = win.top
+                win_right = win.left + win.width
+                win_bottom = win.top + win.height
+                
+                # 自動修正稍微超出視窗範圍的座標（允許 20px 的誤差）
+                if click_x < win_left:
+                    if click_x >= win_left - 20:
+                        click_x = win_left
+                        self._safe_log("info", f"[VLM] x 座標稍微超出視窗左側，自動修正到視窗邊界")
+                    else:
+                        self._safe_log("warning", f"[VLM] x 座標超出視窗範圍過大: {click_x} < {win_left}")
+                        return False
+                elif click_x > win_right:
+                    if click_x <= win_right + 20:
+                        click_x = win_right - 1
+                        self._safe_log("info", f"[VLM] x 座標稍微超出視窗右側，自動修正到視窗邊界")
+                    else:
+                        self._safe_log("warning", f"[VLM] x 座標超出視窗範圍過大: {click_x} > {win_right}")
+                        return False
+                
+                if click_y < win_top:
+                    if click_y >= win_top - 20:
+                        click_y = win_top
+                        self._safe_log("info", f"[VLM] y 座標稍微超出視窗頂部，自動修正到視窗邊界")
+                    else:
+                        self._safe_log("warning", f"[VLM] y 座標超出視窗範圍過大: {click_y} < {win_top}")
+                        return False
+                elif click_y > win_bottom:
+                    if click_y <= win_bottom + 20:
+                        click_y = win_bottom - 1
+                        self._safe_log("info", f"[VLM] y 座標稍微超出視窗底部，自動修正到視窗邊界")
+                    else:
+                        self._safe_log("warning", f"[VLM] y 座標超出視窗範圍過大: {click_y} > {win_bottom}")
+                        return False
+                
+                # 座標已修正，繼續執行點擊
+                if (win_left <= click_x <= win_right and 
+                    win_top <= click_y <= win_bottom):
+                    
+                    # 額外驗證：如果提供了 region，確保座標在 region 範圍內（相對於視窗）
+                    if region:
+                        region_left = region[0]
+                        region_top = region[1]
+                        region_right = region[0] + region[2]
+                        region_bottom = region[1] + region[3]
+                        
+                        if not (region_left <= click_x <= region_right and 
+                                region_top <= click_y <= region_bottom):
+                            self._safe_log("warning", f"[VLM] 座標超出 region 範圍: ({click_x}, {click_y}), region=({region_left}, {region_top}, {region[2]}, {region[3]})")
+                            # 如果座標明顯超出 region，拒絕點擊
+                            if abs(click_y - region_bottom) > 50:  # 允許 50px 的誤差
+                                self._safe_log("warning", f"[VLM] 座標超出 region 範圍過大，拒絕點擊")
+                                return False
+                    
+                    # 🎯 執行點擊並獲取最終座標（已應用偏移）
+                    final_x, final_y = self._perform_click(click_x, click_y, clicks, click_type, offset_x, offset_y)
+                    
+                    # 記錄統計
+                    recognizer.record_vlm_hit(result.time_ms)
+                    
+                    # 🎯 自動記錄相對於視窗的比例座標（使用最終座標）
+                    relative_x = final_x - win.left
+                    relative_y = final_y - win.top
+                    ratio_x = relative_x / win.width
+                    ratio_y = relative_y / win.height
+                    
+                    action_type = "雙擊" if clicks == 2 else "點擊"
+                    self._safe_log("info", f"[VLM] VLM 辨識成功並{action_type}: {target_text} (信心: {result.confidence:.2f}, 耗時: {result.time_ms:.0f}ms)")
+                    self._safe_log("info", f"[STAT] [座標庫] 比例座標: x_ratio={ratio_x:.4f}, y_ratio={ratio_y:.4f} | 絕對座標: ({final_x}, {final_y})")
+                    
+                    # 🎯 使用最終座標記錄（已應用偏移）
+                    DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
+                    # 記錄圖像辨識成功（重置連續失敗計數）
+                    recognizer.record_image_recognition_success()
+                    
+                    # 自動截圖並標註（如果有 reporter）
+                    if DesktopApp._reporter and hasattr(DesktopApp._reporter, 'add_recognition_screenshot'):
+                        try:
+                            item_name = target_text or "VLM_Element"
+                            # 🎯 使用最終點擊座標（已應用偏移），確保綠色標記顯示在實際點擊位置
+                            # 為了在截圖上標記一個框，我們以最終點擊座標為中心點，計算左上角
+                            box_x = final_x - 25  # 假設框的寬度是 50，所以左上角 x = 中心 x - 25
+                            box_y = final_y - 25  # 假設框的高度是 50，所以左上角 y = 中心 y - 25
+                            # 🎯 但傳入實際點擊座標 final_x, final_y 作為標記位置，確保綠色標記顯示在正確位置
+                            DesktopApp._reporter.add_recognition_screenshot(
+                                item_name=item_name,
+                                x=final_x,  # 🎯 使用最終點擊座標，確保綠色標記顯示在實際點擊位置
+                                y=final_y,  # 🎯 使用最終點擊座標，確保綠色標記顯示在實際點擊位置
+                                width=50,
+                                height=50,
+                                method="VLM",
+                                region=region  # 傳入搜尋區域，用於在截圖上標記
+                            )
+                        except Exception as e:
+                            self.logger.debug(f"自動截圖失敗: {e}")
+                    
+                    return True
+                else:
+                    self.logger.debug(f"🤖 VLM 返回座標超出視窗範圍: ({click_x}, {click_y})")
+            
+        except Exception as e:
+            self.logger.debug(f"🤖 VLM 辨識異常: {e}")
+        
+        return False
+
+    def _try_ocr_recognition(self, target_text, region, win, clicks=1, click_type='left', offset_x=0, offset_y=0):
+        """
+        📝 嘗試使用 OCR 進行文字辨識
+        
+        :param target_text: 要尋找的文字
+        :param region: 搜尋區域 (left, top, width, height)
+        :param win: 視窗物件
+        :param clicks: 點擊次數
+        :param click_type: 點擊類型
+        :param offset_x: X 軸偏移量（像素，預設 0）
+        :param offset_y: Y 軸偏移量（像素，預設 0）
+        :return: True (成功點擊) / False (辨識失敗)
+        """
+        if not target_text:
+            return False
+            
+        if not self._get_ocr_engine():
+            return False
+        
+        try:
+            from base.ok_script_recognizer import get_recognizer
+            recognizer = get_recognizer()
+            
+            ocr_start = time.perf_counter()
+            result = self._find_text_by_ocr(target_text, region)
+            if result:
+                ocr_time_ms = (time.perf_counter() - ocr_start) * 1000
+                recognizer.record_ocr_hit(ocr_time_ms)
+                
+                click_x, click_y = result
+                # 🎯 執行點擊並獲取最終座標（已應用偏移）
+                final_x, final_y = self._perform_click(click_x, click_y, clicks, click_type, offset_x, offset_y)
+                
+                # 🎯 自動記錄相對於視窗的比例座標（使用最終座標）
+                relative_x = final_x - win.left
+                relative_y = final_y - win.top
+                ratio_x = relative_x / win.width
+                ratio_y = relative_y / win.height
+                
+                action_type = "雙擊" if clicks == 2 else "點擊"
+                self._safe_log("info", f"[OCR] OCR 文字辨識成功並{action_type}: {target_text} (耗時: {ocr_time_ms:.1f}ms)")
+                self._safe_log("info", f"[STAT] [座標庫] 比例座標: x_ratio={ratio_x:.4f}, y_ratio={ratio_y:.4f} | 視窗尺寸: {win.width}x{win.height} | 絕對座標: ({final_x}, {final_y})")
+                
+                # 🎯 使用最終座標記錄（已應用偏移）
+                DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
+                recognizer.record_image_recognition_success()
+                
+                # 自動截圖並標註（如果有 reporter）
+                if DesktopApp._reporter and hasattr(DesktopApp._reporter, 'add_recognition_screenshot'):
+                    try:
+                        item_name = target_text or "OCR_Text"
+                        # 🎯 使用最終點擊座標（已應用偏移），確保綠色標記顯示在實際點擊位置
+                        DesktopApp._reporter.add_recognition_screenshot(
+                            item_name=item_name,
+                            x=final_x,  # 🎯 使用最終點擊座標，確保綠色標記顯示在實際點擊位置
+                            y=final_y,  # 🎯 使用最終點擊座標，確保綠色標記顯示在實際點擊位置
+                            width=50,
+                            height=50,
+                            method="OCR"
+                        )
+                    except Exception as e:
+                        self.logger.debug(f"自動截圖失敗: {e}")
+                
+                return True
+        except Exception as e:
+            self.logger.debug(f"OCR 辨識異常: {e}")
+        
+        return False
+
+    def _try_ok_script_recognition(self, image_path, region, win, clicks=1, click_type='left', confidence=0.7, offset_x=0, offset_y=0):
+        """
+        🎯 嘗試使用 OK Script / OpenCV 進行圖片辨識
+        
+        :param image_path: 圖片路徑（完整路徑）
+        :param region: 搜尋區域 (left, top, width, height)
+        :param win: 視窗物件
+        :param clicks: 點擊次數
+        :param click_type: 點擊類型
+        :param confidence: 置信度閾值（預設 0.7）
+        :param offset_x: X 軸偏移量（像素，預設 0）
+        :param offset_y: Y 軸偏移量（像素，預設 0）
+        :return: True (成功點擊) / False (辨識失敗)
+        """
+        if not image_path or not os.path.exists(image_path):
+            return False
+        
+        try:
+            from base.ok_script_recognizer import get_recognizer
+            recognizer = get_recognizer()
+            
+            self._safe_log("info", f"[DEBUG] 嘗試 OK Script 圖像辨識: {image_path}")
+            result = recognizer.locate_on_screen(image_path, region=region, confidence=confidence)
+            self._safe_log("info", f"[DEBUG] OK Script 辨識結果: {result.success if result else None}, 方法: {result.method if result and hasattr(result, 'method') else None}")
+            
+            if result and result.success:
+                self._safe_log("info", f"[DEBUG] OK Script 辨識成功，開始驗證座標...")
+                # 驗證 result 的座標是否有效
+                if not hasattr(result, 'x') or not hasattr(result, 'y') or result.x is None or result.y is None:
+                    self.logger.warning(f"⚠️ OK Script 辨識成功但座標無效: x={getattr(result, 'x', None)}, y={getattr(result, 'y', None)}")
+                    raise ValueError("OK Script 辨識結果座標無效")
+                
+                # 🎯 計算中心點：OK Script 返回的是左上角座標，需要計算中心點
+                center_x = result.x + (result.width // 2) if hasattr(result, 'width') and result.width > 0 else result.x
+                center_y = result.y + (result.height // 2) if hasattr(result, 'height') and result.height > 0 else result.y
+                
+                self._safe_log("info", f"[DEBUG] 座標驗證通過: 左上角=({result.x}, {result.y}), 中心點=({center_x}, {center_y})，執行點擊...")
+                # 🎯 執行點擊並獲取最終座標（已應用偏移）
+                final_x, final_y = self._perform_click(center_x, center_y, clicks, click_type, offset_x, offset_y)
+                self._safe_log("info", f"[DEBUG] 點擊執行完成")
+                
+                # 🎯 使用最終座標記錄（已應用偏移）
+                DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
+                
+                # 🎯 自動記錄相對於視窗的比例座標（如果視窗資訊可用）
+                # 注意：使用最終座標（已應用偏移）計算比例座標
+                try:
+                    relative_x = final_x - win.left
+                    relative_y = final_y - win.top
+                    ratio_x = relative_x / win.width
+                    ratio_y = relative_y / win.height
+                    
+                    action_type = "雙擊" if clicks == 2 else "點擊"
+                    image_name = os.path.basename(image_path)
+                    self._safe_log("info", f"[OK] {result.method.upper()} 辨識成功並{action_type}: {image_name} (信心: {result.confidence:.2f}, 耗時: {result.time_ms:.1f}ms)")
+                    self._safe_log("info", f"[STAT] [座標庫] 比例座標: x_ratio={ratio_x:.4f}, y_ratio={ratio_y:.4f} | 視窗尺寸: {win.width}x{win.height} | 絕對座標: ({final_x}, {final_y})")
+                except Exception as win_err:
+                    # 視窗資訊不可用（可能句柄失效），但仍記錄辨識成功
+                    action_type = "雙擊" if clicks == 2 else "點擊"
+                    image_name = os.path.basename(image_path)
+                    self._safe_log("info", f"[OK] {result.method.upper()} 辨識成功並{action_type}: {image_name} (信心: {result.confidence:.2f}, 耗時: {result.time_ms:.1f}ms)")
+                    self._safe_log("warning", f"[WARN] 無法計算比例座標（視窗資訊不可用）: {type(win_err).__name__}: {win_err}")
+                    self._safe_log("info", f"[STAT] [座標庫] 絕對座標: ({center_x}, {center_y})")
+                
+                DesktopApp._last_x, DesktopApp._last_y = center_x, center_y
+                recognizer.record_image_recognition_success()
+                
+                # 自動截圖並標註（如果有 reporter）
+                if DesktopApp._reporter and hasattr(DesktopApp._reporter, 'add_recognition_screenshot'):
+                    try:
+                        item_name = os.path.basename(image_path)
+                        # 使用實際辨識到的物件尺寸
+                        width = result.width if hasattr(result, 'width') and result.width > 0 else 50
+                        height = result.height if hasattr(result, 'height') and result.height > 0 else 50
+                        # 🎯 使用最終點擊座標（已應用偏移），確保綠色標記顯示在實際點擊位置
+                        DesktopApp._reporter.add_recognition_screenshot(
+                            item_name=item_name,
+                            x=final_x,  # 🎯 使用最終點擊座標，確保綠色標記顯示在實際點擊位置
+                            y=final_y,  # 🎯 使用最終點擊座標，確保綠色標記顯示在實際點擊位置
+                            width=width,
+                            height=height,
+                            method=result.method.upper() if hasattr(result, 'method') else "OK Script",
+                            region=region  # 傳入搜尋區域，用於在截圖上標記
+                        )
+                    except Exception as e:
+                        self.logger.debug(f"自動截圖失敗: {e}")
+                
+                return True
+        except Exception as e:
+            # 將異常日誌提升為 info 級別，方便調試
+            self._safe_log("warning", f"[WARN] OK Script 辨識過程發生異常: {type(e).__name__}: {e}")
+            import traceback
+            self.logger.debug(f"OK Script 辨識異常詳細信息:\n{traceback.format_exc()}")
+        
+        return False
+
+    def _try_pyautogui_recognition(self, image_path, region, win, clicks=1, click_type='left', confidence=0.7, offset_x=0, offset_y=0):
+        """
+        📸 嘗試使用 PyAutoGUI 進行圖片辨識
+        
+        :param image_path: 圖片路徑（完整路徑）
+        :param region: 搜尋區域 (left, top, width, height)
+        :param win: 視窗物件
+        :param clicks: 點擊次數
+        :param click_type: 點擊類型
+        :param confidence: 置信度閾值（預設 0.7）
+        :param offset_x: X 軸偏移量（像素，預設 0）
+        :param offset_y: Y 軸偏移量（像素，預設 0）
+        :return: True (成功點擊) / False (辨識失敗)
+        """
+        if not image_path or not os.path.exists(image_path):
+            return False
+        
+        try:
+            from base.ok_script_recognizer import get_recognizer
+            recognizer = get_recognizer()
+            
+            loc = pyautogui.locateOnScreen(image_path, confidence=confidence, region=region)
+            if loc:
+                center = pyautogui.center(loc)
+                # 🎯 執行點擊並獲取最終座標（已應用偏移）
+                final_x, final_y = self._perform_click(center.x, center.y, clicks, click_type, offset_x, offset_y)
+                
+                # 🎯 自動記錄相對於視窗的比例座標（使用最終座標）
+                relative_x = final_x - win.left
+                relative_y = final_y - win.top
+                ratio_x = relative_x / win.width
+                ratio_y = relative_y / win.height
+                
+                action_type = "雙擊" if clicks == 2 else "點擊"
+                image_name = os.path.basename(image_path)
+                self._safe_log("info", f"[IMG] 圖片辨識成功並{action_type}: {image_name}")
+                self._safe_log("info", f"[STAT] [座標庫] 比例座標: x_ratio={ratio_x:.4f}, y_ratio={ratio_y:.4f} | 視窗尺寸: {win.width}x{win.height} | 絕對座標: ({final_x}, {final_y})")
+                
+                # 🎯 使用最終座標記錄（已應用偏移）
+                DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
+                recognizer.record_image_recognition_success()
+                
+                # 自動截圖並標註（如果有 reporter）
+                if DesktopApp._reporter and hasattr(DesktopApp._reporter, 'add_recognition_screenshot'):
+                    try:
+                        item_name = os.path.basename(image_path)
+                        width = loc.width if loc else 50
+                        height = loc.height if loc else 50
+                        # 🎯 使用最終點擊座標（已應用偏移），確保綠色標記顯示在實際點擊位置
+                        DesktopApp._reporter.add_recognition_screenshot(
+                            item_name=item_name,
+                            x=final_x,  # 🎯 使用最終點擊座標，確保綠色標記顯示在實際點擊位置
+                            y=final_y,  # 🎯 使用最終點擊座標，確保綠色標記顯示在實際點擊位置
+                            width=width,
+                            height=height,
+                            method="PyAutoGUI",
+                            region=region  # 傳入搜尋區域，用於在截圖上標記
+                        )
+                    except Exception as e:
+                        self.logger.debug(f"自動截圖失敗: {e}")
+                
+                return True
+        except Exception:
+            pass
+        
+        return False
+
+    def _prepare_click_context(self, x_ratio, y_ratio, image_path=None, is_relative=False, from_bottom=False):
+        """
+        準備點擊上下文：獲取視窗、計算 region、處理圖片路徑
+        返回 (win, region, full_img) 或 None（如果失敗）
+        """
+        win = self.get_nx_window()
+        
+        # 🎯 如果找不到窗口，嘗試使用全屏作為保底
+        if not win:
+            self.logger.warning("[WINDOW] 未找到 Nx Witness 視窗，使用全屏作為保底")
+            try:
+                screen_width, screen_height = pyautogui.size()
+                # 創建一個虛擬的窗口對象（使用全屏尺寸）
+                class VirtualWindow:
+                    def __init__(self, left, top, width, height):
+                        self.left = left
+                        self.top = top
+                        self.width = width
+                        self.height = height
+                        self.isActive = False
+                
+                win = VirtualWindow(0, 0, screen_width, screen_height)
+                region = (0, 0, screen_width, screen_height)
+            except Exception as e:
+                self.logger.error(f"[WINDOW] 無法獲取全屏尺寸: {e}")
+                return None
+        else:
+            try:
+                win_left = win.left
+                win_top = win.top
+                win_width = win.width
+                win_height = win.height
+                
+                if win_width <= 0 or win_height <= 0:
+                    self.logger.warning(f"[WINDOW] 視窗尺寸無效: {win_width}x{win_height}")
+                    return None
+                
+                region = (win_left, win_top, win_width, win_height)
+            except Exception as e:
+                self.logger.warning(f"[WINDOW] 獲取視窗屬性失敗: {e}")
+                return None
+        
+        # 處理圖片路徑
+        full_img = None
+        if image_path:
+            if image_path.startswith("res/") or image_path.startswith("res\\"):
+                image_path = image_path[4:]
+            full_img = os.path.normpath(os.path.join(EnvConfig.RES_PATH, image_path))
+        
+        return (win, region, full_img)
+
+    def smart_click_priority_text(self, x_ratio, y_ratio, target_text=None, image_path=None, timeout=3, is_relative=False, from_bottom=False, clicks=1, click_type='left', window_obj=None, use_vlm=None, offset_x=0, offset_y=0):
+        """
+        🎯 文字優先策略：VLM > OCR > OK Script > PyAutoGUI
+        適合需要精確文字匹配的場景
+        
+        :param x_ratio: X 軸比例 (0.0 - 1.0)
+        :param y_ratio: Y 軸比例 (0.0 - 1.0)
+        :param target_text: 要尋找的文字（用於 VLM/OCR）
+        :param image_path: 圖片路徑（相對於 res/，作為備選）
+        :param timeout: 超時時間（秒，預設 3）
+        :param clicks: 點擊次數（1=單擊，2=雙擊）
+        :param click_type: 點擊類型（'left'=左鍵, 'right'=右鍵）
+        :param use_vlm: 是否使用 VLM 辨識（None=根據配置, True=強制使用, False=強制禁用）
+        :param offset_x: X 軸偏移量（像素），用於所有點擊時微調位置（預設 0）
+        :param offset_y: Y 軸偏移量（像素），用於所有點擊時微調位置（預設 0）
+        :return: True (成功) / False (失敗)
+        """
+        vlm_enabled = use_vlm if use_vlm is not None else getattr(EnvConfig, 'VLM_ENABLED', False)
+        
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            ctx = self._prepare_click_context(x_ratio, y_ratio, image_path, is_relative, from_bottom)
+            if not ctx:
+                time.sleep(0.1)
+                continue
+            
+            win, region, full_img = ctx
+            
+            # 為 VLM/OCR 創建一個限制區域，圍繞 x_ratio, y_ratio 附近（避免搜尋到其他位置的文字）
+            # 使用一個較小的搜尋區域，例如寬度為視窗的 60%，高度為視窗的 30%，中心在 (x_ratio, y_ratio)
+            search_region_width = int(win.width * 0.6)
+            search_region_height = int(win.height * 0.3)
+            search_region_left = max(win.left, int(win.left + win.width * x_ratio - search_region_width / 2))
+            search_region_top = max(win.top, int(win.top + win.height * y_ratio - search_region_height / 2))
+            search_region = (search_region_left, search_region_top, search_region_width, search_region_height)
+            
+            # 🎯 優先級 1: VLM（如果啟用且 target_text 存在）
+            # 使用限制的搜尋區域，避免搜尋到其他位置的文字
+            if vlm_enabled and target_text:
+                if self._try_vlm_recognition(target_text, search_region, win, clicks, click_type, offset_x, offset_y):
+                    return True
+            
+            # 🎯 優先級 2: OCR（也使用限制的搜尋區域）
+            if target_text:
+                if self._try_ocr_recognition(target_text, search_region, win, clicks, click_type, offset_x, offset_y):
+                    return True
+            
+            # 🎯 優先級 3: OK Script 圖片辨識（使用完整的 region）
+            if full_img:
+                if self._try_ok_script_recognition(full_img, region, win, clicks, click_type, 0.7, offset_x, offset_y):
+                    return True
+            
+            # 🎯 優先級 4: PyAutoGUI 圖片辨識（使用完整的 region）
+            if full_img:
+                if self._try_pyautogui_recognition(full_img, region, win, clicks, click_type, 0.7, offset_x, offset_y):
+                    return True
+            
+            time.sleep(0.15)
+        
+        # 🎯 如果所有辨識方法都失敗，使用座標保底
+        win = self.get_nx_window()
+        if win:
+            try:
+                if is_relative:
+                    tx = DesktopApp._last_x + x_ratio
+                    ty = DesktopApp._last_y + y_ratio
+                    self.logger.info(f"[COORD] [TEXT_PRIORITY] 執行相對座標點擊: 原始座標=({tx}, {ty}), 偏移=(offset_x={offset_x}, offset_y={offset_y})")
+                elif from_bottom:
+                    tx = win.left + int(win.width * x_ratio)
+                    ty = win.top + win.height - int(win.height * y_ratio)
+                    self.logger.info(f"[COORD] [TEXT_PRIORITY] 執行視窗底部對齊點擊: 原始座標=({tx}, {ty}), 偏移=(offset_x={offset_x}, offset_y={offset_y})")
+                else:
+                    tx = win.left + int(win.width * x_ratio)
+                    ty = win.top + int(win.height * y_ratio)
+                    self.logger.info(f"[COORD] [TEXT_PRIORITY] 執行視窗比例點擊: 原始座標=({tx}, {ty}), 偏移=(offset_x={offset_x}, offset_y={offset_y})")
+                
+                # 🎯 執行點擊並獲取最終座標（應用偏移）
+                final_x, final_y = self._perform_click(tx, ty, clicks, click_type, offset_x, offset_y)
+                # 🎯 使用最終座標記錄（已應用偏移）
+                DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
+                return True
+            except Exception as e:
+                self.logger.error(f"[ERROR] [TEXT_PRIORITY] 座標保底失敗: {e}")
+        
+        return False
+
+    def smart_click_priority_image(self, x_ratio, y_ratio, target_text=None, image_path=None, timeout=3, is_relative=False, from_bottom=False, clicks=1, click_type='left', window_obj=None, use_vlm=None, offset_x=0, offset_y=0):
+        """
+        🎯 圖片優先策略：OK Script > PyAutoGUI > VLM > OCR
+        適合動態選單、圖標等場景
+        
+        :param x_ratio: X 軸比例 (0.0 - 1.0)
+        :param y_ratio: Y 軸比例 (0.0 - 1.0)
+        :param target_text: 要尋找的文字（用於 VLM/OCR，作為備選）
+        :param image_path: 圖片路徑（相對於 res/，優先使用）
+        :param timeout: 超時時間（秒，預設 3）
+        :param clicks: 點擊次數（1=單擊，2=雙擊）
+        :param click_type: 點擊類型（'left'=左鍵, 'right'=右鍵）
+        :param use_vlm: 是否使用 VLM 辨識（None=根據配置, True=強制使用, False=強制禁用）
+        :param offset_x: X 軸偏移量（像素），用於所有點擊時微調位置（預設 0）
+        :param offset_y: Y 軸偏移量（像素），用於所有點擊時微調位置（預設 0）
+        :return: True (成功) / False (失敗)
+        """
+        vlm_enabled = use_vlm if use_vlm is not None else getattr(EnvConfig, 'VLM_ENABLED', False)
+        
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            ctx = self._prepare_click_context(x_ratio, y_ratio, image_path, is_relative, from_bottom)
+            if not ctx:
+                time.sleep(0.1)
+                continue
+            
+            win, region, full_img = ctx
+            
+            # 🎯 優先級 1: OK Script 圖片辨識
+            if full_img:
+                if self._try_ok_script_recognition(full_img, region, win, clicks, click_type, 0.7, offset_x, offset_y):
+                    return True
+            
+            # 🎯 優先級 2: PyAutoGUI 圖片辨識
+            if full_img:
+                if self._try_pyautogui_recognition(full_img, region, win, clicks, click_type, 0.7, offset_x, offset_y):
+                    return True
+            
+            # 🎯 優先級 3: VLM（如果啟用且 target_text 存在）
+            if vlm_enabled and target_text:
+                if self._try_vlm_recognition(target_text, region, win, clicks, click_type, offset_x, offset_y):
+                    return True
+            
+            # 🎯 優先級 4: OCR
+            if target_text:
+                if self._try_ocr_recognition(target_text, region, win, clicks, click_type, offset_x, offset_y):
+                    return True
+            
+            time.sleep(0.15)
+        
+        # 🎯 如果所有辨識方法都失敗，使用座標保底
+        win = self.get_nx_window()
+        if win:
+            try:
+                if is_relative:
+                    tx = DesktopApp._last_x + x_ratio
+                    ty = DesktopApp._last_y + y_ratio
+                    self.logger.info(f"[COORD] [IMAGE_PRIORITY] 執行相對座標點擊: 原始座標=({tx}, {ty}), 偏移=(offset_x={offset_x}, offset_y={offset_y})")
+                elif from_bottom:
+                    tx = win.left + int(win.width * x_ratio)
+                    ty = win.top + win.height - int(win.height * y_ratio)
+                    self.logger.info(f"[COORD] [IMAGE_PRIORITY] 執行視窗底部對齊點擊: 原始座標=({tx}, {ty}), 偏移=(offset_x={offset_x}, offset_y={offset_y})")
+                else:
+                    tx = win.left + int(win.width * x_ratio)
+                    ty = win.top + int(win.height * y_ratio)
+                    self.logger.info(f"[COORD] [IMAGE_PRIORITY] 執行視窗比例點擊: 原始座標=({tx}, {ty}), 偏移=(offset_x={offset_x}, offset_y={offset_y})")
+                
+                # 🎯 執行點擊並獲取最終座標（應用偏移）
+                final_x, final_y = self._perform_click(tx, ty, clicks, click_type, offset_x, offset_y)
+                # 🎯 使用最終座標記錄（已應用偏移）
+                DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
+                return True
+            except Exception as e:
+                self.logger.error(f"[ERROR] [IMAGE_PRIORITY] 座標保底失敗: {e}")
+        
+        return False
+
+    def smart_click(self, x_ratio, y_ratio, target_text=None, image_path=None, timeout=3, is_relative=False, from_bottom=False, clicks=1, click_type='left', window_obj=None, use_ok_script=True, use_vlm=None, offset_x=0, offset_y=0, region=None):
+        """ 
+        🎯 智能點擊：優先級 OK Script > VLM > OCR 文字 > 座標保底
+        :param x_ratio: X 軸比例 (0.0 - 1.0) 或絕對像素（is_relative=True 時）
+        :param y_ratio: Y 軸比例 (0.0 - 1.0) 或絕對像素（is_relative=True 時）
+        :param target_text: OCR 要尋找的文字（也用於 VLM 查詢）
+        :param image_path: 圖片路徑（相對於 res/）
+        :param timeout: 超時時間（秒，預設 3）
+        :param is_relative: 是否使用相對座標（相對於上次點擊位置）
+        :param from_bottom: Y 軸是否從視窗底部計算
+        :param clicks: 點擊次數（1=單擊，2=雙擊）
+        :param click_type: 點擊類型（'left'=左鍵, 'right'=右鍵）
+        :param window_obj: 指定視窗物件（可選）
+        :param use_ok_script: 是否優先使用 OK Script 辨識（預設 True）
+        :param use_vlm: 是否使用 VLM 辨識（None=根據配置, True=強制使用, False=強制禁用）
+        :param offset_x: X 軸偏移量（像素），用於所有點擊時微調位置（預設 0）
+        :param offset_y: Y 軸偏移量（像素），用於所有點擊時微調位置（預設 0）
+        :param region: 搜尋區域 (left, top, width, height)，用於限制 VLM/OCR 搜尋範圍（可選）
+        """
+        from base.ok_script_recognizer import get_recognizer
+        recognizer = get_recognizer()
+        recognizer.set_logger(self.logger)
+        
+        # 取得 VLM 配置
+        vlm_enabled = use_vlm if use_vlm is not None else getattr(EnvConfig, 'VLM_ENABLED', False)
+        vlm_priority = getattr(EnvConfig, 'VLM_PRIORITY', 2)  # 預設在 OK Script 後
+        
+        start_time = time.time()
+        
+        if image_path:
+            if image_path.startswith("res/") or image_path.startswith("res\\"):
+                image_path = image_path[4:]
+            full_img = os.path.normpath(os.path.join(EnvConfig.RES_PATH, image_path))
+        else:
+            full_img = None
+
+        while time.time() - start_time < timeout:
+            win = self.get_nx_window()
+            if not win:
+                time.sleep(0.1)
+                continue
+            
+            # 驗證視窗物件是否有效（確保視窗已完全初始化）
+            try:
+                # 嘗試訪問視窗屬性，如果失敗表示視窗尚未完全初始化
+                win_left = win.left
+                win_top = win.top
+                win_width = win.width
+                win_height = win.height
+                
+                # 確保視窗尺寸有效（大於 0）
+                if win_width <= 0 or win_height <= 0:
+                    self.logger.debug(f"視窗尺寸無效: {win_width}x{win_height}，等待初始化...")
+                    time.sleep(0.1)
+                    continue
+                
+            except Exception as e:
+                # 視窗物件無效或正在初始化，等待後重試
+                self.logger.debug(f"視窗尚未完全初始化: {e}，等待...")
+                time.sleep(0.2)
+                continue
+            
+            try:
+                if not win.isActive:
+                    win.activate()
+                    time.sleep(0.1)  # 減少等待時間
+            except Exception: 
+                pass
+
+            # 🎯 如果提供了 region 參數，使用它；否則使用整個視窗區域
+            if region is None:
+                region = (win_left, win_top, win_width, win_height)
+
+            # 【優先級 1】如果有 target_text，優先使用文字辨識（VLM/OCR）以確保點擊正確的文字
+            # 這樣可以避免圖片辨識匹配到錯誤的位置（例如 server_tile.png 可能匹配多個卡片）
+            if target_text:
+                # VLM 優先（如果啟用）- 無論 VLM_PRIORITY 是多少，當有 target_text 時都優先嘗試 VLM
+                self._safe_log("info", f"[DEBUG] 檢查 VLM 條件: vlm_enabled={vlm_enabled}, vlm_priority={vlm_priority}, target_text='{target_text}'")
+                try:
+                    print(f"[SMART_CLICK] [DEBUG] 檢查 VLM 條件: vlm_enabled={vlm_enabled}, vlm_priority={vlm_priority}, target_text='{target_text}'")
+                except:
+                    pass
+                
+                if vlm_enabled:
+                    self._safe_log("info", f"[VLM] 優先使用 LLM 辨識文字: '{target_text}'")
+                    vlm_result = self._try_vlm_recognition(target_text, region, win, clicks, click_type, offset_x, offset_y)
+                    self._safe_log("info", f"[DEBUG] VLM 辨識結果: {vlm_result}")
+                    if vlm_result:
+                        return True
+                
+                # OCR 優先（如果 VLM 未啟用或失敗）
+                if self._get_ocr_engine():
+                    # 🎯 使用封裝好的方法，確保偏移量正確傳遞
+                    if self._try_ocr_recognition(target_text, region, win, clicks, click_type, offset_x, offset_y):
+                        return True
+
+            # 【優先級 2】OK Script / OpenCV Template Matching（圖片辨識作為備選）
+            # 只有在文字辨識（VLM/OCR）都失敗時才使用圖片辨識
+            # 降低置信度閾值（從 0.85 降到 0.7）以提高對畫面變化的容錯性
+            if use_ok_script and full_img and os.path.exists(full_img):
+                self._safe_log("info", f"[OK_SCRIPT] 嘗試使用 OK Script 圖片辨識: {image_path}")
+                # 🎯 使用封裝好的方法，確保偏移量正確傳遞
+                if self._try_ok_script_recognition(full_img, region, win, clicks, click_type, 0.7, offset_x, offset_y):
+                    self._safe_log("info", f"[OK_SCRIPT] 圖片辨識成功")
+                    return True
+                else:
+                    self._safe_log("info", f"[OK_SCRIPT] 圖片辨識失敗，繼續嘗試其他方法")
+
+            # 注意：VLM 已在【優先級 1】處理（當 target_text 存在時）
+            # 如果 target_text 存在且 VLM 啟用，VLM 已在【優先級 1】嘗試
+            # 這裡不需要再次調用 VLM
+
+            # 【優先級 3】圖片辨識（pyautogui 備用）
+            # 降低置信度閾值（從 0.8 降到 0.7）以提高對畫面變化的容錯性
+            if full_img and os.path.exists(full_img) and not use_ok_script:
+                self._safe_log("info", f"[PYAUTOGUI] 嘗試使用 PyAutoGUI 圖片辨識: {image_path}")
+                # 🎯 使用封裝好的方法，確保偏移量正確傳遞
+                if self._try_pyautogui_recognition(full_img, region, win, clicks, click_type, 0.7, offset_x, offset_y):
+                    self._safe_log("info", f"[PYAUTOGUI] 圖片辨識成功")
+                    return True
+                else:
+                    self._safe_log("info", f"[PYAUTOGUI] 圖片辨識失敗，繼續嘗試其他方法")
+            
+            # 【優先級 4】OCR 文字辨識（如果【優先級 1】未處理，或【優先級 1】只處理了VLM priority==1的情況）
+            # 注意：如果 target_text 存在且【優先級 1】已經處理了OCR，這裡不會再執行
+            # 但如果【優先級 1】只處理了VLM priority==1的情況，且VLM失敗，這裡會執行OCR作為備選
+            if target_text and self._get_ocr_engine() and not (vlm_enabled and vlm_priority == 1):
+                self._safe_log("info", f"[OCR] 嘗試使用 OCR 文字辨識: '{target_text}'")
+                # 🎯 使用封裝好的方法，確保偏移量正確傳遞
+                if self._try_ocr_recognition(target_text, region, win, clicks, click_type, offset_x, offset_y):
+                    self._safe_log("info", f"[OCR] 文字辨識成功")
+                    return True
+                else:
+                    self._safe_log("info", f"[OCR] 文字辨識失敗，繼續嘗試其他方法")
+            
+            # 【優先級 5】VLM 在 OCR 後（如果配置 VLM_PRIORITY >= 3）
+            if vlm_enabled and vlm_priority >= 3 and target_text:
+                self.logger.info(f"🤖 [VLM] 嘗試使用 LLM 辨識文字: '{target_text}' (優先級 {vlm_priority})")
+                vlm_result = self._try_vlm_recognition(target_text, region, win, clicks, click_type, offset_x, offset_y)
+                self.logger.info(f"🔍 [DEBUG] VLM 優先級 {vlm_priority} 辨識結果: {vlm_result}")
+                if vlm_result:
+                    return True
+                else:
+                    self.logger.info(f"🤖 [VLM] 辨識失敗，繼續嘗試其他方法")
+            
+            time.sleep(0.15)  # 減少等待間隔
+
+        # 【優先級 4】座標保底 - 當所有辨識方法都失敗時使用
+        self._safe_log("warning", f"[COORD] 所有辨識方法都失敗，使用座標保底 (x_ratio={x_ratio}, y_ratio={y_ratio}, clicks={clicks})")
+        
+        # 重新獲取視窗（可能已經改變）
+        win = self.get_nx_window()
+        if win:
+            # 記錄座標保底統計
+            recognizer.record_coordinate_hit()
+            
+            # 座標保底點擊（僅在圖片/文字辨識都失敗時使用）
+            try:
+                # 驗證視窗控制代碼是否有效
+                _ = win.left  # 嘗試訪問屬性
+                
+                if is_relative:
+                    tx = DesktopApp._last_x + x_ratio
+                    ty = DesktopApp._last_y + y_ratio
+                    self._safe_log("info", f"[COORD] 執行相對座標點擊: 原始座標=({tx}, {ty}), 偏移=(offset_x={offset_x}, offset_y={offset_y}), clicks={clicks}")
+                elif from_bottom:
+                    tx = win.left + int(win.width * x_ratio)
+                    ty = win.top + win.height - int(win.height * y_ratio)
+                    self._safe_log("info", f"[COORD] 執行視窗底部對齊點擊: 原始座標=({tx}, {ty}), 偏移=(offset_x={offset_x}, offset_y={offset_y}), clicks={clicks}")
+                else:
+                    tx = win.left + int(win.width * x_ratio)
+                    ty = win.top + int(win.height * y_ratio)
+                    self._safe_log("info", f"[COORD] 執行視窗比例點擊: 原始座標=({tx}, {ty}), 偏移=(offset_x={offset_x}, offset_y={offset_y}), clicks={clicks}")
+                
+                # 🎯 執行點擊並獲取最終座標（應用偏移）
+                final_x, final_y = self._perform_click(tx, ty, clicks, click_type, offset_x, offset_y)
+                # 🎯 使用最終座標記錄（已應用偏移）
+                DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
+                self._safe_log("info", f"[COORD] 座標保底點擊成功: 最終座標=({final_x}, {final_y})")
+                return True
+            except Exception as e:
+                self._safe_log("error", f"[ERROR] 座標保底點擊失敗: {e}")
+                import traceback
+                traceback.print_exc()
+                return False
+        else:
+            self._safe_log("error", f"[ERROR] 找不到視窗，座標保底失敗")
+            return False
+    
+    def get_recognition_stats(self) -> str:
+        """
+        📊 取得圖像辨識統計報告
+        :return: 統計摘要字串
+        """
+        from base.ok_script_recognizer import get_recognizer
+        recognizer = get_recognizer()
+        return recognizer.get_stats_summary()
+    
+    def save_recognition_stats(self):
+        """
+        💾 保存圖像辨識統計到文件
+        """
+        from base.ok_script_recognizer import get_recognizer
+        recognizer = get_recognizer()
+        recognizer.save_stats()
+        self.logger.info("✅ 辨識統計已保存到 logs/recognition_stats.json")
+    
+    def reset_recognition_stats(self):
+        """
+        🔄 重置圖像辨識統計
+        """
+        from base.ok_script_recognizer import get_recognizer
+        recognizer = get_recognizer()
+        recognizer.reset_stats()
+        self.logger.info("✅ 辨識統計已重置")
+    
+    def _find_text_by_ocr(self, target_text, region):
+        """
+        使用 OCR 在指定區域尋找文字
+        :param target_text: 要尋找的文字
+        :param region: (left, top, width, height)
+        :return: (x, y) 座標或 None
+        """
+        try:
+            # 截取指定區域
+            screenshot = pyautogui.screenshot(region=region)
+            img_array = np.array(screenshot)
+            
+            # OCR 辨識
+            ocr_engine = self._get_ocr_engine()
+            if not ocr_engine:
+                return None
+            
+            result = ocr_engine.ocr(img_array, cls=True)
+            
+            if not result or not result[0]:
+                return None
+            
+            # 尋找匹配的文字
+            for line in result[0]:
+                text = line[1][0]
+                confidence = line[1][1]
+                box = line[0]
+                
+                # 模糊匹配（包含即可）
+                if target_text in text and confidence > 0.5:
+                    # 計算文字中心點（相對於螢幕的絕對座標）
+                    center_x = region[0] + (box[0][0] + box[2][0]) / 2
+                    center_y = region[1] + (box[0][1] + box[2][1]) / 2
+                    
+                    self.logger.debug(f"OCR 找到文字: {text} (信賴度: {confidence:.2f})")
+                    return (int(center_x), int(center_y))
+            
+            return None
+            
+        except Exception as e:
+            self.logger.debug(f"OCR 處理異常: {e}")
+            return None
+
+    # ==================== 通用 VLM 截图和日志方法 ====================
+    
+    def _log_method_entry(self, method_name, additional_info=""):
+        """
+        🎯 通用方法入口日志记录
+        统一所有 page 方法入口的日志格式，方便排查
+        
+        :param method_name: 方法名称（用于日志标记）
+        :param additional_info: 额外的信息（可选）
+        """
+        import sys
+        print("=" * 80, file=sys.stderr)
+        print(f"[{method_name.upper()}] ========== {method_name}() 方法被調用！==========", file=sys.stderr)
+        if additional_info:
+            print(f"[{method_name.upper()}] {additional_info}", file=sys.stderr)
+        print("=" * 80, file=sys.stderr)
+        self.logger.info(f"[{method_name.upper()}] 方法開始執行")
+    
+    def _get_debug_dir(self, subdir="vlm_scan_debug"):
+        """
+        🎯 获取调试截图目录路径
+        
+        :param subdir: 子目录名称（如 "vlm_scan_debug", "radio_verify_debug" 等）
+        :return: 调试目录的完整路径
+        """
+        # 计算项目根目录（从 base/desktop_app.py 向上两级）
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        debug_dir = os.path.join(base_dir, "logs", subdir)
+        os.makedirs(debug_dir, exist_ok=True)
+        return debug_dir
+    
+    def _save_vlm_scan_region_screenshot(self, step_name, scan_region, win):
+        """
+        🎯 保存 VLM 掃描區域的截圖，用紅框標記掃描區域
+        通用方法，所有 page 方法都可以使用
+        
+        :param step_name: 步驟名稱（用於文件名）
+        :param scan_region: 掃描區域 (left, top, width, height)
+        :param win: 視窗物件
+        """
+        try:
+            import pyautogui
+            from PIL import Image, ImageDraw
+            import datetime
+            
+            # 截取全屏
+            screenshot = pyautogui.screenshot()
+            
+            # 創建 logs 目錄（直接放在項目根目錄下的 logs 資料夾）
+            base_dir = os.path.dirname(os.path.dirname(__file__))
+            debug_dir = os.path.join(base_dir, "logs")
+            os.makedirs(debug_dir, exist_ok=True)
+            
+            # 生成時間戳
+            now = datetime.datetime.now()
+            timestamp = now.strftime("%Y%m%d_%H%M%S") + "_{:03d}".format(now.microsecond // 1000)
+            
+            # 轉換為 PIL Image
+            img = Image.frombytes('RGB', screenshot.size, screenshot.tobytes())
+            draw = ImageDraw.Draw(img)
+            
+            # 提取掃描區域座標
+            scan_left, scan_top, scan_width, scan_height = scan_region
+            
+            # 用紅框標記掃描區域
+            rect_left = scan_left
+            rect_top = scan_top
+            rect_right = scan_left + scan_width
+            rect_bottom = scan_top + scan_height
+            
+            # 繪製紅色矩形框（線寬 3px）
+            draw.rectangle(
+                [rect_left, rect_top, rect_right, rect_bottom],
+                outline="red",
+                width=3
+            )
+            
+            # 標記視窗範圍（藍色框）
+            if win:
+                win_rect_left = win.left
+                win_rect_top = win.top
+                win_rect_right = win.left + win.width
+                win_rect_bottom = win.top + win.height
+                draw.rectangle(
+                    [win_rect_left, win_rect_top, win_rect_right, win_rect_bottom],
+                    outline="blue",
+                    width=2
+                )
+                # 標記視窗信息
+                draw.text((win_rect_left + 5, win_rect_top + 5), f"Window: {win.title}", fill="blue")
+            
+            # 標記掃描區域信息
+            draw.text((rect_left + 5, rect_top + 5), f"Scan Region: ({scan_left}, {scan_top}, {scan_width}, {scan_height})", fill="red")
+            
+            # 保存截圖
+            screenshot_path = os.path.join(debug_dir, f"{step_name}_{timestamp}.png")
+            img.save(screenshot_path)
+            
+            self.logger.info(f"[VLM_SCAN] [SCREENSHOT] VLM 掃描區域截圖已保存: {screenshot_path}")
+            print(f"[VLM_SCAN] [SCREENSHOT] VLM 掃描區域截圖已保存: {screenshot_path}")
+            print(f"[VLM_SCAN] [SCAN_REGION] 掃描區域: ({scan_left}, {scan_top}, {scan_width}, {scan_height})")
+            if win:
+                print(f"[VLM_SCAN] [WINDOW] 視窗範圍: ({win.left}, {win.top}, {win.width}, {win.height})")
+            
+        except Exception as e:
+            self.logger.warning(f"[VLM_SCAN] [SCREENSHOT] 保存截圖失敗: {e}")
+            print(f"[VLM_SCAN] [SCREENSHOT] 保存截圖失敗: {e}")
+    
+    def _save_vlm_error_screenshot(self, step_name, scan_region, win, vlm_x, vlm_y):
+        """
+        🎯 保存 VLM 錯誤截圖，標記掃描區域、視窗範圍和 VLM 返回的錯誤座標
+        通用方法，所有 page 方法都可以使用
+        
+        :param step_name: 步驟名稱（用於文件名）
+        :param scan_region: 掃描區域 (left, top, width, height)
+        :param win: 視窗物件
+        :param vlm_x: VLM 返回的 X 座標
+        :param vlm_y: VLM 返回的 Y 座標
+        """
+        try:
+            import pyautogui
+            from PIL import Image, ImageDraw
+            import datetime
+            
+            # 截取全屏
+            screenshot = pyautogui.screenshot()
+            
+            # 創建 logs 目錄（直接放在項目根目錄下的 logs 資料夾）
+            base_dir = os.path.dirname(os.path.dirname(__file__))
+            debug_dir = os.path.join(base_dir, "logs")
+            os.makedirs(debug_dir, exist_ok=True)
+            
+            # 生成時間戳
+            now = datetime.datetime.now()
+            timestamp = now.strftime("%Y%m%d_%H%M%S") + "_{:03d}".format(now.microsecond // 1000)
+            
+            # 轉換為 PIL Image
+            img = Image.frombytes('RGB', screenshot.size, screenshot.tobytes())
+            draw = ImageDraw.Draw(img)
+            
+            # 提取掃描區域座標
+            scan_left, scan_top, scan_width, scan_height = scan_region
+            
+            # 用紅框標記掃描區域
+            rect_left = scan_left
+            rect_top = scan_top
+            rect_right = scan_left + scan_width
+            rect_bottom = scan_top + scan_height
+            
+            # 繪製紅色矩形框（線寬 3px）
+            draw.rectangle(
+                [rect_left, rect_top, rect_right, rect_bottom],
+                outline="red",
+                width=3
+            )
+            
+            # 標記視窗範圍（藍色框）
+            if win:
+                win_rect_left = win.left
+                win_rect_top = win.top
+                win_rect_right = win.left + win.width
+                win_rect_bottom = win.top + win.height
+                draw.rectangle(
+                    [win_rect_left, win_rect_top, win_rect_right, win_rect_bottom],
+                    outline="blue",
+                    width=2
+                )
+                # 標記視窗信息
+                draw.text((win_rect_left + 5, win_rect_top + 5), f"Window: {win.title}", fill="blue")
+            
+            # 標記 VLM 返回的錯誤座標（黃色圓圈）
+            if abs(vlm_x) < 100000 and abs(vlm_y) < 100000:  # 只標記合理的座標範圍
+                # 繪製黃色圓圈標記 VLM 返回的座標
+                circle_radius = 10
+                draw.ellipse(
+                    [vlm_x - circle_radius, vlm_y - circle_radius, vlm_x + circle_radius, vlm_y + circle_radius],
+                    outline="yellow",
+                    width=3
+                )
+                draw.text((vlm_x + 15, vlm_y), f"VLM Coord: ({vlm_x}, {vlm_y})", fill="yellow")
+            
+            # 標記掃描區域信息
+            draw.text((rect_left + 5, rect_top + 5), f"Scan Region: ({scan_left}, {scan_top}, {scan_width}, {scan_height})", fill="red")
+            
+            # 標記錯誤信息
+            if win:
+                draw.text((rect_left + 5, rect_top + 25), f"ERROR: VLM coord ({vlm_x}, {vlm_y}) out of window ({win.left}, {win.top}, {win.width}, {win.height})", fill="red")
+            
+            # 保存截圖
+            screenshot_path = os.path.join(debug_dir, f"{step_name}_{timestamp}.png")
+            img.save(screenshot_path)
+            
+            self.logger.info(f"[VLM_SCAN] [SCREENSHOT] VLM 錯誤截圖已保存: {screenshot_path}")
+            print(f"[VLM_SCAN] [SCREENSHOT] VLM 錯誤截圖已保存: {screenshot_path}")
+            print(f"[VLM_SCAN] [ERROR] VLM 返回座標 ({vlm_x}, {vlm_y}) 超出視窗範圍")
+            
+        except Exception as e:
+            self.logger.warning(f"[VLM_SCAN] [SCREENSHOT] 保存錯誤截圖失敗: {e}")
+            print(f"[VLM_SCAN] [SCREENSHOT] 保存錯誤截圖失敗: {e}")
+    
+    def _save_vlm_click_coord_screenshot(self, step_name, scan_region, win, click_x, click_y):
+        """
+        🎯 保存點擊後的截圖，標記掃描區域和實際點擊的座標
+        通用方法，所有 page 方法都可以使用
+        
+        :param step_name: 步驟名稱（用於文件名）
+        :param scan_region: 掃描區域 (left, top, width, height) 或 None
+        :param win: 視窗物件
+        :param click_x: 實際點擊的 X 座標
+        :param click_y: 實際點擊的 Y 座標
+        """
+        try:
+            import pyautogui
+            from PIL import Image, ImageDraw
+            import datetime
+            
+            # 截取全屏
+            screenshot = pyautogui.screenshot()
+            
+            # 創建 logs 目錄（直接放在項目根目錄下的 logs 資料夾）
+            base_dir = os.path.dirname(os.path.dirname(__file__))
+            debug_dir = os.path.join(base_dir, "logs")
+            os.makedirs(debug_dir, exist_ok=True)
+            
+            # 生成時間戳
+            now = datetime.datetime.now()
+            timestamp = now.strftime("%Y%m%d_%H%M%S") + "_{:03d}".format(now.microsecond // 1000)
+            
+            # 轉換為 PIL Image
+            img = Image.frombytes('RGB', screenshot.size, screenshot.tobytes())
+            draw = ImageDraw.Draw(img)
+            
+            # 標記掃描區域（如果有）
+            if scan_region:
+                scan_left, scan_top, scan_width, scan_height = scan_region
+                # 用紅框標記掃描區域
+                draw.rectangle(
+                    [scan_left, scan_top, scan_left + scan_width, scan_top + scan_height],
+                    outline="red",
+                    width=2
+                )
+                draw.text((scan_left + 5, scan_top + 5), f"Scan Region: ({scan_left}, {scan_top}, {scan_width}, {scan_height})", fill="red")
+            
+            # 標記視窗範圍（藍色框）
+            if win:
+                win_rect_left = win.left
+                win_rect_top = win.top
+                win_rect_right = win.left + win.width
+                win_rect_bottom = win.top + win.height
+                draw.rectangle(
+                    [win_rect_left, win_rect_top, win_rect_right, win_rect_bottom],
+                    outline="blue",
+                    width=2
+                )
+                # 標記視窗信息
+                draw.text((win_rect_left + 5, win_rect_top + 5), f"Window: {win.title}", fill="blue")
+            
+            # 標記實際點擊的座標（綠色圓圈和十字）
+            circle_radius = 15
+            draw.ellipse(
+                [click_x - circle_radius, click_y - circle_radius, click_x + circle_radius, click_y + circle_radius],
+                outline="green",
+                width=3
+            )
+            # 繪製十字標記
+            draw.line([(click_x - 20, click_y), (click_x + 20, click_y)], fill="green", width=3)
+            draw.line([(click_x, click_y - 20), (click_x, click_y + 20)], fill="green", width=3)
+            draw.text((click_x + circle_radius + 5, click_y - circle_radius), f"ACTUAL CLICK: ({click_x}, {click_y})", fill="green")
+            
+            # 保存截圖
+            screenshot_path = os.path.join(debug_dir, f"{step_name}_{timestamp}.png")
+            img.save(screenshot_path)
+            
+            self.logger.info(f"[VLM_SCAN] [SCREENSHOT] 實際點擊座標截圖已保存: {screenshot_path}")
+            print(f"[VLM_SCAN] [SCREENSHOT] 實際點擊座標截圖已保存: {screenshot_path}")
+            print(f"[VLM_SCAN] [CLICK_COORD] 實際點擊座標: ({click_x}, {click_y})")
+            
+        except Exception as e:
+            self.logger.warning(f"[VLM_SCAN] [SCREENSHOT] 保存點擊座標截圖失敗: {e}")
+            print(f"[VLM_SCAN] [SCREENSHOT] 保存點擊座標截圖失敗: {e}")

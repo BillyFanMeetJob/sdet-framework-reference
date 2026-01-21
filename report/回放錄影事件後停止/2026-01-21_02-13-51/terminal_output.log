@@ -1,0 +1,57 @@
+================================================================================
+æ¸¬è©¦æ¡ˆä¾‹: å›žæ”¾éŒ„å½±äº‹ä»¶å¾Œåœæ­¢
+åŸ·è¡Œæ™‚é–“: 2026-01-21 02:13:50
+åŸ·è¡Œå‘½ä»¤: C:\Python314\python.exe -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name å›žæ”¾éŒ„å½±äº‹ä»¶å¾Œåœæ­¢ -v -s --tb=short
+å·¥ä½œç›®éŒ„: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+tests/test_runner.py::test_main_flow[\u56de\u653e\u9304\u5f71\u4e8b\u4ef6\u5f8c\u505c\u6b62-steps0] >>> [DEBUG] ÀË¬dµn¿ýª¬ºA¡]¥Ø¼Ð¦øªA¾¹: LAPTOP-QRJN5735¡^
+>>> [OK] ÅçÃÒ¦¨¥\¡G§ä¨ì¹w´Á¤¸¯À desktop_main/server_icon.png
+>>> [OK] ¤w¦b¥Dµe­±¡AµL»Ý­«·sµn¿ý¡]¤w³q¹L¥Dµe­±¤¸¯ÀÅçÃÒ¡^
+>>> [CASE_1-5] °õ¦æ Case 1-5: ¦^©ñ¿ý¼v¨Æ¥ó«á°±¤î¡]¼½©ñ«ùÄò®É¶¡: 7 ¬í¡^
+>>> [CASE_1-5] ¨BÆJ 0: ÀË¬d¿ý¼vµe­±¬O§_¤w¶}±Ò...
+>>> [RECORDING_VIEW] ÀË¬d¿ý¼vµe­±¬O§_¤w¶}±Ò...
+>>> [RECORDING_VIEW] ¤¤¶¡µøÀW°Ï°ì¥­§¡«G«×: 0.00, ìH­È: 30, µe­±ª¬ºA: ¥¼¶}±Ò¡]¥þ¶Â¡^
+>>> [CASE_1-5] ¿ý¼vµe­±¥¼¶}±Ò¡]¥þ¶Â¡^¡AÂùÀ» usb_cam ¥´¶}¿ý¼vµe­±...
+>>> [CLICK] ÂùÀ»Äá¼v¾÷: usb_cam...
+>>> [DEBUG] ÀË¬d VLM ±ø¥ó: vlm_enabled=True, vlm_priority=2, target_text='usb'
+[SMART_CLICK] [DEBUG] ÀË¬d VLM ±ø¥ó: vlm_enabled=True, vlm_priority=2, target_text='usb'
+>>> [VLM] Àu¥ý¨Ï¥Î LLM ¿ëÃÑ¤å¦r: 'usb'
+>>> [DEBUG] _try_vlm_recognition ³Q½Õ¥Î: target_text='usb', region=(0, 0, 1920, 1200)
+>>> [DEBUG] VLM ±Ò¥Îª¬ºA: True
+>>> [DEBUG] ªì©l¤Æ VLM: backend=ollama, model=llava
+>>> [OK] VLM ¤ÞÀºªì©l¤Æ¦¨¥\ (ollama/llava)
+>>> [DEBUG] Ollama ¥i¥Î¡A¤w¦w¸Ë¼Ò«¬: ["model='llava:latest' modified_at=datetime.datetime(2026, 1, 17, 17, 11, 23, 171732, tzinfo=TzInfo(28800)) digest='8dd30f6b0cb19f555f2c7a7ebda861449ea2cc76bf1f44e262931f45fc81d081' size=4733363377 details=ModelDetails(parent_model='', format='gguf', family='llama', families=['llama', 'clip'], parameter_size='7B', quantization_level='Q4_0')"]
+>>> [DEBUG] _get_vlm_engine() ªð¦^: <base.vlm_recognizer.VLMRecognizer object at 0x000002654800C830> (Ãþ«¬: <class 'base.vlm_recognizer.VLMRecognizer'>)
+>>> [VLM] ¥¿¦b¨Ï¥Î LLM ·j´M¤¸¯À: 'usb'
+>>> [OK] VLM ªì©l¤Æ¦¨¥\: ollama/llava
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: success=False, confidence=0.0, x=0.0, y=0.0
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: False
+[33mChecking connectivity to the model hosters, this may take a while. To bypass this check, set `DISABLE_MODEL_SOURCE_CHECK` to `True`.[0m
+>>> [WARN] OCR ¤ÞÀºªì©l¤Æ¥¢±Ñ: No module named 'paddle'
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_main\usb_cam_item.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: True, ¤èªk: ok_script
+>>> [DEBUG] OK Script ¿ëÃÑ¦¨¥\¡A¶}©lÅçÃÒ®y¼Ð...
+>>> [DEBUG] ®y¼ÐÅçÃÒ³q¹L: ¥ª¤W¨¤=(39, 219), ¤¤¤ßÂI=(97, 236)¡A°õ¦æÂIÀ»...
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (97, 236), °Ê§@=ÂùÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (97, 236), °Ê§@=ÂùÀ»
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (97, 236), °Ê§@=ÂùÀ»
+>>> [DEBUG] ÂIÀ»°õ¦æ§¹¦¨
+>>> [OK] OK_SCRIPT ¿ëÃÑ¦¨¥\¨ÃÂùÀ»: usb_cam_item.png («H¤ß: 1.00, ¯Ó®É: 258.1ms)
+>>> [STAT] [®y¼Ð®w] ¤ñ¨Ò®y¼Ð: x_ratio=0.0505, y_ratio=0.1967 | µøµ¡¤Ø¤o: 1920x1200 | µ´¹ï®y¼Ð: (97, 236)
+>>> [OK] ÂùÀ»Äá¼v¾÷: usb_cam
+>>> [RECORDING_VIEW] ÀË¬d¿ý¼vµe­±¬O§_¤w¶}±Ò...
+>>> [RECORDING_VIEW] ¤¤¶¡µøÀW°Ï°ì¥­§¡«G«×: 137.87, ìH­È: 30, µe­±ª¬ºA: ¤w¶}±Ò
+>>> [CASE_1-5] ¨BÆJ 1: ÂIÀ»¥k¤U¨¤¤é¾ä¹Ï¼Ð...
+================================================================================
+[CLICK_CALENDAR_ICON] ========== click_calendar_icon() ¤èªk³Q½Õ¥Î¡I==========
+================================================================================
+>>> [CLICK_CALENDAR_ICON] ¤èªk¶}©l°õ¦æ
+>>> [CALENDAR] ÂIÀ»¥k¤U¨¤¤é¾ä¹Ï¼Ð...

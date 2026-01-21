@@ -1,0 +1,5 @@
+Control Identifiers:
+
+Pane - 'Nx Witness Client'    (L0, T0, R1920, B1200)
+['Pane', 'Nx Witness Client', 'Nx Witness ClientPane']
+child_window(title="Nx Witness Client", control_type="Pane")

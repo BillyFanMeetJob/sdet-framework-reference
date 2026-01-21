@@ -1,0 +1,71 @@
+================================================================================
+æ¸¬è©¦æ¡ˆä¾‹: é–‹å•ŸéŒ„å½±åŠŸèƒ½
+åŸ·è¡Œæ™‚é–“: 2026-01-19 22:44:09
+åŸ·è¡Œå‘½ä»¤: C:\Python314\python.exe -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name é–‹å•ŸéŒ„å½±åŠŸèƒ½ -v -s --tb=short
+å·¥ä½œç›®éŒ„: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+tests/test_runner.py::test_main_flow[\u958b\u555f\u9304\u5f71\u529f\u80fd-steps0] >>> [DEBUG] ÀË¬dµn¿ýª¬ºA¡]¥Ø¼Ð¦øªA¾¹: LAPTOP-QRJN5735¡^
+>>> [OK] ÅçÃÒ¦¨¥\¡G§ä¨ì¹w´Á¤¸¯À desktop_main/server_icon.png
+>>> [OK] ¤w¦b¥Dµe­±¡AµL»Ý­«·sµn¿ý¡]¤w³q¹L¥Dµe­±¤¸¯ÀÅçÃÒ¡^
+>>> [CASE_1-4] °õ¦æ Case 1-4: ¶}±Ò¿ý¼v¥\¯à¡]Äá¼v¾÷: usb_cam¡^
+>>> [CLICK] ¥kÁäÂIÀ»Äá¼v¾÷: usb_cam...
+>>> [DEBUG] ­­¨î·j¯Á°Ï°ì¨ì¥ª°¼­±ªO: (0, 0, 576, 1200)
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_main\usb_cam_item.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: True, ¤èªk: ok_script
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (39, 219), °Ê§@=¥kÁä
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (39, 219), °Ê§@=¥kÁä
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (39, 219), °Ê§@=¥kÁä
+>>> [OK] OK_SCRIPT ¿ëÃÑ¦¨¥\¨ÃÂIÀ»: desktop_main/usb_cam_item.png («H¤ß: 0.99, ¯Ó®É: 211.5ms)
+>>> [STAT] [®y¼Ð®w] ¤ñ¨Ò®y¼Ð: x_ratio=0.0203, y_ratio=0.1825 | µøµ¡¤Ø¤o: 1920x1200 | µ´¹ï®y¼Ð: (39, 219)
+>>> [OK] ¥kÁäÂIÀ»Äá¼v¾÷¦¨¥\
+================================================================================
+[CLICK_MENU] ========== click_camera_settings_menu() ¤èªk³Q½Õ¥Î¡I==========
+================================================================================
+>>> [CLICK] ÂIÀ»¡uÄá¼v¾÷³]©w¡v¿ï³æ¶µ¥Ø...
+[CLICK_MENU] ·Ç³ÆÂIÀ»¡uÄá¼v¾÷³]©w¡v¿ï³æ¶µ¥Ø...
+[CLICK_MENU] ½Õ¥Î smart_click ÂIÀ»¡uÄá¼v¾÷³]©w¡v¿ï³æ...
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_main\camera_settings_menu.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: None, ¤èªk: None
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_main\camera_settings_menu.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: None, ¤èªk: None
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_main\camera_settings_menu.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: None, ¤èªk: None
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_main\camera_settings_menu.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: None, ¤èªk: None
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_main\camera_settings_menu.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: None, ¤èªk: None
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_main\camera_settings_menu.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: None, ¤èªk: None
+>>> [ERROR] ¹Ï¤ù/¤å¦r¿ëÃÑ¥¢±Ñ¡A«O©³§¤¼Ð¥\¯à¤w¸T¥Î¡]image_path=desktop_main/camera_settings_menu.png, target_text=None¡^
+>>> [WARN] ¹Ï¤ù¿ëÃÑ¥¢±Ñ¡A¹Á¸Õ¤å¦r¿ëÃÑ¡]ÁcÅé¤¤¤å¡^...
+>>> [DEBUG] ÀË¬d VLM ±ø¥ó: vlm_enabled=True, vlm_priority=2, target_text='Äá¼v¾÷³]©w'
+[SMART_CLICK] [DEBUG] ÀË¬d VLM ±ø¥ó: vlm_enabled=True, vlm_priority=2, target_text='Äá¼v¾÷³]©w'
+>>> [VLM] Àu¥ý¨Ï¥Î LLM ¿ëÃÑ¤å¦r: 'Äá¼v¾÷³]©w'
+>>> [DEBUG] _try_vlm_recognition ³Q½Õ¥Î: target_text='Äá¼v¾÷³]©w', region=(0, 0, 1920, 1200)
+>>> [DEBUG] VLM ±Ò¥Îª¬ºA: True
+>>> [DEBUG] ªì©l¤Æ VLM: backend=ollama, model=llava
+>>> [OK] VLM ¤ÞÀºªì©l¤Æ¦¨¥\ (ollama/llava)
+>>> [DEBUG] Ollama ¥i¥Î¡A¤w¦w¸Ë¼Ò«¬: ["model='llava:latest' modified_at=datetime.datetime(2026, 1, 17, 17, 11, 23, 171732, tzinfo=TzInfo(28800)) digest='8dd30f6b0cb19f555f2c7a7ebda861449ea2cc76bf1f44e262931f45fc81d081' size=4733363377 details=ModelDetails(parent_model='', format='gguf', family='llama', families=['llama', 'clip'], parameter_size='7B', quantization_level='Q4_0')"]
+>>> [DEBUG] _get_vlm_engine() ªð¦^: <base.vlm_recognizer.VLMRecognizer object at 0x000001C10E5E8050> (Ãþ«¬: <class 'base.vlm_recognizer.VLMRecognizer'>)
+>>> [VLM] ¥¿¦b¨Ï¥Î LLM ·j´M¤¸¯À: 'Äá¼v¾÷³]©w'
+>>> [OK] VLM ªì©l¤Æ¦¨¥\: ollama/llava
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: success=True, confidence=0.75, x=648, y=850
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (648, 850), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (648, 850), °Ê§@=³æÀ»
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (648, 850), °Ê§@=³æÀ»
+>>> [VLM] VLM ¿ëÃÑ¦¨¥\¨ÃÂIÀ»: Äá¼v¾÷³]©w («H¤ß: 0.75, ¯Ó®É: 2750ms)
+>>> [STAT] [®y¼Ð®w] ¤ñ¨Ò®y¼Ð: x_ratio=0.3375, y_ratio=0.7083 | µ´¹ï®y¼Ð: (648, 850)
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: True
+>>> [WARN] µ¥«Ý 5 ¬í«á¥¼§ä¨ìµøµ¡©Îµøµ¡©|¥¼§¹¥þªì©l¤Æ
+>>> [WARN] wait_for_window ¥¼§ä¨ìµøµ¡¡A¦ýÂIÀ»¤w¦¨¥\¡AÄ~Äò°õ¦æ«áÄò¨BÆJ
+[CLICK_MENU] wait_for_window ¥¼§ä¨ìµøµ¡¡A¦ýÂIÀ»¤w¦¨¥\
+[CLICK_MENU] click_camera_settings_menu() §¹¦¨¡Aªð¦^ True
+>>> [ERROR] ÂIÀ»¿ï³æÅçÃÒ¥¢±Ñ¡GÄá¼v¾÷³]©wµøµ¡¥¼¶}±Ò¡]¶W®É: 5¬í¡^

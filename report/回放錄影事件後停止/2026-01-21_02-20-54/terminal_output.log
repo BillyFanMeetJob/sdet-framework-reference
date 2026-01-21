@@ -1,0 +1,28 @@
+================================================================================
+æ¸¬è©¦æ¡ˆä¾‹: å›žæ”¾éŒ„å½±äº‹ä»¶å¾Œåœæ­¢
+åŸ·è¡Œæ™‚é–“: 2026-01-21 02:20:53
+åŸ·è¡Œå‘½ä»¤: C:\Python314\python.exe -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name å›žæ”¾éŒ„å½±äº‹ä»¶å¾Œåœæ­¢ -v -s --tb=short
+å·¥ä½œç›®éŒ„: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+tests/test_runner.py::test_main_flow[\u56de\u653e\u9304\u5f71\u4e8b\u4ef6\u5f8c\u505c\u6b62-steps0] >>> [DEBUG] ÀË¬dµn¿ýª¬ºA¡]¥Ø¼Ð¦øªA¾¹: LAPTOP-QRJN5735¡^
+>>> [OK] ÅçÃÒ¦¨¥\¡G§ä¨ì¹w´Á¤¸¯À desktop_main/server_icon.png
+>>> [OK] ¤w¦b¥Dµe­±¡AµL»Ý­«·sµn¿ý¡]¤w³q¹L¥Dµe­±¤¸¯ÀÅçÃÒ¡^
+>>> [CASE_1-5] °õ¦æ Case 1-5: ¦^©ñ¿ý¼v¨Æ¥ó«á°±¤î¡]¼½©ñ«ùÄò®É¶¡: 7 ¬í¡^
+>>> [CASE_1-5] ¨BÆJ 0: ÀË¬d¿ý¼vµe­±¬O§_¤w¶}±Ò...
+>>> [RECORDING_VIEW] ÀË¬d¿ý¼vµe­±¬O§_¤w¶}±Ò...
+>>> [RECORDING_VIEW] ¤¤¶¡µøÀW°Ï°ì¥­§¡«G«×: 130.94, ìH­È: 30, µe­±ª¬ºA: ¤w¶}±Ò
+>>> [CASE_1-5] ¿ý¼vµe­±¤w¶}±Ò¡A¸õ¹LÂùÀ» usb_cam
+>>> [CASE_1-5] ¨BÆJ 1: ÂIÀ»¥k¤U¨¤¤é¾ä¹Ï¼Ð...
+================================================================================
+[CLICK_CALENDAR_ICON] ========== click_calendar_icon() ¤èªk³Q½Õ¥Î¡I==========
+================================================================================
+>>> [CLICK_CALENDAR_ICON] ¤èªk¶}©l°õ¦æ
+>>> [CALENDAR] ÂIÀ»¥k¤U¨¤¤é¾ä¹Ï¼Ð...

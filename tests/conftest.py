@@ -1,55 +1,43 @@
-# tests/conftest.py
-from collections.abc import Generator
+# 相對路徑: tests/conftest.py
 
 import pytest
+import sys
+import os
+from selenium import webdriver
 
-from toolkit.logger import get_logger
-from toolkit.web_toolkit import take_screenshot
-from toolkit.datatable import DataTable
-from base.browser import Browser
+# 確保能找到根目錄的 config
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-logger = get_logger(__name__)
+from config import EnvConfig
 
-@pytest.fixture(scope="function")
-def browser() -> Generator[Browser, None, None]:
+def pytest_addoption(parser):
+    """ 
+    🎯 註冊自定義參數 --test_name 
+    讓 pytest -s --test_name "..." 不再報錯
     """
-    建立並管理一個 Browser 實體：
-    - 測試開始前建立 Browser（內含 driver / wait）
-    - 測試結束後自動呼叫 browser.quit() 關閉瀏覽器
+    parser.addoption("--test_name", action="store", default=None, help="指定要執行的 TestName")
+
+@pytest.fixture(scope="session")
+def browser_context():
     """
-    browser = Browser()
-    logger.info("建立 Browser 實體")
-    try:
-        yield browser
-    finally:
-        logger.info("關閉 Browser")
-        # Browser 類別應該要統一提供 quit() 介面
-        browser.quit()
-
-
-# 單元測試用
-@pytest.fixture(scope="function")
-def datatable():
-    return DataTable()
-
-
-@pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_makereport(item, call):
+    Web 專用 Fixture：
+    採按需啟動機制，只有被呼叫時才會開啟瀏覽器。
     """
-    若測試失敗且有 browser / logged_in_browser fixture，
-    自動呼叫 take_screenshot()，將畫面截圖存檔。
+    driver = None
+    
+    def _get_driver():
+        nonlocal driver
+        if driver is None:
+            print("\n[系統] 偵測到 Web 測試需求，啟動瀏覽器...")
+            # 根據 EnvConfig 決定設定
+            options = webdriver.ChromeOptions()
+            # 您可以在此處加入更多的 options 設定
+            driver = webdriver.Chrome(options=options)
+            driver.maximize_window()
+        return driver
 
-    這個 hook 會在每個測試的 setup/call/teardown 階段後被呼叫，
-    我們只在「call 階段且失敗」時處理截圖。
-    """
-    outcome = yield
-    rep = outcome.get_result()
+    yield _get_driver
 
-    # 只在測試主體階段（call）且失敗時處理
-    if rep.when == "call" and rep.failed:
-        # 嘗試從測試參數中拿 browser 或 logged_in_browser fixture
-        browser = item.funcargs.get("logged_in_browser") or item.funcargs.get("browser")
-
-        if browser and getattr(browser, "driver", None):
-            logger.error(f"測試失敗，自動截圖：{item.name}")
-            take_screenshot(browser.driver, name_prefix=f"FAIL_{item.name}")
+    if driver:
+        print("\n[系統] 關閉 Web 瀏覽器實體。")
+        driver.quit()
