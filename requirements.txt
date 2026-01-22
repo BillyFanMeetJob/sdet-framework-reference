@@ -18,9 +18,9 @@ pyperclip>=1.8.2  # Clipboard operations (for getting browser URL)
 selenium>=4.15.0
 webdriver-manager>=4.0.0
 
-# ==================== Android/iOS Automation (Optional) ====================
+# ==================== Android/iOS Automation ====================
 # 安裝 Appium: pip install Appium-Python-Client
-# Appium-Python-Client>=2.11.0
+Appium-Python-Client>=2.11.0
 
 # ==================== OCR ====================
 paddleocr>=2.7.0

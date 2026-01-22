@@ -42,8 +42,28 @@ class DevConfig(BaseConfig):
     ADMIN_PASSWORD = "1q2w!Q@W"  # 預設空密碼，如有密碼請在此設置
     
     # Nx Cloud 登錄資訊
-    NX_CLOUD_EMAIL = "billy.19920717@gmail.com"  # Nx Cloud 登錄郵箱
+    NX_CLOUD_EMAIL = "billy.19920917@gmail.com"  # Nx Cloud 登錄郵箱
     NX_CLOUD_PASSWORD = "1q2w!Q@W"  # Nx Cloud 登錄密碼（預設與管理員密碼相同）
+    
+    # ==================== Android Mobile App 配置 ====================
+    # Appium Server 配置
+    APPIUM_SERVER_URL = "http://localhost:4723"  # Appium Server 地址
+    APPIUM_COMMAND_TIMEOUT = 300  # Appium 命令超時時間（秒）
+    
+    # Android 設備配置
+    ANDROID_PLATFORM_VERSION = "11.0"  # Android 版本
+    ANDROID_DEVICE_NAME = "Android Device"  # 設備名稱
+    ANDROID_UDID = None  # 設備 UDID（如果為 None，則使用第一個連接的設備）
+    ANDROID_AUTOMATION_NAME = "UiAutomator2"  # 自動化引擎
+    
+    # Nx Witness App 配置
+    ANDROID_APP_PACKAGE = "com.networkoptix.nxwitness.mobile"  # App Package Name
+    ANDROID_APP_ACTIVITY = "com.networkoptix.nxwitness.mobile.ui.login.LoginActivity"  # 啟動 Activity
+    ANDROID_APP_PATH = None  # APK 文件路徑（如果為 None，則使用已安裝的 App）
+    
+    # Android 等待超時配置
+    ANDROID_DEFAULT_TIMEOUT = 10  # 默認等待超時時間（秒）
+    ANDROID_IMPLICIT_WAIT = 5  # 隱式等待時間（秒）
     
     # VLM (視覺語言模型) 設定
     VLM_ENABLED = True  # 是否啟用 VLM 辨識
