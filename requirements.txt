@@ -12,6 +12,7 @@ pygetwindow>=0.0.9
 Pillow>=10.0.0
 numpy>=1.24.0
 pywinauto>=0.6.8  # Windows UI Automation (for UI tree dumping)
+pyperclip>=1.8.2  # Clipboard operations (for getting browser URL)
 
 # ==================== Web Automation ====================
 selenium>=4.15.0

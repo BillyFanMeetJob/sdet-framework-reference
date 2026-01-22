@@ -19,6 +19,7 @@ import os
 import subprocess
 import sys
 import shutil
+import datetime
 from typing import List, Dict, Optional
 from config import EnvConfig
 
@@ -39,6 +40,13 @@ class TestCaseLauncher:
         # 執行狀態
         self.is_running = False
         self.execution_thread: Optional[threading.Thread] = None
+        
+        # 追蹤當前執行的測試案例和 log 文件
+        self.current_test_name: Optional[str] = None
+        self.current_log_file: Optional[str] = None
+        
+        # 追蹤當前執行的 subprocess，用於強制終止
+        self.current_process: Optional[subprocess.Popen] = None
         
         # 載入測試清單
         self.load_test_cases()
@@ -441,7 +449,16 @@ class TestCaseLauncher:
         for idx, test_name in enumerate(test_names, 1):
             if not self.is_running:
                 self.log("測試執行已中斷", "WARNING")
+                # 🎯 如果被中斷，更新狀態並嘗試為當前測試生成報告
+                if self.current_test_name:
+                    # 更新狀態為 "fail"（表示被中斷）
+                    self.root.after(0, self.update_status, self.current_test_name, "fail")
+                    self._generate_report_for_stopped_test(self.current_test_name, "interrupted")
                 break
+            
+            # 更新當前測試案例名稱
+            self.current_test_name = test_name
+            self.current_log_file = None
             
             # 更新狀態為執行中
             self.root.after(0, self.update_status, test_name, "running")
@@ -450,6 +467,9 @@ class TestCaseLauncher:
             try:
                 # 執行測試邏輯（模擬）
                 result = self.execute_test_logic(test_name)
+                
+                # 🎯 執行完成後，保存 log 文件路徑（如果有的話）
+                # execute_test_logic 會設置 self.current_log_file
                 
                 # 更新狀態顯示
                 if result:
@@ -462,6 +482,25 @@ class TestCaseLauncher:
             except Exception as e:
                 self.root.after(0, self.update_status, test_name, "fail")
                 self.log(f"✗ {test_name} - 執行時發生錯誤: {str(e)}", "ERROR")
+            
+            finally:
+                # 🎯 清除進程引用
+                self.current_process = None
+                
+                # 🎯 每個測試完成後，嘗試生成報告（如果有的話）
+                # 注意：pytest 測試本身會在 test_runner.py 中生成報告
+                # 這裡主要是為了處理被中斷的情況
+                # 如果測試正常完成，pytest 會自動生成報告，這裡不需要重複生成
+                # 但如果測試被中斷，我們需要手動生成報告
+                
+                # 清除當前測試信息（但保留 log 文件路徑，用於後續報告生成）
+                # 注意：不清除 current_log_file，因為 stop_tests 可能需要它
+                if not self.is_running:
+                    # 如果被中斷，log 文件路徑會保留，供 stop_tests 使用
+                    pass
+                else:
+                    # 正常完成，清除當前測試名稱（但保留 log 文件路徑）
+                    self.current_test_name = None
         
         # 執行完成
         self.is_running = False
@@ -615,8 +654,8 @@ class TestCaseLauncher:
                     try:
                         # 打開文件用於實時寫入 stdout 和 stderr
                         with open(temp_log_file, 'a', encoding='utf-8', errors='ignore', buffering=1) as log_file:
-                            # 執行 subprocess，將 stdout 和 stderr 直接寫入文件（buffering=1 表示行緩衝）
-                            result = subprocess.run(
+                            # 🎯 使用 Popen 而不是 run，以便能夠在需要時終止進程
+                            self.current_process = subprocess.Popen(
                                 cmd,
                                 cwd=project_root,  # 設置工作目錄為專案根目錄
                                 env=env,  # 使用修改後的環境變數（包含 TEST_TERMINAL_LOG）
@@ -624,15 +663,88 @@ class TestCaseLauncher:
                                 stderr=subprocess.STDOUT,  # 將 stderr 也合併到 stdout
                                 text=True,
                                 encoding='utf-8',
-                                errors='ignore',
-                                timeout=300  # 5 分鐘超時
+                                errors='ignore'
                             )
+                            
+                            # 🎯 等待進程完成，但定期檢查 is_running 狀態
+                            try:
+                                # 使用 poll() 定期檢查進程狀態，而不是直接 wait()
+                                while self.current_process.poll() is None:
+                                    if not self.is_running:
+                                        # 如果用戶點擊了 Stop，終止進程
+                                        self.log("檢測到停止請求，正在終止測試進程...", "WARNING")
+                                        
+                                        # 🎯 在終止進程前，確保 log 文件被刷新
+                                        if temp_log_file:
+                                            try:
+                                                log_file.flush()  # 強制刷新緩衝區
+                                                self.log(f"Log 文件已刷新: {temp_log_file}", "INFO")
+                                            except Exception as flush_e:
+                                                self.log(f"刷新 log 文件時發生錯誤: {str(flush_e)}", "WARNING")
+                                        
+                                        self.current_process.terminate()
+                                        # 等待進程終止（最多 5 秒）
+                                        try:
+                                            self.current_process.wait(timeout=5)
+                                        except subprocess.TimeoutExpired:
+                                            # 如果進程沒有響應 terminate，強制終止
+                                            self.log("進程未響應 terminate，強制終止...", "WARNING")
+                                            self.current_process.kill()
+                                            self.current_process.wait()
+                                        
+                                        # 🎯 進程終止後，再次確保 log 文件被保存
+                                        if temp_log_file:
+                                            try:
+                                                log_file.write("\n" + "=" * 80 + "\n")
+                                                log_file.write("測試進程被用戶手動終止\n")
+                                                log_file.write(f"終止時間: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                                                log_file.write("=" * 80 + "\n")
+                                                log_file.flush()
+                                                self.log(f"Log 文件已保存: {temp_log_file}", "INFO")
+                                            except Exception as save_e:
+                                                self.log(f"保存 log 文件時發生錯誤: {str(save_e)}", "WARNING")
+                                        
+                                        break
+                                    time.sleep(0.5)  # 每 0.5 秒檢查一次
+                                
+                                # 獲取進程返回碼
+                                returncode = self.current_process.returncode
+                                
+                                # 創建一個類似 subprocess.run 返回的結果對象
+                                class ProcessResult:
+                                    def __init__(self, returncode):
+                                        self.returncode = returncode
+                                        self.stdout = None
+                                        self.stderr = None
+                                
+                                result = ProcessResult(returncode)
+                                
+                            except KeyboardInterrupt:
+                                # 如果收到中斷信號，終止進程
+                                self.log("收到中斷信號，正在終止測試進程...", "WARNING")
+                                if self.current_process:
+                                    self.current_process.terminate()
+                                    try:
+                                        self.current_process.wait(timeout=5)
+                                    except subprocess.TimeoutExpired:
+                                        self.current_process.kill()
+                                        self.current_process.wait()
+                                result = ProcessResult(-1)
                             
                             # 寫入結尾信息
                             log_file.write("\n" + "=" * 80 + "\n")
                             log_file.write(f"退出碼: {result.returncode}\n")
-                            log_file.write(f"執行結果: {'成功' if result.returncode == 0 else '失敗'}\n")
+                            if result.returncode == 0:
+                                log_file.write(f"執行結果: 成功\n")
+                            elif result.returncode == -1:
+                                log_file.write(f"執行結果: 被用戶中斷\n")
+                            else:
+                                log_file.write(f"執行結果: 失敗或被中斷\n")
                             log_file.write("=" * 80 + "\n")
+                            log_file.flush()  # 確保寫入到文件
+                            
+                            # 保存 log 文件路徑
+                            self.current_log_file = temp_log_file
                         
                         # 執行完成後，讀取文件內容用於 UI 顯示
                         try:
@@ -657,21 +769,58 @@ class TestCaseLauncher:
                             self.log(f"讀取 Terminal log 失敗: {read_e}", "WARNING")
                         
                         self.log(f"Terminal log 已保存: {temp_log_file}", "INFO")
+                        
+                        # 🎯 保存 log 文件路徑，用於後續生成報告
+                        self.current_log_file = temp_log_file
                     except Exception as e:
                         self.log(f"執行測試或保存 Terminal log 失敗: {e}", "WARNING")
                         import traceback
                         self.log(f"錯誤詳情: {traceback.format_exc()[:500]}", "ERROR")
                         # 如果失敗，回退到 capture_output 模式
-                        result = subprocess.run(
+                        # 🎯 使用 Popen 以便能夠終止
+                        self.current_process = subprocess.Popen(
                             cmd,
                             cwd=project_root,
                             env=env,
-                            capture_output=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
                             text=True,
                             encoding='utf-8',
-                            errors='ignore',
-                            timeout=300
+                            errors='ignore'
                         )
+                        
+                        # 等待進程完成，但定期檢查 is_running 狀態
+                        try:
+                            while self.current_process.poll() is None:
+                                if not self.is_running:
+                                    self.log("檢測到停止請求，正在終止測試進程...", "WARNING")
+                                    self.current_process.terminate()
+                                    try:
+                                        self.current_process.wait(timeout=5)
+                                    except subprocess.TimeoutExpired:
+                                        self.current_process.kill()
+                                        self.current_process.wait()
+                                    break
+                                time.sleep(0.5)
+                            
+                            stdout, stderr = self.current_process.communicate()
+                            
+                            class ProcessResult:
+                                def __init__(self, returncode, stdout, stderr):
+                                    self.returncode = returncode
+                                    self.stdout = stdout
+                                    self.stderr = stderr
+                            
+                            result = ProcessResult(self.current_process.returncode, stdout, stderr)
+                        except KeyboardInterrupt:
+                            if self.current_process:
+                                self.current_process.terminate()
+                                try:
+                                    self.current_process.wait(timeout=5)
+                                except subprocess.TimeoutExpired:
+                                    self.current_process.kill()
+                                    self.current_process.wait()
+                            result = ProcessResult(-1, "", "進程被中斷")
                         # 如果失敗但仍需要保存 log
                         if temp_log_file and result:
                             try:
@@ -688,17 +837,50 @@ class TestCaseLauncher:
                             except:
                                 pass
                 else:
-                    # 如果沒有 temp_log_file，使用 capture_output
-                    result = subprocess.run(
+                    # 如果沒有 temp_log_file，使用 Popen
+                    self.current_process = subprocess.Popen(
                         cmd,
                         cwd=project_root,
                         env=env,
-                        capture_output=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
                         text=True,
                         encoding='utf-8',
-                        errors='ignore',
-                        timeout=300
+                        errors='ignore'
                     )
+                    
+                    # 等待進程完成，但定期檢查 is_running 狀態
+                    try:
+                        while self.current_process.poll() is None:
+                            if not self.is_running:
+                                self.log("檢測到停止請求，正在終止測試進程...", "WARNING")
+                                self.current_process.terminate()
+                                try:
+                                    self.current_process.wait(timeout=5)
+                                except subprocess.TimeoutExpired:
+                                    self.current_process.kill()
+                                    self.current_process.wait()
+                                break
+                            time.sleep(0.5)
+                        
+                        stdout, stderr = self.current_process.communicate()
+                        
+                        class ProcessResult:
+                            def __init__(self, returncode, stdout, stderr):
+                                self.returncode = returncode
+                                self.stdout = stdout
+                                self.stderr = stderr
+                        
+                        result = ProcessResult(self.current_process.returncode, stdout, stderr)
+                    except KeyboardInterrupt:
+                        if self.current_process:
+                            self.current_process.terminate()
+                            try:
+                                self.current_process.wait(timeout=5)
+                            except subprocess.TimeoutExpired:
+                                self.current_process.kill()
+                                self.current_process.wait()
+                        result = ProcessResult(-1, "", "進程被中斷")
                 
                 # 記錄輸出（限制長度，用於 UI 顯示）
                 # 如果使用文件重定向，result.stdout 和 result.stderr 會是 None，需要從文件讀取
@@ -724,7 +906,15 @@ class TestCaseLauncher:
                 return success
                 
             except subprocess.TimeoutExpired:
-                self.log(f"✗ 測試執行超時（超過 5 分鐘）", "ERROR")
+                self.log(f"✗ 測試執行超時（超過 1 分鐘）", "ERROR")
+                # 如果進程還在運行，終止它
+                if self.current_process:
+                    try:
+                        self.current_process.terminate()
+                        self.current_process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        self.current_process.kill()
+                        self.current_process.wait()
                 return False
             except FileNotFoundError:
                 self.log(f"⚠️ 找不到 Python 解釋器或 pytest: {python_exe}", "WARNING")
@@ -736,21 +926,192 @@ class TestCaseLauncher:
                 return False
     
     def stop_tests(self):
-        """停止測試執行"""
+        """
+        停止測試執行
+        
+        功能：
+        1. 停止執行程序（包括終止 subprocess）
+        2. 保存 log
+        3. 產生 HTML 報告
+        4. 更新狀態顯示
+        """
         if not self.is_running:
             return
         
-        self.is_running = False
         self.log("正在停止測試執行...", "WARNING")
+        
+        # 🎯 首先設置停止標誌
+        self.is_running = False
+        
+        # 🎯 如果當前有正在運行的 subprocess，立即終止它
+        if self.current_process and self.current_process.poll() is None:
+            self.log("正在終止測試進程...", "WARNING")
+            try:
+                # 🎯 在終止進程前，確保 log 文件被保存
+                # 如果 log 文件存在，嘗試讀取並保存當前內容
+                if self.current_log_file and os.path.exists(self.current_log_file):
+                    try:
+                        # 讀取當前 log 文件內容
+                        with open(self.current_log_file, 'r', encoding='utf-8', errors='ignore') as f:
+                            log_content = f.read()
+                        # 追加終止信息
+                        with open(self.current_log_file, 'a', encoding='utf-8', errors='ignore') as f:
+                            f.write("\n" + "=" * 80 + "\n")
+                            f.write("測試進程被用戶手動終止\n")
+                            f.write(f"終止時間: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                            f.write("=" * 80 + "\n")
+                            f.flush()
+                        self.log(f"Log 文件已保存: {self.current_log_file}", "INFO")
+                    except Exception as log_e:
+                        self.log(f"保存 log 文件時發生錯誤: {str(log_e)}", "WARNING")
+                
+                self.current_process.terminate()
+                # 等待進程終止（最多 5 秒）
+                try:
+                    self.current_process.wait(timeout=5)
+                    self.log("測試進程已終止", "INFO")
+                except subprocess.TimeoutExpired:
+                    # 如果進程沒有響應 terminate，強制終止
+                    self.log("進程未響應 terminate，強制終止...", "WARNING")
+                    self.current_process.kill()
+                    self.current_process.wait()
+                    self.log("測試進程已強制終止", "INFO")
+            except Exception as e:
+                self.log(f"終止測試進程時發生錯誤: {str(e)}", "ERROR")
+        
+        # 🎯 如果當前有正在執行的測試，更新狀態並生成報告
+        if self.current_test_name:
+            # 更新狀態為 "interrupted"（使用 "fail" 狀態顯示）
+            self.root.after(0, self.update_status, self.current_test_name, "fail")
+            self.log(f"正在為中斷的測試 '{self.current_test_name}' 生成報告...", "INFO")
+            
+            # 🎯 確保 log 文件路徑被正確保存（在生成報告前）
+            if self.current_log_file:
+                self.log(f"[LOG] 當前 log 文件: {self.current_log_file}", "INFO")
+                if os.path.exists(self.current_log_file):
+                    file_size = os.path.getsize(self.current_log_file)
+                    self.log(f"[LOG] Log 文件大小: {file_size} bytes", "INFO")
+                else:
+                    self.log(f"[WARNING] Log 文件不存在: {self.current_log_file}", "WARNING")
+            else:
+                # 嘗試從環境變數獲取
+                if 'TEST_TERMINAL_LOG' in os.environ:
+                    self.current_log_file = os.environ.get('TEST_TERMINAL_LOG')
+                    self.log(f"[LOG] 從環境變數獲取 log 文件: {self.current_log_file}", "INFO")
+            
+            self._generate_report_for_stopped_test(self.current_test_name, "interrupted")
         
         # 等待執行線程結束（最多等待 2 秒）
         if self.execution_thread and self.execution_thread.is_alive():
             self.execution_thread.join(timeout=2.0)
+        
+        # 清除進程引用
+        self.current_process = None
+        
+        self.log("測試執行已停止", "WARNING")
     
     def _execution_completed(self):
         """執行完成後的回調（在主線程中執行）"""
         self.btn_run.config(state=tk.NORMAL)
         self.btn_stop.config(state=tk.DISABLED)
+    
+    def _generate_report_for_stopped_test(self, test_name: str, status: str):
+        """
+        為中斷或完成的測試生成報告
+        
+        :param test_name: 測試案例名稱
+        :param status: 狀態 ('interrupted', 'completed')
+        """
+        import datetime
+        try:
+            from engine.test_reporter import TestReporter
+            
+            # 🎯 嘗試獲取 TestReporter 實例（如果測試已經初始化了）
+            # 方法 1: 從 DesktopApp 獲取
+            reporter = None
+            try:
+                from base.desktop_app import DesktopApp
+                reporter = DesktopApp.get_reporter()
+            except Exception as e:
+                self.log(f"[WARNING] 無法從 DesktopApp 獲取 reporter: {str(e)}", "WARNING")
+            
+            # 確定 log 文件路徑（優先使用 current_log_file）
+            log_file_path = self.current_log_file
+            if not log_file_path:
+                # 嘗試從環境變數獲取
+                if 'TEST_TERMINAL_LOG' in os.environ:
+                    log_file_path = os.environ.get('TEST_TERMINAL_LOG')
+            
+            # 🎯 確保 log 文件存在並記錄路徑
+            if log_file_path:
+                if os.path.exists(log_file_path):
+                    file_size = os.path.getsize(log_file_path)
+                    self.log(f"[LOG] 找到 log 文件: {log_file_path} ({file_size} bytes)", "INFO")
+                else:
+                    self.log(f"[WARNING] Log 文件不存在: {log_file_path}", "WARNING")
+            else:
+                self.log(f"[WARNING] 未找到 log 文件路徑", "WARNING")
+            
+            # 確定整體狀態
+            overall_status = "fail" if status == "interrupted" else "pass"
+            
+            # 🎯 如果找到了對應的 reporter，使用它生成報告
+            if reporter and hasattr(reporter, 'test_name') and reporter.test_name == test_name:
+                self.log(f"[REPORT] 找到 TestReporter 實例，正在生成報告...", "INFO")
+                
+                # 生成報告
+                try:
+                    html_path = reporter.finish(overall_status, log_file_path=log_file_path)
+                    if html_path and os.path.exists(html_path):
+                        abs_path = os.path.abspath(html_path).replace("\\", "/")
+                        self.log(f"[REPORT] ✅ 報告已生成: {abs_path}", "INFO")
+                        self.log(f"[REPORT] 您可以直接在瀏覽器中打開此文件查看詳細報告", "INFO")
+                        if log_file_path and os.path.exists(log_file_path):
+                            self.log(f"[LOG] Log 文件位置: {log_file_path}", "INFO")
+                    else:
+                        self.log(f"[WARNING] 報告生成失敗: {html_path}", "WARNING")
+                except Exception as e:
+                    self.log(f"[ERROR] 生成報告時發生錯誤: {str(e)}", "ERROR")
+                    import traceback
+                    self.log(f"[ERROR] 錯誤詳情: {traceback.format_exc()[:500]}", "ERROR")
+                    # 🎯 如果使用現有 reporter 失敗，嘗試創建新報告
+                    reporter = None
+            
+            # 🎯 如果沒有找到 reporter 或使用現有 reporter 失敗，創建一個新的並生成基本報告
+            if not reporter:
+                self.log(f"[REPORT] 未找到 TestReporter 實例，創建新的報告...", "INFO")
+                
+                try:
+                    reporter = TestReporter(test_name)
+                    
+                    # 添加一個步驟說明測試被中斷
+                    if status == "interrupted":
+                        reporter.add_step(
+                            step_no=1,
+                            step_name="測試執行被中斷",
+                            status="fail",
+                            message=f"測試執行過程中被用戶手動停止（停止時間: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}）"
+                        )
+                    
+                    # 生成報告
+                    html_path = reporter.finish(overall_status, log_file_path=log_file_path)
+                    if html_path and os.path.exists(html_path):
+                        abs_path = os.path.abspath(html_path).replace("\\", "/")
+                        self.log(f"[REPORT] ✅ 報告已生成: {abs_path}", "INFO")
+                        self.log(f"[REPORT] 您可以直接在瀏覽器中打開此文件查看詳細報告", "INFO")
+                        if log_file_path and os.path.exists(log_file_path):
+                            self.log(f"[LOG] Log 文件位置: {log_file_path}", "INFO")
+                    else:
+                        self.log(f"[WARNING] 報告生成失敗: {html_path}", "WARNING")
+                except Exception as e:
+                    self.log(f"[ERROR] 創建新報告時發生錯誤: {str(e)}", "ERROR")
+                    import traceback
+                    self.log(f"[ERROR] 錯誤詳情: {traceback.format_exc()[:500]}", "ERROR")
+                    
+        except Exception as e:
+            self.log(f"[ERROR] 生成報告時發生未預期的錯誤: {str(e)}", "ERROR")
+            import traceback
+            self.log(f"[ERROR] 錯誤詳情: {traceback.format_exc()[:500]}", "ERROR")
 
 
 def main():

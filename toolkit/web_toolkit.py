@@ -20,7 +20,8 @@ import config as C
 
 def create_driver(timeout: Optional[int] = None) -> tuple[webdriver.Chrome, WebDriverWait]:
     if timeout is None:
-        timeout = C.DEFAULT_TIMEOUT
+        # 如果 config 中有 DEFAULT_TIMEOUT，使用它；否則使用默認值 10 秒
+        timeout = getattr(C, 'DEFAULT_TIMEOUT', 10)
 
     chrome_options = Options()
 
@@ -30,6 +31,13 @@ def create_driver(timeout: Optional[int] = None) -> tuple[webdriver.Chrome, WebD
 
     # 訪客模式
     chrome_options.add_argument("--guest")
+    
+    # 🎯 保持瀏覽器打開：使用 remote-debugging-port 讓瀏覽器在 driver 關閉後仍然保持打開
+    # 這樣即使 Python 進程退出，瀏覽器也會保持打開狀態
+    # 使用固定的 port 9222，方便後續重新連接
+    debug_port = 9222
+    chrome_options.add_argument(f"--remote-debugging-port={debug_port}")
+    chrome_options.add_experimental_option("detach", True)  # 嘗試使用 detach 選項
 
     # 關閉密碼管理相關提示
     prefs = {

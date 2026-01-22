@@ -1028,15 +1028,17 @@ class NxPocActions(BaseAction):
                 )
             step_no += 1
             
-            # 步驟 4: 初始化 WebDriver（網頁端）
-            self.logger.info("[CASE_2-1] 步驟 4: 初始化 WebDriver...")
-            if not self.nx_cloud_web_page.initialize_webdriver():
-                error_msg = "WebDriver 初始化失敗"
+            # 步驟 4: 從瀏覽器獲取 URL（桌面端）
+            self.logger.info("[CASE_2-1] 步驟 4: 從瀏覽器獲取 URL...")
+            target_url = self.nx_cloud_page.get_current_browser_url()
+            
+            if not target_url:
+                error_msg = "無法從瀏覽器獲取 Nx Cloud 網址"
                 self.logger.error(f"[CASE_2-1] [ERROR] {error_msg}")
                 if reporter:
                     reporter.add_step(
                         step_no=step_no,
-                        step_name="初始化 WebDriver",
+                        step_name="獲取瀏覽器 URL",
                         status="fail",
                         message=error_msg
                     )
@@ -1045,19 +1047,42 @@ class NxPocActions(BaseAction):
             if reporter:
                 reporter.add_step(
                     step_no=step_no,
-                    step_name="初始化 WebDriver",
+                    step_name="獲取瀏覽器 URL",
                     status="pass",
-                    message="WebDriver 初始化成功"
+                    message=f"成功獲取 URL: {target_url}"
                 )
             step_no += 1
             
-            # 步驟 5: 檢查登錄按鈕是否存在（網頁端）
-            self.logger.info("[CASE_2-1] 步驟 5: 檢查登錄按鈕是否存在...")
+            # 步驟 5: 啟動新的 WebDriver 並導航到 URL（網頁端）
+            self.logger.info("[CASE_2-1] 步驟 5: 啟動新的 WebDriver 並導航到 URL...")
+            if not self.nx_cloud_web_page.start_new_driver_and_open_url(target_url):
+                error_msg = "啟動新 WebDriver 並導航到 URL 失敗"
+                self.logger.error(f"[CASE_2-1] [ERROR] {error_msg}")
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="啟動新 WebDriver",
+                        status="fail",
+                        message=error_msg
+                    )
+                raise AssertionError(f"[ERROR] {error_msg}")
+            
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="啟動新 WebDriver",
+                    status="pass",
+                    message="成功啟動新 WebDriver 並導航到 URL"
+                )
+            step_no += 1
+            
+            # 步驟 6: 檢查登錄按鈕是否存在（網頁端）
+            self.logger.info("[CASE_2-1] 步驟 6: 檢查登錄按鈕是否存在...")
             if self.nx_cloud_web_page.check_login_button_exists():
                 self.logger.info("[CASE_2-1] 登錄按鈕存在，進入網頁版登錄流程...")
                 
-                # 步驟 5.1: 點擊登錄按鈕（網頁端）
-                self.logger.info("[CASE_2-1] 步驟 5.1: 點擊登錄按鈕...")
+                # 步驟 6.1: 點擊登錄按鈕（網頁端）
+                self.logger.info("[CASE_2-1] 步驟 6.1: 點擊登錄按鈕...")
                 if not self.nx_cloud_web_page.click_login_button():
                     error_msg = "點擊登錄按鈕失敗"
                     self.logger.error(f"[CASE_2-1] [ERROR] {error_msg}")
@@ -1079,8 +1104,8 @@ class NxPocActions(BaseAction):
                     )
                 step_no += 1
                 
-                # 步驟 5.2: 輸入郵箱（網頁端）
-                self.logger.info("[CASE_2-1] 步驟 5.2: 輸入郵箱...")
+                # 步驟 6.2: 輸入郵箱（網頁端）
+                self.logger.info("[CASE_2-1] 步驟 6.2: 輸入郵箱...")
                 email = kwargs.get("email", self.config.NX_CLOUD_EMAIL)
                 if not self.nx_cloud_web_page.input_email(email):
                     error_msg = f"輸入郵箱失敗: {email}"
@@ -1103,8 +1128,8 @@ class NxPocActions(BaseAction):
                     )
                 step_no += 1
                 
-                # 步驟 5.3: 點擊【下一步】（網頁端）
-                self.logger.info("[CASE_2-1] 步驟 5.3: 點擊【下一步】...")
+                # 步驟 6.3: 點擊【下一步】（網頁端）
+                self.logger.info("[CASE_2-1] 步驟 6.3: 點擊【下一步】...")
                 if not self.nx_cloud_web_page.click_next_button():
                     error_msg = "點擊【下一步】失敗"
                     self.logger.error(f"[CASE_2-1] [ERROR] {error_msg}")
@@ -1126,8 +1151,8 @@ class NxPocActions(BaseAction):
                     )
                 step_no += 1
                 
-                # 步驟 5.4: 輸入密碼（網頁端）
-                self.logger.info("[CASE_2-1] 步驟 5.4: 輸入密碼...")
+                # 步驟 6.4: 輸入密碼（網頁端）
+                self.logger.info("[CASE_2-1] 步驟 6.4: 輸入密碼...")
                 password = kwargs.get("password", self.config.NX_CLOUD_PASSWORD)
                 if not self.nx_cloud_web_page.input_password(password):
                     error_msg = "輸入密碼失敗"
@@ -1150,8 +1175,8 @@ class NxPocActions(BaseAction):
                     )
                 step_no += 1
                 
-                # 步驟 5.5: 點擊【登錄】（網頁端）
-                self.logger.info("[CASE_2-1] 步驟 5.5: 點擊【登錄】...")
+                # 步驟 6.5: 點擊【登錄】（網頁端）
+                self.logger.info("[CASE_2-1] 步驟 6.5: 點擊【登錄】...")
                 if not self.nx_cloud_web_page.click_login_submit_button():
                     error_msg = "點擊【登錄】失敗"
                     self.logger.error(f"[CASE_2-1] [ERROR] {error_msg}")
@@ -1185,12 +1210,138 @@ class NxPocActions(BaseAction):
             self.logger.error(f"[CASE_2-1] [ERROR] 執行失敗: {e}")
             import traceback
             traceback.print_exc()
-            # 確保關閉 WebDriver（網頁端）
-            try:
-                self.nx_cloud_web_page.close_webdriver()
-            except:
-                pass
+            # 🎯 不關閉 WebDriver，保留瀏覽器以便後續步驟使用
+            # 如果確實需要關閉，可以在測試完成後手動調用 close_webdriver()
+            self.logger.info("[CASE_2-1] [INFO] 保留瀏覽器視窗，以便後續步驟使用")
             raise
         
         self.logger.info("✅ Case 2-1 完成：已進入 Nx Cloud")
+        self.logger.info("[CASE_2-1] [INFO] 瀏覽器視窗已保留，可用於後續步驟")
+        return self
+    
+    def run_review_recording_playback_step(self, **kwargs):
+        """
+        Case 2-2: 調閱一個錄影事件回放
+        
+        步驟：
+        1. 點擊「查看」頁簽
+        2. 點擊 server
+        3. 點擊 usb-cam
+        """
+        self.logger.info("[CASE_2-2] 執行 Case 2-2: 調閱一個錄影事件回放")
+        
+        # 1. 初始化 Page Object (如果還沒有)
+        if not self.nx_cloud_web_page:
+            from pages.web.nx_cloud_web_page import NxCloudWebPage
+            self.nx_cloud_web_page = NxCloudWebPage()
+            self.logger.info("[CASE_2-2] 已初始化 NxCloudWebPage")
+        
+        # 2. 檢查 Driver 是否活著，如果死了就「重新連接」
+        # 利用 Remote Debugging Port (9222) 的優勢：只要 Chrome 還開著，隨時都能連回去
+        if not self.nx_cloud_web_page.driver:
+            self.logger.info("[CASE_2-2] Driver 未連接，嘗試重新連接到現有的 Debug Chrome (Port 9222)...")
+            
+            success = self.nx_cloud_web_page.attach_to_debug_chrome(port=9222)
+            
+            if not success:
+                self.logger.error("[CASE_2-2] ❌ 重新連接失敗！請確認 Chrome (Port 9222) 是否已開啟。")
+                raise AssertionError("[ERROR] WebDriver 重新連接失敗，請確認 Chrome (Port 9222) 是否已開啟")
+            else:
+                self.logger.info("[CASE_2-2] ✅ 重新連接成功！繼續執行測試。")
+        
+        # 3. 確保現在是在正確的頁面（記錄當前 URL）
+        try:
+            current_url = self.nx_cloud_web_page.driver.current_url
+            self.logger.info(f"[CASE_2-2] 當前網址: {current_url}")
+        except Exception as e:
+            self.logger.warning(f"[CASE_2-2] 無法獲取當前 URL: {e}")
+        
+        # 獲取 TestReporter（如果存在）
+        reporter = None
+        try:
+            from base.desktop_app import DesktopApp
+            reporter = DesktopApp.get_reporter()
+        except Exception as e:
+            self.logger.warning(f"[CASE_2-2] 無法獲取 TestReporter: {e}")
+        
+        try:
+            step_no = 1
+            
+            # 步驟 1: 點擊「查看」頁簽
+            self.logger.info(f"[CASE_2-2] 步驟 {step_no}: 點擊「查看」頁簽...")
+            if not self.nx_cloud_web_page.click_view_tab():
+                error_msg = "點擊「查看」頁簽失敗"
+                self.logger.error(f"[CASE_2-2] [ERROR] {error_msg}")
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="點擊「查看」頁簽",
+                        status="fail",
+                        message=error_msg
+                    )
+                raise AssertionError(f"[ERROR] {error_msg}")
+            
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="點擊「查看」頁簽",
+                    status="pass",
+                    message="成功點擊「查看」頁簽"
+                )
+            step_no += 1
+            
+            # 步驟 2: 點擊 server
+            self.logger.info(f"[CASE_2-2] 步驟 {step_no}: 點擊 server...")
+            if not self.nx_cloud_web_page.click_server():
+                error_msg = "點擊 server 失敗"
+                self.logger.error(f"[CASE_2-2] [ERROR] {error_msg}")
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="點擊 server",
+                        status="fail",
+                        message=error_msg
+                    )
+                raise AssertionError(f"[ERROR] {error_msg}")
+            
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="點擊 server",
+                    status="pass",
+                    message="成功點擊 server"
+                )
+            step_no += 1
+            
+            # 步驟 3: 點擊 usb-cam
+            self.logger.info(f"[CASE_2-2] 步驟 {step_no}: 點擊 usb-cam...")
+            if not self.nx_cloud_web_page.click_usb_cam():
+                error_msg = "點擊 usb-cam 失敗"
+                self.logger.error(f"[CASE_2-2] [ERROR] {error_msg}")
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="點擊 usb-cam",
+                        status="fail",
+                        message=error_msg
+                    )
+                raise AssertionError(f"[ERROR] {error_msg}")
+            
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="點擊 usb-cam",
+                    status="pass",
+                    message="成功點擊 usb-cam"
+                )
+            
+        except AssertionError:
+            raise
+        except Exception as e:
+            self.logger.error(f"[CASE_2-2] [ERROR] 執行失敗: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
+        
+        self.logger.info("✅ Case 2-2 完成：調閱一個錄影事件回放")
         return self
