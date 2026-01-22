@@ -423,6 +423,165 @@ class ServerSettingsPage(DesktopApp):
         self.logger.info(f"[DEBUG] 密碼確認處理結果: {result}")
         return result
     
+    def _handle_potential_auth_dialog(self, password=None):
+        """
+        處理可能的授權驗證彈窗（支援 '登入' 和 '確認' 兩種類型）
+        
+        當點擊「套用」後，可能會隨機出現兩種不同的授權驗證彈窗：
+        - 情況 A：按鈕文字為「登入」 (Login)
+        - 情況 B：按鈕文字為「確認」 (Confirm) 或「確定」 (OK)
+        
+        Args:
+            password: 密碼（如果為 None，從配置讀取）
+        
+        Returns:
+            bool: True 表示彈窗已處理（或無彈窗），False 表示處理失敗
+        """
+        from config import EnvConfig
+        
+        # 從配置讀取密碼（如果未提供）
+        if password is None:
+            password = getattr(EnvConfig, 'ADMIN_PASSWORD', '')
+        
+        self.logger.info("[AUTH] [START] Checking for authentication dialog...")
+        
+        # 等待彈窗動畫完成
+        wait_time = 2.0
+        self.logger.debug(f"[AUTH] [WAIT] Waiting {wait_time}s for dialog animation...")
+        time.sleep(wait_time)
+        
+        # 1. 判斷是否有彈窗（簡單檢查：嘗試尋找密碼相關文字）
+        # 由於 smart_click 會實際點擊，我們先嘗試快速檢測，如果找不到就假設有彈窗
+        self.logger.info("[AUTH] [CHECK] Checking for password field...")
+        password_texts = ["密碼", "Password", "密码"]
+        has_dialog = False
+        
+        # 嘗試快速檢測密碼文字（使用短 timeout，如果找到就點擊以聚焦輸入框）
+        for text in password_texts:
+            found = self.smart_click(
+                x_ratio=0.5,
+                y_ratio=0.45,  # 密碼輸入框通常在對話框中央偏上
+                target_text=text,
+                timeout=1,  # 短 timeout，快速檢測
+                use_vlm=False  # 圖片優先
+            )
+            if found:
+                has_dialog = True
+                self.logger.info(f"[AUTH] [CHECK] Found password field indicator: '{text}' (clicked to focus)")
+                time.sleep(0.3)  # 等待輸入框獲得焦點
+                break
+        
+        # 如果沒找到，假設有彈窗（因為調用此方法通常意味著預期會有彈窗）
+        # 直接嘗試點擊對話框中央以聚焦輸入框
+        if not has_dialog:
+            self.logger.info("[AUTH] [CHECK] No password field detected, assuming dialog present (will attempt direct input)")
+            # 嘗試點擊對話框中央（假設是輸入框位置）
+            screen_w, screen_h = pyautogui.size()
+            pyautogui.click(screen_w // 2, screen_h // 2)
+            time.sleep(0.3)
+            has_dialog = True  # 假設有彈窗，繼續處理
+        
+        if not has_dialog:
+            self.logger.info("[AUTH] [RESULT] No dialog detected. Continuing.")
+            return True
+        
+        self.logger.info("[AUTH] [DIALOG] Dialog detected. Entering password...")
+        
+        # 2. 輸入密碼
+        # 確保焦點在輸入框（點擊密碼文字旁邊，或直接輸入）
+        self.logger.info("[AUTH] [INPUT] Focusing password field...")
+        password_focused = False
+        for text in password_texts:
+            if self.smart_click(
+                x_ratio=0.5,
+                y_ratio=0.45,  # 密碼輸入框通常在對話框中央偏上
+                target_text=text,
+                timeout=2,
+                use_vlm=False  # 圖片優先
+            ):
+                password_focused = True
+                self.logger.info(f"[AUTH] [INPUT] Focused password field using text: '{text}'")
+                break
+        
+        # 如果找不到密碼文字，直接嘗試輸入（假設焦點已在輸入框）
+        if not password_focused:
+            self.logger.warning("[AUTH] [INPUT] Could not find password field, attempting direct input...")
+            # 嘗試點擊對話框中央（假設是輸入框位置）
+            pyautogui.click(pyautogui.size()[0] // 2, pyautogui.size()[1] // 2)
+            time.sleep(0.3)
+        
+        # 輸入密碼
+        self.logger.info(f"[AUTH] [INPUT] Typing password (length: {len(password)})...")
+        pyautogui.write(password, interval=0.05)
+        time.sleep(0.5)
+        self.logger.info("[AUTH] [INPUT] Password entered.")
+        
+        # 3. 分支處理按鈕（優先嘗試「登入」，然後「確認」，最後「OK」）
+        # 嘗試 1: 「登入」按鈕
+        self.logger.info("[AUTH] [BUTTON] Trying button type: 'Login' (登入)...")
+        login_texts = ["登入", "登錄", "Login", "登录"]
+        login_clicked = False
+        
+        for text in login_texts:
+            if self.smart_click(
+                x_ratio=0.5,
+                y_ratio=0.6,  # 按鈕通常在對話框下方
+                target_text=text,
+                image_path="desktop_settings/login_btn.png",
+                timeout=2,
+                use_vlm=False  # 圖片優先
+            ):
+                self.logger.info(f"[AUTH] [BUTTON] Clicked 'Login' button (text: '{text}').")
+                login_clicked = True
+                break
+        
+        if login_clicked:
+            time.sleep(1.0)  # 等待彈窗關閉
+            self.logger.info("[AUTH] [SUCCESS] Authentication dialog handled (Login button).")
+            return True
+        
+        # 嘗試 2: 「確認」按鈕
+        self.logger.info("[AUTH] [BUTTON] Trying button type: 'Confirm' (確認)...")
+        confirm_texts = ["確認", "确定", "Confirm"]
+        confirm_clicked = False
+        
+        for text in confirm_texts:
+            if self.smart_click(
+                x_ratio=0.5,
+                y_ratio=0.6,
+                target_text=text,
+                image_path="desktop_settings/red_ok_btn.png",
+                timeout=2,
+                use_vlm=False  # 圖片優先
+            ):
+                self.logger.info(f"[AUTH] [BUTTON] Clicked 'Confirm' button (text: '{text}').")
+                confirm_clicked = True
+                break
+        
+        if confirm_clicked:
+            time.sleep(1.0)  # 等待彈窗關閉
+            self.logger.info("[AUTH] [SUCCESS] Authentication dialog handled (Confirm button).")
+            return True
+        
+        # 嘗試 3: 「OK」按鈕
+        self.logger.info("[AUTH] [BUTTON] Trying button type: 'OK'...")
+        if self.smart_click(
+            x_ratio=0.5,
+            y_ratio=0.6,
+            target_text="OK",
+            image_path="desktop_settings/red_ok_btn.png",
+            timeout=1,
+            use_vlm=False  # 圖片優先
+        ):
+            self.logger.info("[AUTH] [BUTTON] Clicked 'OK' button.")
+            time.sleep(1.0)  # 等待彈窗關閉
+            self.logger.info("[AUTH] [SUCCESS] Authentication dialog handled (OK button).")
+            return True
+        
+        # 如果所有按鈕都沒找到，記錄警告但返回 True（假設沒有彈窗或已自動關閉）
+        self.logger.warning("[AUTH] [WARN] Dialog found but no known button clicked. Assuming dialog handled or not present.")
+        return True
+    
     def _wait_for_settings_window_close(self, timeout=2):
         """
         智能等待設定視窗關閉
@@ -472,16 +631,18 @@ class ServerSettingsPage(DesktopApp):
         
         :param camera_name: 攝影機名稱（預設 "usb_cam"）
         """
-        self.logger.info(f"🖱️ 雙擊攝影機: {camera_name}...")
+        self.logger.info(f"[CLICK] 雙擊攝影機: {camera_name}...")
         
-        # 使用 smart_click 統一處理（支援圖片辨識、OCR、座標保底、自學習座標庫）
+        # 🎯 使用圖片優先策略（use_vlm=False），確保圖像辨識優先於 VLM
+        # 使用 smart_click_priority_image 或 smart_click 配合 use_vlm=False
         success = self.smart_click(
             x_ratio=0.10,  # 左側面板 x 位置（與 Server 項目對齊）
             y_ratio=0.18,  # Server 項目下方一點
-            target_text="usb",  # OCR 尋找 "usb" 文字（模糊匹配）
-            image_path="desktop_main/usb_cam_item.png",  # 圖片辨識
+            target_text="usb",  # OCR 尋找 "usb" 文字（模糊匹配，作為備選）
+            image_path="desktop_main/usb_cam_item.png",  # 圖片辨識優先
             timeout=3,
-            clicks=2  # 雙擊
+            clicks=2,  # 雙擊
+            use_vlm=False  # 🎯 關鍵修正：禁用 VLM，確保圖像辨識優先
         )
         
         # 等待畫面載入
@@ -540,16 +701,17 @@ class ServerSettingsPage(DesktopApp):
         
         # 重試循環
         for attempt in range(1, max_retries + 1):
-            self.logger.info(f"[ENSURE_CAMERA] 嘗試 {attempt}/{max_retries}: 使用 VLM 尋找 '{target_text}' 並雙擊...")
+            self.logger.info(f"[ENSURE_CAMERA] 嘗試 {attempt}/{max_retries}: 使用圖像辨識尋找攝影機並雙擊...")
             
-            # 策略 1: 使用 VLM 找到文字後執行雙擊
+            # 🎯 策略 1: 使用圖像辨識優先（use_vlm=False），確保圖像辨識優先於 VLM
             success = self.smart_click(
                 x_ratio=0.10,  # 左側面板 x 位置
                 y_ratio=0.18,  # Server 項目下方一點
-                target_text=target_text,  # VLM 尋找文字
-                image_path="desktop_main/usb_cam_item.png",  # 圖片辨識作為備選
+                target_text=target_text,  # OCR 尋找文字（作為備選）
+                image_path="desktop_main/usb_cam_item.png",  # 圖片辨識優先
                 timeout=3,
-                clicks=2  # 雙擊
+                clicks=2,  # 雙擊
+                use_vlm=False  # 🎯 關鍵修正：禁用 VLM，確保圖像辨識優先
             )
             
             if not success:

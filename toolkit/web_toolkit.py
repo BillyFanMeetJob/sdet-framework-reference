@@ -38,7 +38,9 @@ def create_driver(timeout: Optional[int] = None) -> tuple[webdriver.Chrome, WebD
     }
     chrome_options.add_experimental_option("prefs", prefs)
 
-    if C.HEADLESS:
+    # 🎯 檢查 HEADLESS 配置，如果不存在則默認為 False
+    headless = getattr(C, 'HEADLESS', False)
+    if headless:
         chrome_options.add_argument("--headless=new")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")

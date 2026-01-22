@@ -16,6 +16,8 @@ class NxPocActions(BaseAction):
         from pages.desktop.server_settings_page import ServerSettingsPage
         from pages.desktop.license_settings_page import LicenseSettingsPage
         from pages.desktop.camera_page import CameraPage
+        from pages.desktop.nx_cloud_page import NxCloudPage
+        from pages.web.nx_cloud_web_page import NxCloudWebPage
         
         self.login_page = DesktopLoginPage()
         self.main_page = MainPage()
@@ -23,6 +25,8 @@ class NxPocActions(BaseAction):
         self.server_settings_page = ServerSettingsPage()
         self.camera_page = CameraPage()
         self.license_settings_page = LicenseSettingsPage()
+        self.nx_cloud_page = NxCloudPage()  # 桌面端操作
+        self.nx_cloud_web_page = NxCloudWebPage(browser=None)  # 網頁端操作（手動初始化 WebDriver）
 
     def run_server_login_step(self, **kwargs):
         """ ✅ 1-1 登錄流程：優先點擊 LAPTOP-QRJN5735，失敗則點擊連接服務器 """
@@ -920,4 +924,273 @@ class NxPocActions(BaseAction):
             raise
         
         self.logger.info("✅ Case 1-5 完成：已回放錄影並暫停")
+        return self
+    
+    def run_enter_nx_cloud_step(self, **kwargs):
+        """
+        Case 2-1: 進入 Nx Cloud
+        
+        流程：
+        1. 點擊畫面右上角的賬號（會出現 menu）
+        2. 點擊「開啟 Nx Cloud 介面」（使用圖片 desktop_settings/open_nx_web.png）
+        3. 等待 Chrome 打開網頁
+        4. 如果右上角登錄按鈕存在，進入網頁版登錄流程
+        
+        網頁版登錄流程：
+        1. 點擊登錄按鈕
+        2. 輸入郵箱
+        3. 點擊【下一步】
+        4. 輸入密碼
+        5. 點擊【登錄】
+        """
+        self.logger.info("[CASE_2-1] 執行 Case 2-1: 進入 Nx Cloud")
+        
+        try:
+            # 初始化 TestReporter
+            reporter = None
+            try:
+                from engine.test_reporter import TestReporter
+                reporter = TestReporter.get_instance()
+                if not reporter:
+                    self.logger.warning("[CASE_2-1] TestReporter 未初始化，自動創建一個實例")
+                    reporter = TestReporter()
+            except Exception as e:
+                self.logger.warning(f"[CASE_2-1] 無法初始化 TestReporter: {e}")
+            
+            step_no = 1
+            
+            # 步驟 1: 點擊畫面右上角的賬號
+            self.logger.info("[CASE_2-1] 步驟 1: 點擊畫面右上角的賬號...")
+            if not self.nx_cloud_page.click_account_menu():
+                error_msg = "點擊右上角賬號失敗"
+                self.logger.error(f"[CASE_2-1] [ERROR] {error_msg}")
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="點擊右上角賬號",
+                        status="fail",
+                        message=error_msg
+                    )
+                raise AssertionError(f"[ERROR] {error_msg}")
+            
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="點擊右上角賬號",
+                    status="pass",
+                    message="成功點擊右上角賬號，選單已展開"
+                )
+            step_no += 1
+            
+            # 步驟 2: 點擊「開啟 Nx Cloud 介面」
+            self.logger.info("[CASE_2-1] 步驟 2: 點擊「開啟 Nx Cloud 介面」...")
+            if not self.nx_cloud_page.click_open_nx_cloud_interface():
+                error_msg = "點擊「開啟 Nx Cloud 介面」失敗"
+                self.logger.error(f"[CASE_2-1] [ERROR] {error_msg}")
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="點擊「開啟 Nx Cloud 介面」",
+                        status="fail",
+                        message=error_msg
+                    )
+                raise AssertionError(f"[ERROR] {error_msg}")
+            
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="點擊「開啟 Nx Cloud 介面」",
+                    status="pass",
+                    message="成功點擊「開啟 Nx Cloud 介面」，Chrome 正在打開"
+                )
+            step_no += 1
+            
+            # 步驟 3: 等待 Chrome 視窗出現
+            self.logger.info("[CASE_2-1] 步驟 3: 等待 Chrome 視窗出現...")
+            if not self.nx_cloud_page.wait_for_chrome_window(timeout=10):
+                error_msg = "等待 Chrome 視窗超時"
+                self.logger.error(f"[CASE_2-1] [ERROR] {error_msg}")
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="等待 Chrome 視窗",
+                        status="fail",
+                        message=error_msg
+                    )
+                raise AssertionError(f"[ERROR] {error_msg}")
+            
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="等待 Chrome 視窗",
+                    status="pass",
+                    message="Chrome 視窗已打開"
+                )
+            step_no += 1
+            
+            # 步驟 4: 初始化 WebDriver（網頁端）
+            self.logger.info("[CASE_2-1] 步驟 4: 初始化 WebDriver...")
+            if not self.nx_cloud_web_page.initialize_webdriver():
+                error_msg = "WebDriver 初始化失敗"
+                self.logger.error(f"[CASE_2-1] [ERROR] {error_msg}")
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="初始化 WebDriver",
+                        status="fail",
+                        message=error_msg
+                    )
+                raise AssertionError(f"[ERROR] {error_msg}")
+            
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="初始化 WebDriver",
+                    status="pass",
+                    message="WebDriver 初始化成功"
+                )
+            step_no += 1
+            
+            # 步驟 5: 檢查登錄按鈕是否存在（網頁端）
+            self.logger.info("[CASE_2-1] 步驟 5: 檢查登錄按鈕是否存在...")
+            if self.nx_cloud_web_page.check_login_button_exists():
+                self.logger.info("[CASE_2-1] 登錄按鈕存在，進入網頁版登錄流程...")
+                
+                # 步驟 5.1: 點擊登錄按鈕（網頁端）
+                self.logger.info("[CASE_2-1] 步驟 5.1: 點擊登錄按鈕...")
+                if not self.nx_cloud_web_page.click_login_button():
+                    error_msg = "點擊登錄按鈕失敗"
+                    self.logger.error(f"[CASE_2-1] [ERROR] {error_msg}")
+                    if reporter:
+                        reporter.add_step(
+                            step_no=step_no,
+                            step_name="點擊登錄按鈕",
+                            status="fail",
+                            message=error_msg
+                        )
+                    raise AssertionError(f"[ERROR] {error_msg}")
+                
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="點擊登錄按鈕",
+                        status="pass",
+                        message="成功點擊登錄按鈕"
+                    )
+                step_no += 1
+                
+                # 步驟 5.2: 輸入郵箱（網頁端）
+                self.logger.info("[CASE_2-1] 步驟 5.2: 輸入郵箱...")
+                email = kwargs.get("email", self.config.NX_CLOUD_EMAIL)
+                if not self.nx_cloud_web_page.input_email(email):
+                    error_msg = f"輸入郵箱失敗: {email}"
+                    self.logger.error(f"[CASE_2-1] [ERROR] {error_msg}")
+                    if reporter:
+                        reporter.add_step(
+                            step_no=step_no,
+                            step_name="輸入郵箱",
+                            status="fail",
+                            message=error_msg
+                        )
+                    raise AssertionError(f"[ERROR] {error_msg}")
+                
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="輸入郵箱",
+                        status="pass",
+                        message=f"成功輸入郵箱: {email}"
+                    )
+                step_no += 1
+                
+                # 步驟 5.3: 點擊【下一步】（網頁端）
+                self.logger.info("[CASE_2-1] 步驟 5.3: 點擊【下一步】...")
+                if not self.nx_cloud_web_page.click_next_button():
+                    error_msg = "點擊【下一步】失敗"
+                    self.logger.error(f"[CASE_2-1] [ERROR] {error_msg}")
+                    if reporter:
+                        reporter.add_step(
+                            step_no=step_no,
+                            step_name="點擊【下一步】",
+                            status="fail",
+                            message=error_msg
+                        )
+                    raise AssertionError(f"[ERROR] {error_msg}")
+                
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="點擊【下一步】",
+                        status="pass",
+                        message="成功點擊【下一步】"
+                    )
+                step_no += 1
+                
+                # 步驟 5.4: 輸入密碼（網頁端）
+                self.logger.info("[CASE_2-1] 步驟 5.4: 輸入密碼...")
+                password = kwargs.get("password", self.config.NX_CLOUD_PASSWORD)
+                if not self.nx_cloud_web_page.input_password(password):
+                    error_msg = "輸入密碼失敗"
+                    self.logger.error(f"[CASE_2-1] [ERROR] {error_msg}")
+                    if reporter:
+                        reporter.add_step(
+                            step_no=step_no,
+                            step_name="輸入密碼",
+                            status="fail",
+                            message=error_msg
+                        )
+                    raise AssertionError(f"[ERROR] {error_msg}")
+                
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="輸入密碼",
+                        status="pass",
+                        message="成功輸入密碼"
+                    )
+                step_no += 1
+                
+                # 步驟 5.5: 點擊【登錄】（網頁端）
+                self.logger.info("[CASE_2-1] 步驟 5.5: 點擊【登錄】...")
+                if not self.nx_cloud_web_page.click_login_submit_button():
+                    error_msg = "點擊【登錄】失敗"
+                    self.logger.error(f"[CASE_2-1] [ERROR] {error_msg}")
+                    if reporter:
+                        reporter.add_step(
+                            step_no=step_no,
+                            step_name="點擊【登錄】",
+                            status="fail",
+                            message=error_msg
+                        )
+                    raise AssertionError(f"[ERROR] {error_msg}")
+                
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="點擊【登錄】",
+                        status="pass",
+                        message="成功點擊【登錄】，登錄流程完成"
+                    )
+            else:
+                self.logger.info("[CASE_2-1] 登錄按鈕不存在，可能已經登錄，跳過登錄流程")
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="檢查登錄按鈕",
+                        status="pass",
+                        message="登錄按鈕不存在，可能已經登錄，跳過登錄流程"
+                    )
+            
+        except Exception as e:
+            self.logger.error(f"[CASE_2-1] [ERROR] 執行失敗: {e}")
+            import traceback
+            traceback.print_exc()
+            # 確保關閉 WebDriver（網頁端）
+            try:
+                self.nx_cloud_web_page.close_webdriver()
+            except:
+                pass
+            raise
+        
+        self.logger.info("✅ Case 2-1 完成：已進入 Nx Cloud")
         return self

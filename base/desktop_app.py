@@ -8,6 +8,7 @@ from toolkit.logger import get_logger
 from config import EnvConfig
 from PIL import Image
 import numpy as np
+from typing import Optional, Tuple
 
 class DesktopApp:
     _last_x, _last_y = 0, 0
@@ -25,7 +26,8 @@ class DesktopApp:
         :param message: 日誌內容
         """
         # 替換常見 emoji 為 ASCII 等效字符
-        safe_message = message.replace("🔍", "[DEBUG]").replace("🤖", "[VLM]").replace("📝", "[OCR]").replace("🎯", "[OK]").replace("📸", "[IMG]").replace("📊", "[STAT]").replace("❌", "[ERROR]").replace("✅", "[OK]").replace("⚠️", "[WARN]").replace("⏳", "[WAIT]").replace("🚀", "[START]").replace("💡", "[TIP]")
+        # 按使用頻率排序，確保所有 emoji 都被清理
+        safe_message = message.replace("🟢", "[START]").replace("📸", "[IMG]").replace("🤖", "[VLM]").replace("📝", "[OCR]").replace("📍", "[LOC]").replace("✅", "[OK]").replace("⚠️", "[WARN]").replace("❌", "[ERROR]").replace("⏱️", "[TIMEOUT]").replace("💾", "[SAVE]").replace("⚙️", "[CFG]").replace("🖱️", "[CLICK]").replace("⌨️", "[KEY]").replace("🎬", "[CASE]").replace("🔄", "[SWITCH]").replace("🔍", "[DEBUG]").replace("🎯", "[OK]").replace("📊", "[STAT]").replace("⏳", "[WAIT]").replace("🚀", "[START]").replace("💡", "[TIP]")
         getattr(self.logger, level)(safe_message)
     
     @classmethod
@@ -499,6 +501,18 @@ class DesktopApp:
             self.logger.info(f"[CLICK_COORD] 實際點擊座標: ({final_x}, {final_y}), 動作={click_action}")
             self._safe_log("info", f"[CLICK_COORD] 實際點擊座標: ({final_x}, {final_y}), 動作={click_action}")
             print(f"[CLICK_COORD] 實際點擊座標: ({final_x}, {final_y}), 動作={click_action}")
+        
+        # 🎯 報告優化：點擊前截圖並標記點擊位置
+        reporter = DesktopApp.get_reporter()
+        if reporter and hasattr(reporter, 'add_click_screenshot'):
+            try:
+                reporter.add_click_screenshot(
+                    click_x=final_x,
+                    click_y=final_y,
+                    click_action=click_action
+                )
+            except Exception as e:
+                self.logger.debug(f"[CLICK] 添加點擊截圖失敗: {e}")
         
         # 🎯 使用最終座標執行點擊
         if click_type == 'right':
@@ -1396,20 +1410,33 @@ class DesktopApp:
                     if DesktopApp._reporter and hasattr(DesktopApp._reporter, 'add_recognition_screenshot'):
                         try:
                             item_name = target_text or "VLM_Element"
-                            # 🎯 使用最終點擊座標（已應用偏移），確保綠色標記顯示在實際點擊位置
-                            # 為了在截圖上標記一個框，我們以最終點擊座標為中心點，計算左上角
-                            box_x = final_x - 25  # 假設框的寬度是 50，所以左上角 x = 中心 x - 25
-                            box_y = final_y - 25  # 假設框的高度是 50，所以左上角 y = 中心 y - 25
-                            # 🎯 但傳入實際點擊座標 final_x, final_y 作為標記位置，確保綠色標記顯示在正確位置
-                            DesktopApp._reporter.add_recognition_screenshot(
-                                item_name=item_name,
-                                x=final_x,  # 🎯 使用最終點擊座標，確保綠色標記顯示在實際點擊位置
-                                y=final_y,  # 🎯 使用最終點擊座標，確保綠色標記顯示在實際點擊位置
-                                width=50,
-                                height=50,
-                                method="VLM",
-                                region=region  # 傳入搜尋區域，用於在截圖上標記
-                            )
+                            # 🎯 如果有 VLM 返回的邊界框，使用它；否則使用默認框
+                            if result.box:
+                                box_xmin, box_ymin, box_xmax, box_ymax = result.box
+                                box_width = box_xmax - box_xmin
+                                box_height = box_ymax - box_ymin
+                                # 使用邊界框的左上角和尺寸
+                                DesktopApp._reporter.add_recognition_screenshot(
+                                    item_name=item_name,
+                                    x=final_x,  # 點擊座標（紅色圓點）
+                                    y=final_y,  # 點擊座標（紅色圓點）
+                                    width=50,  # 默認寬度（用於紅色框）
+                                    height=50,  # 默認高度（用於紅色框）
+                                    method="VLM",
+                                    region=region,  # 傳入搜尋區域，用於在截圖上標記
+                                    vlm_box=result.box  # 🎯 傳入 VLM 邊界框（綠色矩形）
+                                )
+                            else:
+                                # 沒有邊界框，使用默認框
+                                DesktopApp._reporter.add_recognition_screenshot(
+                                    item_name=item_name,
+                                    x=final_x,
+                                    y=final_y,
+                                    width=50,
+                                    height=50,
+                                    method="VLM",
+                                    region=region
+                                )
                         except Exception as e:
                             self.logger.debug(f"自動截圖失敗: {e}")
                     
@@ -1887,6 +1914,9 @@ class DesktopApp:
         :param offset_y: Y 軸偏移量（像素），用於所有點擊時微調位置（預設 0）
         :param region: 搜尋區域 (left, top, width, height)，用於限制 VLM/OCR 搜尋範圍（可選）
         """
+        # 方法入口：記錄開始尋找目標
+        self.logger.info(f"[SMART_CLICK] [START] Finding target: text='{target_text}', image='{image_path}', timeout={timeout}s")
+        
         from base.ok_script_recognizer import get_recognizer
         recognizer = get_recognizer()
         recognizer.set_logger(self.logger)
@@ -1897,14 +1927,24 @@ class DesktopApp:
         
         start_time = time.time()
         
+        # 處理圖片路徑
+        original_image_path = image_path  # 保留原始路徑用於日誌
         if image_path:
             if image_path.startswith("res/") or image_path.startswith("res\\"):
                 image_path = image_path[4:]
             full_img = os.path.normpath(os.path.join(EnvConfig.RES_PATH, image_path))
         else:
             full_img = None
+        
+        # 追蹤已嘗試的策略（用於最終總結）
+        # 注意：在循環中，同一個策略可能被嘗試多次，但我們只記錄一次
+        attempted_strategies = []
+        strategy_results = {}  # 記錄每個策略的結果
+        strategy_attempted_in_loop = set()  # 追蹤本輪循環中已嘗試的策略（避免重複記錄）
 
         while time.time() - start_time < timeout:
+            # 每輪循環重置已嘗試策略集合（允許同一策略在不同循環中重試）
+            strategy_attempted_in_loop.clear()
             win = self.get_nx_window()
             if not win:
                 time.sleep(0.1)
@@ -1937,44 +1977,109 @@ class DesktopApp:
             except Exception: 
                 pass
 
-            # 🎯 如果提供了 region 參數，使用它；否則使用整個視窗區域
+            # 如果提供了 region 參數，使用它；否則使用整個視窗區域
             if region is None:
                 region = (win_left, win_top, win_width, win_height)
 
-            # 【優先級 1】如果有 target_text，優先使用文字辨識（VLM/OCR）以確保點擊正確的文字
-            # 這樣可以避免圖片辨識匹配到錯誤的位置（例如 server_tile.png 可能匹配多個卡片）
-            if target_text:
-                # VLM 優先（如果啟用）- 無論 VLM_PRIORITY 是多少，當有 target_text 時都優先嘗試 VLM
-                self._safe_log("info", f"[DEBUG] 檢查 VLM 條件: vlm_enabled={vlm_enabled}, vlm_priority={vlm_priority}, target_text='{target_text}'")
-                try:
-                    print(f"[SMART_CLICK] [DEBUG] 檢查 VLM 條件: vlm_enabled={vlm_enabled}, vlm_priority={vlm_priority}, target_text='{target_text}'")
-                except:
-                    pass
+            # 策略選擇：根據 use_vlm 參數決定優先級
+            # 如果 use_vlm=False 且有圖片，啟用「圖片優先」模式；否則使用傳統模式（VLM 優先）
+            image_first_mode = (use_vlm is False) and full_img and os.path.exists(full_img)
+            
+            if image_first_mode:
+                # 【優先級 1】圖片優先模式：先嘗試圖片辨識
+                if use_ok_script:
+                    strategy_name = f"Image Recognition (OK Script: {original_image_path})"
+                    self.logger.info(f"[SMART_CLICK] [IMG] Trying Image Strategy: {original_image_path}...")
+                    attempted_strategies.append(strategy_name)
+                    if self._try_ok_script_recognition(full_img, region, win, clicks, click_type, 0.7, offset_x, offset_y):
+                        self.logger.info(f"[SMART_CLICK] [IMG] Success.")
+                        return True
+                    else:
+                        self.logger.warning(f"[SMART_CLICK] [IMG] Failed (Confidence too low or not found).")
+                        strategy_results[strategy_name] = "Failed"
                 
-                if vlm_enabled:
-                    self._safe_log("info", f"[VLM] 優先使用 LLM 辨識文字: '{target_text}'")
+                # 【優先級 2】圖片失敗後，嘗試 VLM（作為備選）- 即使 use_vlm=False，也允許 VLM 作為備選
+                if target_text and vlm_enabled:
+                    strategy_name = f"Text/VLM Recognition ('{target_text}')"
+                    priority_mode = "VLM"
+                    self.logger.info(f"[SMART_CLICK] [TEXT] Trying Text Strategy: '{target_text}' (Priority: {priority_mode})...")
+                    attempted_strategies.append(strategy_name)
                     vlm_result = self._try_vlm_recognition(target_text, region, win, clicks, click_type, offset_x, offset_y)
-                    self._safe_log("info", f"[DEBUG] VLM 辨識結果: {vlm_result}")
                     if vlm_result:
+                        self.logger.info(f"[SMART_CLICK] [TEXT] Success.")
                         return True
+                    else:
+                        self.logger.warning(f"[SMART_CLICK] [TEXT] Failed.")
+                        strategy_results[strategy_name] = "Failed"
                 
-                # OCR 優先（如果 VLM 未啟用或失敗）
-                if self._get_ocr_engine():
-                    # 🎯 使用封裝好的方法，確保偏移量正確傳遞
+                # 【優先級 3】VLM 失敗後，嘗試 OCR
+                if target_text and self._get_ocr_engine():
+                    strategy_name = f"OCR Text Recognition ('{target_text}')"
+                    priority_mode = "OCR"
+                    self.logger.info(f"[SMART_CLICK] [TEXT] Trying Text Strategy: '{target_text}' (Priority: {priority_mode})...")
+                    attempted_strategies.append(strategy_name)
                     if self._try_ocr_recognition(target_text, region, win, clicks, click_type, offset_x, offset_y):
+                        self.logger.info(f"[SMART_CLICK] [TEXT] Success.")
                         return True
+                    else:
+                        self.logger.warning(f"[SMART_CLICK] [TEXT] Failed.")
+                        strategy_results[strategy_name] = "Failed"
+                
+                # 【優先級 4】如果沒有使用 OK Script，嘗試 PyAutoGUI 圖片辨識
+                if not use_ok_script:
+                    strategy_name = f"Image Recognition (PyAutoGUI: {original_image_path})"
+                    self.logger.info(f"[SMART_CLICK] [IMG] Trying Image Strategy: {original_image_path}...")
+                    attempted_strategies.append(strategy_name)
+                    if self._try_pyautogui_recognition(full_img, region, win, clicks, click_type, 0.7, offset_x, offset_y):
+                        self.logger.info(f"[SMART_CLICK] [IMG] Success.")
+                        return True
+                    else:
+                        self.logger.warning(f"[SMART_CLICK] [IMG] Failed (Confidence too low or not found).")
+                        strategy_results[strategy_name] = "Failed"
+            else:
+                # 【優先級 1】傳統模式：如果有 target_text，優先使用文字辨識（VLM/OCR）
+                # 這樣可以避免圖片辨識匹配到錯誤的位置（例如 server_tile.png 可能匹配多個卡片）
+                if target_text:
+                    # VLM 優先（如果啟用）- 無論 VLM_PRIORITY 是多少，當有 target_text 時都優先嘗試 VLM
+                    if vlm_enabled:
+                        strategy_name = f"Text/VLM Recognition ('{target_text}')"
+                        priority_mode = "VLM"
+                        self.logger.info(f"[SMART_CLICK] [TEXT] Trying Text Strategy: '{target_text}' (Priority: {priority_mode})...")
+                        attempted_strategies.append(strategy_name)
+                        vlm_result = self._try_vlm_recognition(target_text, region, win, clicks, click_type, offset_x, offset_y)
+                        if vlm_result:
+                            self.logger.info(f"[SMART_CLICK] [TEXT] Success.")
+                            return True
+                        else:
+                            self.logger.warning(f"[SMART_CLICK] [TEXT] Failed.")
+                            strategy_results[strategy_name] = "Failed"
+                    
+                    # OCR 優先（如果 VLM 未啟用或失敗）
+                    if self._get_ocr_engine():
+                        strategy_name = f"OCR Text Recognition ('{target_text}')"
+                        priority_mode = "OCR"
+                        self.logger.info(f"[SMART_CLICK] [TEXT] Trying Text Strategy: '{target_text}' (Priority: {priority_mode})...")
+                        attempted_strategies.append(strategy_name)
+                        if self._try_ocr_recognition(target_text, region, win, clicks, click_type, offset_x, offset_y):
+                            self.logger.info(f"[SMART_CLICK] [TEXT] Success.")
+                            return True
+                        else:
+                            self.logger.warning(f"[SMART_CLICK] [TEXT] Failed.")
+                            strategy_results[strategy_name] = "Failed"
 
-            # 【優先級 2】OK Script / OpenCV Template Matching（圖片辨識作為備選）
-            # 只有在文字辨識（VLM/OCR）都失敗時才使用圖片辨識
-            # 降低置信度閾值（從 0.85 降到 0.7）以提高對畫面變化的容錯性
-            if use_ok_script and full_img and os.path.exists(full_img):
-                self._safe_log("info", f"[OK_SCRIPT] 嘗試使用 OK Script 圖片辨識: {image_path}")
-                # 🎯 使用封裝好的方法，確保偏移量正確傳遞
-                if self._try_ok_script_recognition(full_img, region, win, clicks, click_type, 0.7, offset_x, offset_y):
-                    self._safe_log("info", f"[OK_SCRIPT] 圖片辨識成功")
-                    return True
-                else:
-                    self._safe_log("info", f"[OK_SCRIPT] 圖片辨識失敗，繼續嘗試其他方法")
+                # 【優先級 2】OK Script / OpenCV Template Matching（圖片辨識作為備選）
+                # 只有在文字辨識（VLM/OCR）都失敗時才使用圖片辨識
+                # 降低置信度閾值（從 0.85 降到 0.7）以提高對畫面變化的容錯性
+                if use_ok_script and full_img and os.path.exists(full_img):
+                    strategy_name = f"Image Recognition (OK Script: {original_image_path})"
+                    self.logger.info(f"[SMART_CLICK] [IMG] Trying Image Strategy: {original_image_path}...")
+                    attempted_strategies.append(strategy_name)
+                    if self._try_ok_script_recognition(full_img, region, win, clicks, click_type, 0.7, offset_x, offset_y):
+                        self.logger.info(f"[SMART_CLICK] [IMG] Success.")
+                        return True
+                    else:
+                        self.logger.warning(f"[SMART_CLICK] [IMG] Failed (Confidence too low or not found).")
+                        strategy_results[strategy_name] = "Failed"
 
             # 注意：VLM 已在【優先級 1】處理（當 target_text 存在時）
             # 如果 target_text 存在且 VLM 啟用，VLM 已在【優先級 1】嘗試
@@ -1983,40 +2088,63 @@ class DesktopApp:
             # 【優先級 3】圖片辨識（pyautogui 備用）
             # 降低置信度閾值（從 0.8 降到 0.7）以提高對畫面變化的容錯性
             if full_img and os.path.exists(full_img) and not use_ok_script:
-                self._safe_log("info", f"[PYAUTOGUI] 嘗試使用 PyAutoGUI 圖片辨識: {image_path}")
-                # 🎯 使用封裝好的方法，確保偏移量正確傳遞
+                strategy_name = f"Image Recognition (PyAutoGUI: {original_image_path})"
+                self.logger.info(f"[SMART_CLICK] [IMG] Trying Image Strategy: {original_image_path}...")
+                attempted_strategies.append(strategy_name)
                 if self._try_pyautogui_recognition(full_img, region, win, clicks, click_type, 0.7, offset_x, offset_y):
-                    self._safe_log("info", f"[PYAUTOGUI] 圖片辨識成功")
+                    self.logger.info(f"[SMART_CLICK] [IMG] Success.")
                     return True
                 else:
-                    self._safe_log("info", f"[PYAUTOGUI] 圖片辨識失敗，繼續嘗試其他方法")
+                    self.logger.warning(f"[SMART_CLICK] [IMG] Failed (Confidence too low or not found).")
+                    strategy_results[strategy_name] = "Failed"
             
             # 【優先級 4】OCR 文字辨識（如果【優先級 1】未處理，或【優先級 1】只處理了VLM priority==1的情況）
             # 注意：如果 target_text 存在且【優先級 1】已經處理了OCR，這裡不會再執行
             # 但如果【優先級 1】只處理了VLM priority==1的情況，且VLM失敗，這裡會執行OCR作為備選
             if target_text and self._get_ocr_engine() and not (vlm_enabled and vlm_priority == 1):
-                self._safe_log("info", f"[OCR] 嘗試使用 OCR 文字辨識: '{target_text}'")
-                # 🎯 使用封裝好的方法，確保偏移量正確傳遞
+                strategy_name = f"OCR Text Recognition ('{target_text}')"
+                priority_mode = "OCR"
+                self.logger.info(f"[SMART_CLICK] [TEXT] Trying Text Strategy: '{target_text}' (Priority: {priority_mode})...")
+                attempted_strategies.append(strategy_name)
                 if self._try_ocr_recognition(target_text, region, win, clicks, click_type, offset_x, offset_y):
-                    self._safe_log("info", f"[OCR] 文字辨識成功")
+                    self.logger.info(f"[SMART_CLICK] [TEXT] Success.")
                     return True
                 else:
-                    self._safe_log("info", f"[OCR] 文字辨識失敗，繼續嘗試其他方法")
+                    self.logger.warning(f"[SMART_CLICK] [TEXT] Failed.")
+                    strategy_results[strategy_name] = "Failed"
             
             # 【優先級 5】VLM 在 OCR 後（如果配置 VLM_PRIORITY >= 3）
             if vlm_enabled and vlm_priority >= 3 and target_text:
-                self.logger.info(f"🤖 [VLM] 嘗試使用 LLM 辨識文字: '{target_text}' (優先級 {vlm_priority})")
+                strategy_name = f"Text/VLM Recognition ('{target_text}', Priority: {vlm_priority})"
+                priority_mode = f"VLM (Priority {vlm_priority})"
+                self.logger.info(f"[SMART_CLICK] [TEXT] Trying Text Strategy: '{target_text}' (Priority: {priority_mode})...")
+                attempted_strategies.append(strategy_name)
                 vlm_result = self._try_vlm_recognition(target_text, region, win, clicks, click_type, offset_x, offset_y)
-                self.logger.info(f"🔍 [DEBUG] VLM 優先級 {vlm_priority} 辨識結果: {vlm_result}")
                 if vlm_result:
+                    self.logger.info(f"[SMART_CLICK] [TEXT] Success.")
                     return True
                 else:
-                    self.logger.info(f"🤖 [VLM] 辨識失敗，繼續嘗試其他方法")
+                    self.logger.warning(f"[SMART_CLICK] [TEXT] Failed.")
+                    strategy_results[strategy_name] = "Failed"
             
             time.sleep(0.15)  # 減少等待間隔
+        
+        # 循環超時：記錄超時信息
+        elapsed_time = time.time() - start_time
+        if elapsed_time >= timeout:
+            self.logger.warning(f"[SMART_CLICK] [TIMEOUT] Recognition timeout ({timeout}s), attempted strategies: {len(attempted_strategies)}")
 
-        # 【優先級 4】座標保底 - 當所有辨識方法都失敗時使用
-        self._safe_log("warning", f"[COORD] 所有辨識方法都失敗，使用座標保底 (x_ratio={x_ratio}, y_ratio={y_ratio}, clicks={clicks})")
+        # 【優先級 最後】座標保底 - 當所有辨識方法都失敗時使用
+        # 總結失敗：記錄所有嘗試過的策略
+        if attempted_strategies:
+            failed_strategies = ", ".join(attempted_strategies)
+            self.logger.error(f"[SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: {failed_strategies}")
+        else:
+            self.logger.error(f"[SMART_CLICK] [FAIL] All strategies failed (No available recognition methods).")
+        
+        # 嘗試座標保底
+        strategy_name = f"Coordinate Fallback (Ratio: {x_ratio:.3f}, {y_ratio:.3f})"
+        self.logger.info(f"[SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio ({x_ratio:.3f}, {y_ratio:.3f})...")
         
         # 重新獲取視窗（可能已經改變）
         win = self.get_nx_window()
@@ -2032,29 +2160,45 @@ class DesktopApp:
                 if is_relative:
                     tx = DesktopApp._last_x + x_ratio
                     ty = DesktopApp._last_y + y_ratio
-                    self._safe_log("info", f"[COORD] 執行相對座標點擊: 原始座標=({tx}, {ty}), 偏移=(offset_x={offset_x}, offset_y={offset_y}), clicks={clicks}")
+                    self.logger.debug(f"[SMART_CLICK] [COORD] Executing relative coordinate click: ({tx}, {ty}), offset=({offset_x}, {offset_y}), clicks={clicks}")
                 elif from_bottom:
                     tx = win.left + int(win.width * x_ratio)
                     ty = win.top + win.height - int(win.height * y_ratio)
-                    self._safe_log("info", f"[COORD] 執行視窗底部對齊點擊: 原始座標=({tx}, {ty}), 偏移=(offset_x={offset_x}, offset_y={offset_y}), clicks={clicks}")
+                    self.logger.debug(f"[SMART_CLICK] [COORD] Executing bottom-aligned click: ({tx}, {ty}), offset=({offset_x}, {offset_y}), clicks={clicks}")
                 else:
                     tx = win.left + int(win.width * x_ratio)
                     ty = win.top + int(win.height * y_ratio)
-                    self._safe_log("info", f"[COORD] 執行視窗比例點擊: 原始座標=({tx}, {ty}), 偏移=(offset_x={offset_x}, offset_y={offset_y}), clicks={clicks}")
+                    self.logger.debug(f"[SMART_CLICK] [COORD] Executing ratio-based click: ({tx}, {ty}), offset=({offset_x}, {offset_y}), clicks={clicks}")
                 
-                # 🎯 執行點擊並獲取最終座標（應用偏移）
+                # 執行點擊並獲取最終座標（應用偏移）
                 final_x, final_y = self._perform_click(tx, ty, clicks, click_type, offset_x, offset_y)
-                # 🎯 使用最終座標記錄（已應用偏移）
+                # 使用最終座標記錄（已應用偏移）
                 DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
-                self._safe_log("info", f"[COORD] 座標保底點擊成功: 最終座標=({final_x}, {final_y})")
+                
+                # 🎯 添加報告截圖（標記座標保底點擊位置）
+                if DesktopApp._reporter and hasattr(DesktopApp._reporter, 'add_recognition_screenshot'):
+                    try:
+                        DesktopApp._reporter.add_recognition_screenshot(
+                            item_name="Coordinate Fallback",
+                            x=final_x,
+                            y=final_y,
+                            width=50,
+                            height=50,
+                            method="Coordinate",
+                            region=region if region else (win.left, win.top, win.width, win.height)
+                        )
+                    except Exception as e:
+                        self.logger.debug(f"座標保底截圖失敗: {e}")
+                
+                self.logger.info(f"[SMART_CLICK] [COORD] Success. Final coordinates: ({final_x}, {final_y})")
                 return True
             except Exception as e:
-                self._safe_log("error", f"[ERROR] 座標保底點擊失敗: {e}")
+                self.logger.error(f"[SMART_CLICK] [COORD] Failed. Error: {e}")
                 import traceback
                 traceback.print_exc()
                 return False
         else:
-            self._safe_log("error", f"[ERROR] 找不到視窗，座標保底失敗")
+            self.logger.error(f"[SMART_CLICK] [COORD] Failed. Window not found.")
             return False
     
     def get_recognition_stats(self) -> str:
@@ -2188,14 +2332,18 @@ class DesktopApp:
             img = Image.frombytes('RGB', screenshot.size, screenshot.tobytes())
             draw = ImageDraw.Draw(img)
             
-            # 提取掃描區域座標
-            scan_left, scan_top, scan_width, scan_height = scan_region
+            # 🎯 獲取 DPI 縮放比例（修復高 DPI 螢幕下的座標偏移問題）
+            img_width, img_height = img.size
+            screen_w, screen_h = pyautogui.size()
+            scale_x = img_width / screen_w
+            scale_y = img_height / screen_h
             
-            # 用紅框標記掃描區域
-            rect_left = scan_left
-            rect_top = scan_top
-            rect_right = scan_left + scan_width
-            rect_bottom = scan_top + scan_height
+            # 提取掃描區域座標並應用 DPI 縮放
+            scan_left, scan_top, scan_width, scan_height = scan_region
+            rect_left = int(scan_left * scale_x)
+            rect_top = int(scan_top * scale_y)
+            rect_right = int((scan_left + scan_width) * scale_x)
+            rect_bottom = int((scan_top + scan_height) * scale_y)
             
             # 繪製紅色矩形框（線寬 3px）
             draw.rectangle(
@@ -2204,12 +2352,12 @@ class DesktopApp:
                 width=3
             )
             
-            # 標記視窗範圍（藍色框）
+            # 標記視窗範圍（藍色框）- 應用 DPI 縮放
             if win:
-                win_rect_left = win.left
-                win_rect_top = win.top
-                win_rect_right = win.left + win.width
-                win_rect_bottom = win.top + win.height
+                win_rect_left = int(win.left * scale_x)
+                win_rect_top = int(win.top * scale_y)
+                win_rect_right = int((win.left + win.width) * scale_x)
+                win_rect_bottom = int((win.top + win.height) * scale_y)
                 draw.rectangle(
                     [win_rect_left, win_rect_top, win_rect_right, win_rect_bottom],
                     outline="blue",
@@ -2267,14 +2415,18 @@ class DesktopApp:
             img = Image.frombytes('RGB', screenshot.size, screenshot.tobytes())
             draw = ImageDraw.Draw(img)
             
-            # 提取掃描區域座標
-            scan_left, scan_top, scan_width, scan_height = scan_region
+            # 🎯 獲取 DPI 縮放比例（修復高 DPI 螢幕下的座標偏移問題）
+            img_width, img_height = img.size
+            screen_w, screen_h = pyautogui.size()
+            scale_x = img_width / screen_w
+            scale_y = img_height / screen_h
             
-            # 用紅框標記掃描區域
-            rect_left = scan_left
-            rect_top = scan_top
-            rect_right = scan_left + scan_width
-            rect_bottom = scan_top + scan_height
+            # 提取掃描區域座標並應用 DPI 縮放
+            scan_left, scan_top, scan_width, scan_height = scan_region
+            rect_left = int(scan_left * scale_x)
+            rect_top = int(scan_top * scale_y)
+            rect_right = int((scan_left + scan_width) * scale_x)
+            rect_bottom = int((scan_top + scan_height) * scale_y)
             
             # 繪製紅色矩形框（線寬 3px）
             draw.rectangle(
@@ -2283,12 +2435,12 @@ class DesktopApp:
                 width=3
             )
             
-            # 標記視窗範圍（藍色框）
+            # 標記視窗範圍（藍色框）- 應用 DPI 縮放
             if win:
-                win_rect_left = win.left
-                win_rect_top = win.top
-                win_rect_right = win.left + win.width
-                win_rect_bottom = win.top + win.height
+                win_rect_left = int(win.left * scale_x)
+                win_rect_top = int(win.top * scale_y)
+                win_rect_right = int((win.left + win.width) * scale_x)
+                win_rect_bottom = int((win.top + win.height) * scale_y)
                 draw.rectangle(
                     [win_rect_left, win_rect_top, win_rect_right, win_rect_bottom],
                     outline="blue",
@@ -2297,16 +2449,18 @@ class DesktopApp:
                 # 標記視窗信息
                 draw.text((win_rect_left + 5, win_rect_top + 5), f"Window: {win.title}", fill="blue")
             
-            # 標記 VLM 返回的錯誤座標（黃色圓圈）
+            # 標記 VLM 返回的錯誤座標（黃色圓圈）- 應用 DPI 縮放
             if abs(vlm_x) < 100000 and abs(vlm_y) < 100000:  # 只標記合理的座標範圍
+                vlm_x_scaled = int(vlm_x * scale_x)
+                vlm_y_scaled = int(vlm_y * scale_y)
                 # 繪製黃色圓圈標記 VLM 返回的座標
                 circle_radius = 10
                 draw.ellipse(
-                    [vlm_x - circle_radius, vlm_y - circle_radius, vlm_x + circle_radius, vlm_y + circle_radius],
+                    [vlm_x_scaled - circle_radius, vlm_y_scaled - circle_radius, vlm_x_scaled + circle_radius, vlm_y_scaled + circle_radius],
                     outline="yellow",
                     width=3
                 )
-                draw.text((vlm_x + 15, vlm_y), f"VLM Coord: ({vlm_x}, {vlm_y})", fill="yellow")
+                draw.text((vlm_x_scaled + 15, vlm_y_scaled), f"VLM Coord: ({vlm_x}, {vlm_y})", fill="yellow")
             
             # 標記掃描區域信息
             draw.text((rect_left + 5, rect_top + 5), f"Scan Region: ({scan_left}, {scan_top}, {scan_width}, {scan_height})", fill="red")
@@ -2359,23 +2513,34 @@ class DesktopApp:
             img = Image.frombytes('RGB', screenshot.size, screenshot.tobytes())
             draw = ImageDraw.Draw(img)
             
-            # 標記掃描區域（如果有）
+            # 🎯 獲取 DPI 縮放比例（修復高 DPI 螢幕下的座標偏移問題）
+            img_width, img_height = img.size  # 截圖的物理尺寸
+            screen_w, screen_h = pyautogui.size()  # 螢幕的邏輯尺寸
+            scale_x = img_width / screen_w  # X 軸縮放比例
+            scale_y = img_height / screen_h  # Y 軸縮放比例
+            
+            # 標記掃描區域（如果有）- 應用 DPI 縮放
             if scan_region:
                 scan_left, scan_top, scan_width, scan_height = scan_region
+                # 將邏輯座標轉換為截圖座標
+                scan_left_scaled = int(scan_left * scale_x)
+                scan_top_scaled = int(scan_top * scale_y)
+                scan_width_scaled = int(scan_width * scale_x)
+                scan_height_scaled = int(scan_height * scale_y)
                 # 用紅框標記掃描區域
                 draw.rectangle(
-                    [scan_left, scan_top, scan_left + scan_width, scan_top + scan_height],
+                    [scan_left_scaled, scan_top_scaled, scan_left_scaled + scan_width_scaled, scan_top_scaled + scan_height_scaled],
                     outline="red",
                     width=2
                 )
-                draw.text((scan_left + 5, scan_top + 5), f"Scan Region: ({scan_left}, {scan_top}, {scan_width}, {scan_height})", fill="red")
+                draw.text((scan_left_scaled + 5, scan_top_scaled + 5), f"Scan Region: ({scan_left}, {scan_top}, {scan_width}, {scan_height})", fill="red")
             
-            # 標記視窗範圍（藍色框）
+            # 標記視窗範圍（藍色框）- 應用 DPI 縮放
             if win:
-                win_rect_left = win.left
-                win_rect_top = win.top
-                win_rect_right = win.left + win.width
-                win_rect_bottom = win.top + win.height
+                win_rect_left = int(win.left * scale_x)
+                win_rect_top = int(win.top * scale_y)
+                win_rect_right = int((win.left + win.width) * scale_x)
+                win_rect_bottom = int((win.top + win.height) * scale_y)
                 draw.rectangle(
                     [win_rect_left, win_rect_top, win_rect_right, win_rect_bottom],
                     outline="blue",
@@ -2384,17 +2549,19 @@ class DesktopApp:
                 # 標記視窗信息
                 draw.text((win_rect_left + 5, win_rect_top + 5), f"Window: {win.title}", fill="blue")
             
-            # 標記實際點擊的座標（綠色圓圈和十字）
+            # 標記實際點擊的座標（綠色圓圈和十字）- 應用 DPI 縮放
+            click_x_scaled = int(click_x * scale_x)
+            click_y_scaled = int(click_y * scale_y)
             circle_radius = 15
             draw.ellipse(
-                [click_x - circle_radius, click_y - circle_radius, click_x + circle_radius, click_y + circle_radius],
+                [click_x_scaled - circle_radius, click_y_scaled - circle_radius, click_x_scaled + circle_radius, click_y_scaled + circle_radius],
                 outline="green",
                 width=3
             )
             # 繪製十字標記
-            draw.line([(click_x - 20, click_y), (click_x + 20, click_y)], fill="green", width=3)
-            draw.line([(click_x, click_y - 20), (click_x, click_y + 20)], fill="green", width=3)
-            draw.text((click_x + circle_radius + 5, click_y - circle_radius), f"ACTUAL CLICK: ({click_x}, {click_y})", fill="green")
+            draw.line([(click_x_scaled - 20, click_y_scaled), (click_x_scaled + 20, click_y_scaled)], fill="green", width=3)
+            draw.line([(click_x_scaled, click_y_scaled - 20), (click_x_scaled, click_y_scaled + 20)], fill="green", width=3)
+            draw.text((click_x_scaled + circle_radius + 5, click_y_scaled - circle_radius), f"ACTUAL CLICK: ({click_x}, {click_y})", fill="green")
             
             # 保存截圖
             screenshot_path = os.path.join(debug_dir, f"{step_name}_{timestamp}.png")
@@ -2407,3 +2574,194 @@ class DesktopApp:
         except Exception as e:
             self.logger.warning(f"[VLM_SCAN] [SCREENSHOT] 保存點擊座標截圖失敗: {e}")
             print(f"[VLM_SCAN] [SCREENSHOT] 保存點擊座標截圖失敗: {e}")
+    
+    # ==================== 智慧展開邏輯（DRY：統一實現在基類中）====================
+    
+    def _check_camera_visible(self, camera_name: str) -> bool:
+        """
+        檢查相機節點是否已在畫面上可見（純檢查，不執行任何操作）
+        
+        此方法使用圖片辨識和 OCR 兩種方式檢查相機是否已展開可見。
+        這是智慧展開邏輯的第一步，避免無意義的雙擊 Server Icon。
+        
+        Args:
+            camera_name: 相機名稱，例如 "usb_cam"
+        
+        Returns:
+            bool: 如果相機可見返回 True，否則返回 False
+        
+        Note:
+            - 此方法只檢查，不點擊，符合 SRP 原則
+            - 使用配置中的搜索區域比例，避免硬編碼
+        """
+        win = self.get_nx_window()
+        if not win:
+            self.logger.debug("[Tree] 無法獲取視窗，無法檢查相機可見性")
+            return False
+        
+        # 使用配置中的搜索區域比例（避免硬編碼）
+        cam_config = EnvConfig.CAMERA_SETTINGS
+        left_panel_region = (
+            win.left,
+            win.top + int(win.height * cam_config.LEFT_PANEL_Y_START),
+            int(win.width * cam_config.LEFT_PANEL_X_RATIO),
+            int(win.height * cam_config.LEFT_PANEL_Y_HEIGHT)
+        )
+        
+        # 方法 1: 使用圖片辨識檢查（純檢測，不點擊）
+        # 圖片辨識是最可靠的方式，因為相機圖標的視覺特徵穩定
+        from base.ok_script_recognizer import get_recognizer
+        recognizer = get_recognizer()
+        full_img = os.path.normpath(os.path.join(EnvConfig.RES_PATH, EnvConfig.APP_PATHS.USB_CAM_ITEM))
+        
+        if os.path.exists(full_img):
+            # locate_on_screen 返回 RecognitionResult，包含 success 屬性
+            result = recognizer.locate_on_screen(full_img, region=left_panel_region, confidence=0.7)
+            if result and result.success:
+                self.logger.info(f"[Tree] 圖片辨識：相機節點已可見（位置: {result.x}, {result.y}）")
+                return True
+        
+        # 方法 2: 如果圖片辨識失敗，嘗試 OCR 檢查
+        # OCR 作為備選方案，因為文字辨識可能受到字體、大小、背景影響
+        try:
+            ocr_engine = self._get_ocr_engine()
+            if ocr_engine:
+                # 截取左側面板區域進行 OCR 掃描
+                screenshot = pyautogui.screenshot(region=left_panel_region)
+                
+                # OCR 返回格式：[[(bbox, (text, confidence)), ...], ...]
+                # 這是一個嵌套列表結構：
+                # - 外層列表：可能包含多個檢測區域（通常只有一個）
+                # - 內層列表：每個區域的檢測結果
+                # - 每個結果：tuple，第一個元素是邊界框，第二個元素是 (text, confidence)
+                ocr_result = ocr_engine.ocr(np.array(screenshot), cls=False)
+                
+                if ocr_result and ocr_result[0]:
+                    # 遍歷 OCR 結果，尋找包含相機名稱的文字
+                    for line in ocr_result[0]:
+                        if line and len(line) > 1:
+                            # line[1] 可能是 tuple (text, confidence) 或直接是 text
+                            # 使用 isinstance 檢查並安全提取文字，避免類型錯誤
+                            text = line[1][0] if isinstance(line[1], (list, tuple)) else str(line[1])
+                            
+                            # 使用大小寫不敏感的匹配，提高容錯性
+                            if camera_name.lower() in text.lower():
+                                self.logger.info(f"[Tree] OCR 辨識：相機節點已可見（文字: {text}）")
+                                return True
+        except Exception as e:
+            # OCR 檢查失敗不應該影響整體流程，只記錄 debug 級別日誌
+            self.logger.debug(f"[Tree] OCR 檢查失敗: {e}")
+        
+        return False
+    
+    def _expand_server_if_needed(self) -> bool:
+        """
+        如果需要，展開 Server 節點（純展開操作，不操作相機）
+        
+        此方法負責雙擊 Server Icon 以展開樹狀結構。
+        這是智慧展開邏輯的第二步，只在相機不可見時執行。
+        
+        Returns:
+            bool: 如果成功展開返回 True，否則返回 False
+        
+        Note:
+            - 此方法只展開，不檢查相機，符合 SRP 原則
+            - 使用配置中的 Server Icon 位置和等待時間
+        """
+        self.logger.info("[Tree] 雙擊 Server Icon 進行展開...")
+        
+        cam_config = EnvConfig.CAMERA_SETTINGS
+        thresholds = EnvConfig.THRESHOLDS
+        
+        # 使用配置中的 Server Icon 位置比例
+        success = self.smart_click(
+            x_ratio=cam_config.SERVER_ICON_X_RATIO,
+            y_ratio=cam_config.SERVER_ICON_Y_RATIO,
+            target_text="Server",
+            image_path=EnvConfig.APP_PATHS.SERVER_ICON,
+            clicks=2,  # 雙擊
+            timeout=3
+        )
+        
+        if success:
+            self.logger.info("[Tree] ✅ 成功雙擊 Server Icon")
+            # 使用配置中的等待時間（避免硬編碼）
+            time.sleep(thresholds.TREE_EXPAND_WAIT_TIME)
+            return True
+        else:
+            self.logger.warning("[Tree] ⚠️ 雙擊 Server Icon 失敗")
+            return False
+    
+    def _ensure_camera_visible_and_interact(
+        self, 
+        action: str = "right_click", 
+        camera_name: str = None
+    ) -> bool:
+        """
+        智慧展開邏輯：如果相機已在畫面上，直接操作；否則先展開 Server。
+        
+        此方法組合了檢查、展開、操作三個步驟，實現完整的智慧展開流程。
+        符合 SRP 原則：此方法的唯一責任是「確保相機可見並執行操作」。
+        
+        Args:
+            action: 操作類型，可選值：
+                - "right_click": 右鍵點擊（預設）
+                - "double_click": 雙擊
+                - "click": 單擊
+            camera_name: 相機名稱，如果為 None 則使用配置中的預設值
+        
+        Returns:
+            bool: 操作是否成功
+        
+        Example:
+            >>> # 右鍵點擊相機（智慧展開）
+            >>> success = self._ensure_camera_visible_and_interact("right_click", "usb_cam")
+            >>> 
+            >>> # 雙擊相機（智慧展開）
+            >>> success = self._ensure_camera_visible_and_interact("double_click")
+        
+        Note:
+            - 此方法內部調用 _check_camera_visible 和 _expand_server_if_needed
+            - 使用配置中的相機名稱和資源路徑，避免硬編碼
+        """
+        # 使用配置中的預設相機名稱（避免硬編碼）
+        if camera_name is None:
+            camera_name = EnvConfig.CAMERA_SETTINGS.DEFAULT_CAMERA_NAME
+        
+        self.logger.info(f"[Tree] 檢查相機節點是否可見: {camera_name}...")
+        
+        # 步驟 1: 檢查相機是否已可見
+        camera_visible = self._check_camera_visible(camera_name)
+        
+        if camera_visible:
+            self.logger.info("[Tree] ✅ 相機節點已可見，跳過 Server 展開")
+        else:
+            # 步驟 2: 相機不可見，需要展開 Server
+            expand_success = self._expand_server_if_needed()
+            if not expand_success:
+                # 展開失敗，但繼續嘗試操作（可能相機已經在其他位置）
+                self.logger.warning("[Tree] ⚠️ Server 展開失敗，但繼續嘗試操作相機")
+        
+        # 步驟 3: 對相機進行實際操作
+        self.logger.info(f"[Tree] 對相機執行操作: {action}")
+        
+        # 根據 action 類型設置點擊參數
+        # 使用字典映射提高可讀性和可維護性
+        action_config = {
+            "right_click": {"click_type": "right", "clicks": 1},
+            "double_click": {"click_type": "left", "clicks": 2},
+            "click": {"click_type": "left", "clicks": 1}
+        }
+        
+        config = action_config.get(action, action_config["right_click"])  # 預設右鍵
+        cam_config = EnvConfig.CAMERA_SETTINGS
+        
+        return self.smart_click_priority_image(
+            x_ratio=cam_config.CAMERA_ITEM_X_RATIO,
+            y_ratio=cam_config.CAMERA_ITEM_Y_RATIO,
+            target_text=camera_name,  # 使用相機名稱作為備選
+            image_path=EnvConfig.APP_PATHS.USB_CAM_ITEM,  # 使用配置中的路徑
+            click_type=config["click_type"],
+            clicks=config["clicks"],
+            timeout=3
+        )

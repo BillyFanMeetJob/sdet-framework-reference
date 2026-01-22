@@ -12,7 +12,8 @@ def _safe_encode_message(message):
         return message
     
     # 替換常見 emoji 為 ASCII 等效字符
-    safe_message = message.replace("🔍", "[DEBUG]").replace("🤖", "[VLM]").replace("📝", "[OCR]").replace("🎯", "[OK]").replace("📸", "[IMG]").replace("📊", "[STAT]").replace("❌", "[ERROR]").replace("✅", "[OK]").replace("⚠️", "[WARN]").replace("⏳", "[WAIT]").replace("🚀", "[START]").replace("💡", "[TIP]").replace("🖱️", "[CLICK]").replace("⌨️", "[KEY]").replace("🎬", "[CASE]").replace("🔄", "[SWITCH]")
+    # 按使用頻率排序，確保所有 emoji 都被清理
+    safe_message = message.replace("🟢", "[START]").replace("📸", "[IMG]").replace("🤖", "[VLM]").replace("📝", "[OCR]").replace("📍", "[LOC]").replace("✅", "[OK]").replace("⚠️", "[WARN]").replace("❌", "[ERROR]").replace("⏱️", "[TIMEOUT]").replace("💾", "[SAVE]").replace("⚙️", "[CFG]").replace("🖱️", "[CLICK]").replace("⌨️", "[KEY]").replace("🎬", "[CASE]").replace("🔄", "[SWITCH]").replace("🔍", "[DEBUG]").replace("🎯", "[OK]").replace("📊", "[STAT]").replace("⏳", "[WAIT]").replace("🚀", "[START]").replace("💡", "[TIP]")
     return safe_message
 
 

@@ -7,7 +7,7 @@ UI 樹狀結構傾倒腳本 (UI Tree Dumper)
 使用方法:
     python scripts/dump_ui_tree.py
 """
-
+import time
 import sys
 import os
 from pathlib import Path
@@ -121,6 +121,7 @@ def dump_ui_tree():
 
 def main():
     """主函數"""
+    time.sleep(5)
     try:
         success = dump_ui_tree()
         if success:
