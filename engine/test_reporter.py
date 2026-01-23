@@ -20,11 +20,19 @@ from config import EnvConfig
 class TestReporter:
     """測試報告生成器"""
     
-    def __init__(self, test_name: str):
+    def __init__(self, test_name: str, mobile_driver=None):
+        """
+        初始化測試報告生成器
+        
+        Args:
+            test_name: 測試名稱
+            mobile_driver: Appium WebDriver 實例（用於移動端測試截圖，可選）
+        """
         self.test_name = test_name
         self.start_time = datetime.now()
         self.end_time = None
         self.steps: List[Dict] = []
+        self.mobile_driver = mobile_driver  # 保存 mobile_driver 引用，用於截圖
         
         # 建立報告目錄結構
         self.report_dir = self._create_report_directory()
@@ -35,6 +43,10 @@ class TestReporter:
         
         # 用於記錄自動截圖（每次辨識成功時保存）
         self.recognition_screenshots: List[Dict] = []
+        
+        # 初始化 logger（用於調試日誌）
+        import logging
+        self.logger = logging.getLogger(self.__class__.__name__)
     
     def _create_report_directory(self) -> str:
         """
@@ -43,7 +55,22 @@ class TestReporter:
         report/
         └── <TestName>/
             └── <YYYY-MM-DD_HH-MM-SS>/
+        
+        如果環境變數 TEST_REPORT_DIR 已設置，則使用該目錄（確保與 test_case_launcher 使用相同的目錄）
         """
+        # 檢查環境變數，如果已設置則使用（由 test_case_launcher 傳遞）
+        import os
+        test_report_dir = os.environ.get('TEST_REPORT_DIR')
+        if test_report_dir:
+            # 確保目錄存在
+            os.makedirs(test_report_dir, exist_ok=True)
+            # 記錄使用的目錄（用於調試）
+            import logging
+            logger = logging.getLogger(self.__class__.__name__)
+            logger.info(f"[TEST_REPORTER] 使用環境變數指定的報告目錄: {test_report_dir}")
+            return test_report_dir
+        
+        # 否則使用原有邏輯創建目錄
         project_root = EnvConfig.PROJECT_ROOT
         report_base = os.path.join(project_root, "report")
         
@@ -106,8 +133,38 @@ class TestReporter:
         :param verification_items: 檢核項目列表
         :return: 截圖檔案路徑
         """
-        # 截取全屏
-        screenshot = pyautogui.screenshot()
+        # 🎯 根據是否有 mobile_driver 決定截圖方式
+        # - 如果有 mobile_driver：使用 Appium 截圖（只截取手機模擬器）
+        # - 如果沒有 mobile_driver：使用 pyautogui 截圖（全屏）
+        if self.mobile_driver:
+            # Mobile 測試：使用 Appium 截圖
+            try:
+                import tempfile
+                temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+                temp_path = temp_file.name
+                temp_file.close()
+                
+                # 使用 Appium 的 save_screenshot 方法截圖（只截取手機模擬器）
+                self.mobile_driver.save_screenshot(temp_path)
+                
+                # 讀取截圖並轉換為 PIL Image
+                from PIL import Image
+                screenshot = Image.open(temp_path)
+                
+                # 刪除臨時文件
+                try:
+                    os.unlink(temp_path)
+                except:
+                    pass
+            except Exception as e:
+                # 如果 Appium 截圖失敗，回退到全屏截圖並記錄警告
+                import logging
+                logger = logging.getLogger(self.__class__.__name__)
+                logger.warning(f"[REPORTER] Mobile 截圖失敗，回退到全屏截圖: {e}")
+                screenshot = pyautogui.screenshot()
+        else:
+            # Desktop/Web 測試：使用 pyautogui 截圖（全屏）
+            screenshot = pyautogui.screenshot()
         
         # 轉換為 PIL Image
         img = screenshot.convert('RGB')
@@ -156,7 +213,8 @@ class TestReporter:
         y: int,
         width: int,
         height: int,
-        region: Tuple[int, int, int, int] = None
+        region: Tuple[int, int, int, int] = None,
+        vlm_box: Tuple[int, int, int, int] = None  # VLM 邊界框 (xmin, ymin, xmax, ymax)
     ) -> str:
         """
         截圖並在圖中標出辨識物件和搜尋範圍
@@ -170,8 +228,36 @@ class TestReporter:
         :param region: 搜尋區域 (left, top, width, height)
         :return: 截圖檔案路徑
         """
-        # 截取全屏
-        screenshot = pyautogui.screenshot()
+        # 🎯 根據是否有 mobile_driver 決定截圖方式
+        if self.mobile_driver:
+            # Mobile 測試：使用 Appium 截圖
+            try:
+                import tempfile
+                temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+                temp_path = temp_file.name
+                temp_file.close()
+                
+                # 使用 Appium 的 save_screenshot 方法截圖（只截取手機模擬器）
+                self.mobile_driver.save_screenshot(temp_path)
+                
+                # 讀取截圖並轉換為 PIL Image
+                from PIL import Image
+                screenshot = Image.open(temp_path)
+                
+                # 刪除臨時文件
+                try:
+                    os.unlink(temp_path)
+                except:
+                    pass
+            except Exception as e:
+                # 如果 Appium 截圖失敗，回退到全屏截圖並記錄警告
+                import logging
+                logger = logging.getLogger(self.__class__.__name__)
+                logger.warning(f"[REPORTER] Mobile 截圖失敗，回退到全屏截圖: {e}")
+                screenshot = pyautogui.screenshot()
+        else:
+            # Desktop/Web 測試：使用 pyautogui 截圖（全屏）
+            screenshot = pyautogui.screenshot()
         
         # 轉換為 PIL Image
         img = screenshot.convert('RGB')
@@ -219,8 +305,58 @@ class TestReporter:
             region_info = f"Search Region: ({region_left}, {region_top}, {region_width}, {region_height})"
             draw.text((region_left + 5, region_top - 25), region_info, fill="yellow", font=font)
         
-        # 🎯 標記辨識到的物件（紅色實線矩形）
-        rect = [x, y, x + width, y + height]
+        # 🎯 獲取 DPI 縮放比例（修復高 DPI 螢幕下的座標偏移問題）
+        # Windows 的 DPI 縮放會導致截圖的物理尺寸與 pyautogui 的邏輯尺寸不一致
+        # 例如：150% DPI 縮放時，1920x1080 邏輯解析度對應 2880x1620 物理解析度
+        # 重要：縮放比例只用於繪圖，不應用於點擊座標（pyautogui 會自動處理 OS 縮放）
+        img_width, img_height = img.size  # 截圖的物理尺寸（實際像素）
+        screen_w, screen_h = pyautogui.size()  # 螢幕的邏輯尺寸（pyautogui 座標系）
+        scale_x = img_width / screen_w  # X 軸縮放比例
+        scale_y = img_height / screen_h  # Y 軸縮放比例
+        
+        # 🎯 標記 VLM 邊界框（綠色實線矩形）- 優先繪製，確保在紅色框下方
+        if vlm_box:
+            box_xmin, box_ymin, box_xmax, box_ymax = vlm_box
+            
+            # 🎯 檢查是否為正規化座標（0.0-1.0），如果是則轉換為像素座標
+            is_normalized = all(0.0 <= v <= 1.0 for v in vlm_box)
+            
+            if is_normalized:
+                # 正規化座標：先轉換為邏輯像素座標，再應用 DPI 縮放（用於繪圖）
+                box_xmin = int(box_xmin * screen_w * scale_x)
+                box_ymin = int(box_ymin * screen_h * scale_y)
+                box_xmax = int(box_xmax * screen_w * scale_x)
+                box_ymax = int(box_ymax * screen_h * scale_y)
+                self.logger.debug(f"[VLM_BOX] 檢測到正規化座標，轉換為像素座標（已應用 DPI 縮放）: ({box_xmin}, {box_ymin}, {box_xmax}, {box_ymax})")
+            else:
+                # 絕對座標：直接應用 DPI 縮放（因為座標來自 pyautogui 邏輯座標系，需要轉換為截圖物理座標系）
+                box_xmin = int(box_xmin * scale_x)
+                box_ymin = int(box_ymin * scale_y)
+                box_xmax = int(box_xmax * scale_x)
+                box_ymax = int(box_ymax * scale_y)
+                self.logger.debug(f"[VLM_BOX] 絕對座標已應用 DPI 縮放: scale=({scale_x:.2f}, {scale_y:.2f}), 座標=({box_xmin}, {box_ymin}, {box_xmax}, {box_ymax})")
+            
+            vlm_rect = [box_xmin, box_ymin, box_xmax, box_ymax]
+            draw.rectangle(vlm_rect, outline='green', width=2)
+            
+            # 標註 VLM 邊界框信息（在框的下方，避免與其他標籤重疊）
+            try:
+                vlm_font = ImageFont.truetype("arial.ttf", 12)
+            except:
+                vlm_font = ImageFont.load_default()
+            
+            vlm_label = f"VLM Box: ({box_xmin}, {box_ymin}, {box_xmax}, {box_ymax})"
+            # 在框的下方顯示標籤
+            label_y = box_ymax + 5
+            draw.text((box_xmin, label_y), vlm_label, fill='green', font=vlm_font)
+        
+        # 🎯 標記辨識到的物件（紅色實線矩形）- 應用 DPI 縮放
+        # x, y, width, height 是邏輯座標，需要轉換為物理像素座標用於繪圖
+        rect_x = int(x * scale_x)
+        rect_y = int(y * scale_y)
+        rect_width = int(width * scale_x)
+        rect_height = int(height * scale_y)
+        rect = [rect_x, rect_y, rect_x + rect_width, rect_y + rect_height]
         draw.rectangle(rect, outline='red', width=3)
         
         # 標註物件名稱
@@ -229,34 +365,43 @@ class TestReporter:
         except:
             font = ImageFont.load_default()
         
-        # 在框的上方顯示名稱
-        text_bbox = draw.textbbox((x, y - 20), item_name, font=font)
+        # 在框的上方顯示名稱（使用縮放後的座標）
+        text_bbox = draw.textbbox((rect_x, rect_y - 20), item_name, font=font)
         draw.rectangle(
             [text_bbox[0] - 2, text_bbox[1] - 2, text_bbox[2] + 2, text_bbox[3] + 2],
             fill='red'
         )
-        draw.text((x, y - 20), item_name, fill='white', font=font)
+        draw.text((rect_x, rect_y - 20), item_name, fill='white', font=font)
         
-        # 標記物件座標
+        # 標記物件座標（顯示原始邏輯座標，但使用縮放後的繪製位置）
         coord_text = f"({x}, {y})"
-        draw.text((x + width + 5, y), coord_text, fill='red', font=font)
+        draw.text((rect_x + rect_width + 5, rect_y), coord_text, fill='red', font=font)
         
         # 🎯 標記實際點擊座標（綠色實心圓點和十字準星）
         # 計算點擊座標（即實際執行 pyautogui.click 的位置，即傳入的 x, y）
-        click_x = x
-        click_y = y
+        # 🎯 重要：x, y 是邏輯座標（pyautogui 使用的座標），需要在物理截圖上繪製時應用縮放
+        # 獲取 DPI 縮放比例（如果尚未計算）
+        if 'scale_x' not in locals() or 'scale_y' not in locals():
+            img_width, img_height = img.size
+            screen_w, screen_h = pyautogui.size()
+            scale_x = img_width / screen_w
+            scale_y = img_height / screen_h
         
-        # 🎯 繪製綠色十字準星（兩條長度為 30 像素的綠色線段，交叉點位於 (x, y)）
+        # 🎯 繪圖座標：將邏輯座標轉換為物理像素座標（僅用於繪圖）
+        draw_x = int(x * scale_x)
+        draw_y = int(y * scale_y)
+        
+        # 🎯 繪製綠色十字準星（兩條長度為 30 像素的綠色線段，交叉點位於 (draw_x, draw_y)）
         cross_size = 15  # 半長度 15 像素，總長度 30 像素
         # 水平線（長度 30px，從左到右）
         draw.line(
-            [(click_x - cross_size, click_y), (click_x + cross_size, click_y)],
+            [(draw_x - cross_size, draw_y), (draw_x + cross_size, draw_y)],
             fill='green',
             width=4
         )
         # 垂直線（長度 30px，從上到下）
         draw.line(
-            [(click_x, click_y - cross_size), (click_x, click_y + cross_size)],
+            [(draw_x, draw_y - cross_size), (draw_x, draw_y + cross_size)],
             fill='green',
             width=4
         )
@@ -266,10 +411,10 @@ class TestReporter:
         circle_radius = 5  # 半徑 5 像素，直徑 10 像素
         draw.ellipse(
             [
-                click_x - circle_radius,
-                click_y - circle_radius,
-                click_x + circle_radius,
-                click_y + circle_radius
+                draw_x - circle_radius,
+                draw_y - circle_radius,
+                draw_x + circle_radius,
+                draw_y + circle_radius
             ],
             fill='green',  # 實心填充
             outline='darkgreen',  # 深綠色邊框，增強對比度
@@ -277,15 +422,17 @@ class TestReporter:
         )
         
         # 🎯 加入座標文字：在十字準星旁，用綠色底、白色字標註 Click: (x, y)
-        click_text = f"Click: ({click_x}, {click_y})"
+        # 注意：顯示原始邏輯座標 (x, y)，但繪製位置使用縮放後的座標 (draw_x, draw_y)
+        # 這樣可以清楚看到實際點擊的邏輯座標，同時在截圖上正確標記位置
+        click_text = f"Click: ({x}, {y})"
         try:
             click_font = ImageFont.truetype("arial.ttf", 14)
         except:
             click_font = ImageFont.load_default()
         
         # 計算文字位置（在十字準星右側，稍微向上偏移）
-        text_x = click_x + cross_size + 5
-        text_y = click_y - 15
+        text_x = draw_x + cross_size + 5
+        text_y = draw_y - 15
         
         # 計算文字邊界框
         text_bbox = draw.textbbox((text_x, text_y), click_text, font=click_font)
@@ -308,6 +455,115 @@ class TestReporter:
         
         return screenshot_path
     
+    def add_click_screenshot(
+        self,
+        click_x: int,
+        click_y: int,
+        click_action: str = "單擊"
+    ):
+        """
+        添加點擊前的截圖（標記點擊位置）
+        
+        :param click_x: 點擊 X 座標
+        :param click_y: 點擊 Y 座標
+        :param click_action: 點擊動作（單擊、雙擊、右鍵）
+        """
+        try:
+            # 🎯 根據是否有 mobile_driver 決定截圖方式
+            if self.mobile_driver:
+                # Mobile 測試：使用 Appium 截圖
+                try:
+                    import tempfile
+                    temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+                    temp_path = temp_file.name
+                    temp_file.close()
+                    
+                    # 使用 Appium 的 save_screenshot 方法截圖（只截取手機模擬器）
+                    self.mobile_driver.save_screenshot(temp_path)
+                    
+                    # 讀取截圖並轉換為 PIL Image
+                    from PIL import Image
+                    screenshot = Image.open(temp_path)
+                    
+                    # 刪除臨時文件
+                    try:
+                        os.unlink(temp_path)
+                    except:
+                        pass
+                except Exception as e:
+                    # 如果 Appium 截圖失敗，回退到全屏截圖並記錄警告
+                    import logging
+                    logger = logging.getLogger(self.__class__.__name__)
+                    logger.warning(f"[REPORTER] Mobile 截圖失敗，回退到全屏截圖: {e}")
+                    screenshot = pyautogui.screenshot()
+            else:
+                # Desktop/Web 測試：使用 pyautogui 截圖（全屏）
+                screenshot = pyautogui.screenshot()
+            img = screenshot.convert('RGB')
+            draw = ImageDraw.Draw(img)
+            
+            # 🎯 獲取 DPI 縮放比例
+            img_width, img_height = img.size
+            screen_w, screen_h = pyautogui.size()
+            scale_x = img_width / screen_w
+            scale_y = img_height / screen_h
+            
+            # 🎯 標記點擊位置（綠色實心圓點和十字準星）
+            draw_x = int(click_x * scale_x)
+            draw_y = int(click_y * scale_y)
+            
+            # 繪製十字準星（綠色）
+            crosshair_size = 20
+            draw.line([(draw_x - crosshair_size, draw_y), (draw_x + crosshair_size, draw_y)], fill='green', width=3)
+            draw.line([(draw_x, draw_y - crosshair_size), (draw_x, draw_y + crosshair_size)], fill='green', width=3)
+            
+            # 繪製實心圓點（綠色）
+            circle_radius = 8
+            draw.ellipse(
+                [draw_x - circle_radius, draw_y - circle_radius, draw_x + circle_radius, draw_y + circle_radius],
+                fill='green',
+                outline='green',
+                width=2
+            )
+            
+            # 標註點擊信息
+            try:
+                font = ImageFont.truetype("arial.ttf", 14)
+            except:
+                font = ImageFont.load_default()
+            
+            click_label = f"Click: ({click_x}, {click_y}) [{click_action}]"
+            # 在點擊位置上方顯示標籤
+            label_y = draw_y - 30
+            text_bbox = draw.textbbox((draw_x, label_y), click_label, font=font)
+            draw.rectangle(
+                [text_bbox[0] - 3, text_bbox[1] - 3, text_bbox[2] + 3, text_bbox[3] + 3],
+                fill='green',
+                outline='green'
+            )
+            draw.text((draw_x, label_y), click_label, fill='white', font=font)
+            
+            # 保存截圖
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
+            screenshot_filename = f"click_{timestamp}.png"
+            screenshot_path = os.path.join(self.screenshot_dir, screenshot_filename)
+            img.save(screenshot_path)
+            
+            # 記錄到 recognition_screenshots（用於報告）
+            self.recognition_screenshots.append({
+                "timestamp": datetime.now().isoformat(),
+                "item_name": f"點擊位置 [{click_action}]",
+                "x": click_x,
+                "y": click_y,
+                "width": 20,
+                "height": 20,
+                "method": "座標點擊",
+                "screenshot_path": screenshot_path
+            })
+            
+        except Exception as e:
+            self.logger.debug(f"添加點擊截圖失敗: {e}")
+    
     def add_recognition_screenshot(
         self,
         item_name: str,
@@ -316,7 +572,8 @@ class TestReporter:
         width: int = 50,
         height: int = 50,
         method: str = "OK Script",
-        region: Tuple[int, int, int, int] = None
+        region: Tuple[int, int, int, int] = None,
+        vlm_box: Tuple[int, int, int, int] = None  # VLM 邊界框 (xmin, ymin, xmax, ymax)
     ):
         """
         添加辨識成功的截圖（在 smart_click 成功時調用）
@@ -337,7 +594,8 @@ class TestReporter:
             y=y,
             width=width,
             height=height,
-            region=region
+            region=region,
+            vlm_box=vlm_box  # 傳入 VLM 邊界框
         )
         
         # 重命名檔案為 recognition_xxx.png

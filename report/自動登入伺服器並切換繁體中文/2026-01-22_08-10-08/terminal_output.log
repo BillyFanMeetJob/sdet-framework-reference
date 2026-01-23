@@ -1,0 +1,725 @@
+================================================================================
+æ¸¬è©¦æ¡ˆä¾‹: è‡ªå‹•ç™»å…¥ä¼ºæœå™¨ä¸¦åˆ‡æ›ç¹é«”ä¸­æ–‡
+åŸ·è¡Œæ™‚é–“: 2026-01-22 08:10:07
+åŸ·è¡Œå‘½ä»¤: C:\Python314\python.exe -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name è‡ªå‹•ç™»å…¥ä¼ºæœå™¨ä¸¦åˆ‡æ›ç¹é«”ä¸­æ–‡ -v -s --tb=short
+å·¥ä½œç›®éŒ„: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+tests/test_runner.py::test_main_flow[\u81ea\u52d5\u767b\u5165\u4f3a\u670d\u5668\u4e26\u5207\u63db\u7e41\u9ad4\u4e2d\u6587-steps0] >>> [DEBUG] ÀË¬dµn¿ýª¬ºA¡]¥Ø¼Ð¦øªA¾¹: LAPTOP-QRJN5735¡^
+>>> [WAIT] µ¥«Ý³n¥ó±Ò°Ê...
+>>> [OK] ÅçÃÒ¦¨¥\¡G§ä¨ì¹w´Á¤¸¯À desktop_main/server_icon.png
+>>> [OK] ¤w¦b¥Dµe­±¡AµL»Ý­«·sµn¿ý¡]¤w³q¹L¥Dµe­±¤¸¯ÀÅçÃÒ¡^
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python314\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'cp950' codec can't encode character '\u2699' in position 4: illegal multibyte sequence
+Call stack:
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pytest\__main__.py", line 9, in <module>
+    raise SystemExit(pytest.console_main())
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\config\__init__.py", line 223, in console_main
+    code = main()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\config\__init__.py", line 199, in main
+    ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 365, in pytest_cmdline_main
+    return wrap_session(config, _main)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 318, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 372, in _main
+    config.hook.pytest_runtestloop(session=session)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 396, in pytest_runtestloop
+    item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 118, in pytest_runtest_protocol
+    runtestprotocol(item, nextitem=nextitem)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 137, in runtestprotocol
+    reports.append(call_and_report(item, "call", log))
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 244, in call_and_report
+    call = CallInfo.from_call(
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 353, in from_call
+    result: TResult | None = func()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 245, in <lambda>
+    lambda: runtest_hook(item=item, **kwds),
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 179, in pytest_runtest_call
+    item.runtest()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\python.py", line 1720, in runtest
+    self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\python.py", line 166, in pytest_pyfunc_call
+    result = testfunction(**testargs)
+  File "D:\nxwitness-demo\tests\test_runner.py", line 137, in test_main_flow
+    translator.execute(flow_name, injected_params=step['params'])
+  File "D:\nxwitness-demo\engine\step_translator.py", line 61, in execute
+    return method(**(injected_params or {}))
+  File "D:\nxwitness-demo\actions\nx_poc_actions.py", line 384, in run_change_language_step
+    self.logger.info(f"\u2699\ufe0f ­×§ï»y¨t¬°: {lang}")
+Message: '\u2699\ufe0f ­×§ï»y¨t¬°: ÁcÅé¤¤¤å'
+Arguments: ()
+>>> [CLICK] ÂIÀ»¥ª¤W¨¤µæ³æ...
+>>> [OK_SCRIPT] ¹Á¸Õ¨Ï¥Î OK Script ¹Ï¤ù¿ëÃÑ: desktop_main/menu_icon.png
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_main\menu_icon.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: True, ¤èªk: ok_script
+>>> [DEBUG] OK Script ¿ëÃÑ¦¨¥\¡A¶}©lÅçÃÒ®y¼Ð...
+>>> [DEBUG] ®y¼ÐÅçÃÒ³q¹L: ¥ª¤W¨¤=(0, 0), ¤¤¤ßÂI=(24, 18)¡A°õ¦æÂIÀ»...
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (24, 18), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (24, 18), °Ê§@=³æÀ»
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (24, 18), °Ê§@=³æÀ»
+>>> [DEBUG] ÂIÀ»°õ¦æ§¹¦¨
+>>> [OK] OK_SCRIPT ¿ëÃÑ¦¨¥\¨ÃÂIÀ»: menu_icon.png («H¤ß: 1.00, ¯Ó®É: 192.9ms)
+>>> [STAT] [®y¼Ð®w] ¤ñ¨Ò®y¼Ð: x_ratio=0.0125, y_ratio=0.0150 | µøµ¡¤Ø¤o: 1920x1200 | µ´¹ï®y¼Ð: (24, 18)
+>>> [OK_SCRIPT] ¹Ï¤ù¿ëÃÑ¦¨¥\
+>>> [OK] ¦¨¥\¶}±Ò¥D¿ï³æ
+>>> [DEBUG] ·Ç³ÆÂIÀ»¥»¦a³]¸m...
+[NX_POC_ACTIONS] ·Ç³ÆÂIÀ»¥»¦a³]¸m...
+>>> [CLICK] ÂIÀ»¡u¥»¦a³]¸m¡v...
+[MAIN_PAGE] ¶}©lÂIÀ»¥»¦a³]¸m...
+>>> [OK_SCRIPT] ¹Á¸Õ¨Ï¥Î OK Script ¹Ï¤ù¿ëÃÑ: desktop_main/local_settings.png
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_main\local_settings.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: True, ¤èªk: ok_script
+>>> [DEBUG] OK Script ¿ëÃÑ¦¨¥\¡A¶}©lÅçÃÒ®y¼Ð...
+>>> [DEBUG] ®y¼ÐÅçÃÒ³q¹L: ¥ª¤W¨¤=(25, 339), ¤¤¤ßÂI=(74, 355)¡A°õ¦æÂIÀ»...
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (74, 355), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (74, 355), °Ê§@=³æÀ»
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (74, 355), °Ê§@=³æÀ»
+>>> [DEBUG] ÂIÀ»°õ¦æ§¹¦¨
+>>> [OK] OK_SCRIPT ¿ëÃÑ¦¨¥\¨ÃÂIÀ»: local_settings.png («H¤ß: 1.00, ¯Ó®É: 215.9ms)
+>>> [STAT] [®y¼Ð®w] ¤ñ¨Ò®y¼Ð: x_ratio=0.0385, y_ratio=0.2958 | µøµ¡¤Ø¤o: 1920x1200 | µ´¹ï®y¼Ð: (74, 355)
+>>> [OK_SCRIPT] ¹Ï¤ù¿ëÃÑ¦¨¥\
+[MAIN_PAGE] smart_click µ²ªG: True
+>>> [MAIN_PAGE] smart_click ªð¦^: True
+>>> [OK] ¦¨¥\ÂIÀ»¥»¦a³]¸m
+[MAIN_PAGE] smart_click ¦¨¥\¡Aµ¥«Ý³]¸mµøµ¡¶}±Ò...
+>>> [OK] µøµ¡¤w¥X²{¨Ã§¹¥þªì©l¤Æ: Nx Witness Client (706x847)
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python314\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'cp950' codec can't encode character '\u8bbe' in position 20: illegal multibyte sequence
+Call stack:
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pytest\__main__.py", line 9, in <module>
+    raise SystemExit(pytest.console_main())
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\config\__init__.py", line 223, in console_main
+    code = main()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\config\__init__.py", line 199, in main
+    ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 365, in pytest_cmdline_main
+    return wrap_session(config, _main)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 318, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 372, in _main
+    config.hook.pytest_runtestloop(session=session)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 396, in pytest_runtestloop
+    item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 118, in pytest_runtest_protocol
+    runtestprotocol(item, nextitem=nextitem)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 137, in runtestprotocol
+    reports.append(call_and_report(item, "call", log))
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 244, in call_and_report
+    call = CallInfo.from_call(
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 353, in from_call
+    result: TResult | None = func()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 245, in <lambda>
+    lambda: runtest_hook(item=item, **kwds),
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 179, in pytest_runtest_call
+    item.runtest()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\python.py", line 1720, in runtest
+    self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\python.py", line 166, in pytest_pyfunc_call
+    result = testfunction(**testargs)
+  File "D:\nxwitness-demo\tests\test_runner.py", line 137, in test_main_flow
+    translator.execute(flow_name, injected_params=step['params'])
+  File "D:\nxwitness-demo\engine\step_translator.py", line 61, in execute
+    return method(**(injected_params or {}))
+  File "D:\nxwitness-demo\actions\nx_poc_actions.py", line 400, in run_change_language_step
+    local_settings_result = self.main_page.select_local_settings()
+  File "D:\nxwitness-demo\pages\desktop\main_page.py", line 99, in select_local_settings
+    self.logger.info(f"\u2705 ³]¸mµøµ¡¤w¶}±Ò: {found_window.title}")
+Message: '[OK] ³]¸mµøµ¡¤w¶}±Ò: ¥»¦a\u8bbe¸m - Nx Witness Client'
+Arguments: ()
+>>> [DEBUG] select_local_settings ªð¦^: True
+[NX_POC_ACTIONS] select_local_settings ªð¦^: True
+>>> [DEBUG] ¥»¦a³]¸mÂIÀ»¦¨¥\¡Aµ¥«Ýµøµ¡¸ü¤J...
+[NX_POC_ACTIONS] ¥»¦a³]¸mÂIÀ»¦¨¥\¡Aµ¥«Ýµøµ¡¸ü¤J...
+>>> [DEBUG] ·Ç³Æ¤Á´«¨ì¥~Æ[¤À­¶...
+[NX_POC_ACTIONS] ·Ç³Æ¤Á´«¨ì¥~Æ[¤À­¶...
+>>> [CLICK] ÂIÀ»¡u¥~Æ[¡v¤À­¶...
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python314\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'cp950' codec can't encode character '\u89c2' in position 71: illegal multibyte sequence
+Call stack:
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pytest\__main__.py", line 9, in <module>
+    raise SystemExit(pytest.console_main())
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\config\__init__.py", line 223, in console_main
+    code = main()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\config\__init__.py", line 199, in main
+    ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 365, in pytest_cmdline_main
+    return wrap_session(config, _main)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 318, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 372, in _main
+    config.hook.pytest_runtestloop(session=session)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 396, in pytest_runtestloop
+    item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 118, in pytest_runtest_protocol
+    runtestprotocol(item, nextitem=nextitem)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 137, in runtestprotocol
+    reports.append(call_and_report(item, "call", log))
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 244, in call_and_report
+    call = CallInfo.from_call(
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 353, in from_call
+    result: TResult | None = func()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 245, in <lambda>
+    lambda: runtest_hook(item=item, **kwds),
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 179, in pytest_runtest_call
+    item.runtest()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\python.py", line 1720, in runtest
+    self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\python.py", line 166, in pytest_pyfunc_call
+    result = testfunction(**testargs)
+  File "D:\nxwitness-demo\tests\test_runner.py", line 137, in test_main_flow
+    translator.execute(flow_name, injected_params=step['params'])
+  File "D:\nxwitness-demo\engine\step_translator.py", line 61, in execute
+    return method(**(injected_params or {}))
+  File "D:\nxwitness-demo\actions\nx_poc_actions.py", line 430, in run_change_language_step
+    self.settings_page.switch_to_appearance_tab()
+  File "D:\nxwitness-demo\pages\desktop\settings_page.py", line 15, in switch_to_appearance_tab
+    success = self.smart_click(
+  File "D:\nxwitness-demo\base\desktop_app.py", line 1948, in smart_click
+    self._safe_log("info", f"[DEBUG] ÀË¬d VLM ±ø¥ó: vlm_enabled={vlm_enabled}, vlm_priority={vlm_priority}, target_text='{target_text}'")
+  File "D:\nxwitness-demo\base\desktop_app.py", line 29, in _safe_log
+    getattr(self.logger, level)(safe_message)
+Message: "[DEBUG] ÀË¬d VLM ±ø¥ó: vlm_enabled=True, vlm_priority=2, target_text='¥~\u89c2'"
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python314\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'cp950' codec can't encode character '\u89c2' in position 27: illegal multibyte sequence
+Call stack:
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pytest\__main__.py", line 9, in <module>
+    raise SystemExit(pytest.console_main())
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\config\__init__.py", line 223, in console_main
+    code = main()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\config\__init__.py", line 199, in main
+    ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 365, in pytest_cmdline_main
+    return wrap_session(config, _main)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 318, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 372, in _main
+    config.hook.pytest_runtestloop(session=session)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 396, in pytest_runtestloop
+    item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 118, in pytest_runtest_protocol
+    runtestprotocol(item, nextitem=nextitem)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 137, in runtestprotocol
+    reports.append(call_and_report(item, "call", log))
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 244, in call_and_report
+    call = CallInfo.from_call(
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 353, in from_call
+    result: TResult | None = func()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 245, in <lambda>
+    lambda: runtest_hook(item=item, **kwds),
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 179, in pytest_runtest_call
+    item.runtest()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\python.py", line 1720, in runtest
+    self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\python.py", line 166, in pytest_pyfunc_call
+    result = testfunction(**testargs)
+  File "D:\nxwitness-demo\tests\test_runner.py", line 137, in test_main_flow
+    translator.execute(flow_name, injected_params=step['params'])
+  File "D:\nxwitness-demo\engine\step_translator.py", line 61, in execute
+    return method(**(injected_params or {}))
+  File "D:\nxwitness-demo\actions\nx_poc_actions.py", line 430, in run_change_language_step
+    self.settings_page.switch_to_appearance_tab()
+  File "D:\nxwitness-demo\pages\desktop\settings_page.py", line 15, in switch_to_appearance_tab
+    success = self.smart_click(
+  File "D:\nxwitness-demo\base\desktop_app.py", line 1955, in smart_click
+    self._safe_log("info", f"[VLM] Àu¥ý¨Ï¥Î LLM ¿ëÃÑ¤å¦r: '{target_text}'")
+  File "D:\nxwitness-demo\base\desktop_app.py", line 29, in _safe_log
+    getattr(self.logger, level)(safe_message)
+Message: "[VLM] Àu¥ý¨Ï¥Î LLM ¿ëÃÑ¤å¦r: '¥~\u89c2'"
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python314\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'cp950' codec can't encode character '\u89c2' in position 52: illegal multibyte sequence
+Call stack:
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pytest\__main__.py", line 9, in <module>
+    raise SystemExit(pytest.console_main())
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\config\__init__.py", line 223, in console_main
+    code = main()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\config\__init__.py", line 199, in main
+    ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 365, in pytest_cmdline_main
+    return wrap_session(config, _main)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 318, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 372, in _main
+    config.hook.pytest_runtestloop(session=session)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 396, in pytest_runtestloop
+    item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 118, in pytest_runtest_protocol
+    runtestprotocol(item, nextitem=nextitem)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 137, in runtestprotocol
+    reports.append(call_and_report(item, "call", log))
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 244, in call_and_report
+    call = CallInfo.from_call(
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 353, in from_call
+    result: TResult | None = func()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 245, in <lambda>
+    lambda: runtest_hook(item=item, **kwds),
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 179, in pytest_runtest_call
+    item.runtest()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\python.py", line 1720, in runtest
+    self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\python.py", line 166, in pytest_pyfunc_call
+    result = testfunction(**testargs)
+  File "D:\nxwitness-demo\tests\test_runner.py", line 137, in test_main_flow
+    translator.execute(flow_name, injected_params=step['params'])
+  File "D:\nxwitness-demo\engine\step_translator.py", line 61, in execute
+    return method(**(injected_params or {}))
+  File "D:\nxwitness-demo\actions\nx_poc_actions.py", line 430, in run_change_language_step
+    self.settings_page.switch_to_appearance_tab()
+  File "D:\nxwitness-demo\pages\desktop\settings_page.py", line 15, in switch_to_appearance_tab
+    success = self.smart_click(
+  File "D:\nxwitness-demo\base\desktop_app.py", line 1956, in smart_click
+    vlm_result = self._try_vlm_recognition(target_text, region, win, clicks, click_type, offset_x, offset_y)
+  File "D:\nxwitness-demo\base\desktop_app.py", line 1270, in _try_vlm_recognition
+    self._safe_log("info", f"[DEBUG] _try_vlm_recognition ³Q½Õ¥Î: target_text='{target_text}', region={region}")
+  File "D:\nxwitness-demo\base\desktop_app.py", line 29, in _safe_log
+    getattr(self.logger, level)(safe_message)
+Message: "[DEBUG] _try_vlm_recognition ³Q½Õ¥Î: target_text='¥~\u89c2', region=(0, 0, 1920, 1200)"
+Arguments: ()
+>>> [DEBUG] VLM ±Ò¥Îª¬ºA: True
+>>> [DEBUG] ªì©l¤Æ VLM: backend=ollama, model=llava
+>>> [OK] VLM ¤ÞÀºªì©l¤Æ¦¨¥\ (ollama/llava)
+>>> [DEBUG] Ollama ¥i¥Î¡A¤w¦w¸Ë¼Ò«¬: ["model='llava:latest' modified_at=datetime.datetime(2026, 1, 17, 17, 11, 23, 171732, tzinfo=TzInfo(28800)) digest='8dd30f6b0cb19f555f2c7a7ebda861449ea2cc76bf1f44e262931f45fc81d081' size=4733363377 details=ModelDetails(parent_model='', format='gguf', family='llama', families=['llama', 'clip'], parameter_size='7B', quantization_level='Q4_0')"]
+>>> [DEBUG] _get_vlm_engine() ªð¦^: <base.vlm_recognizer.VLMRecognizer object at 0x000001E6E835B230> (Ãþ«¬: <class 'base.vlm_recognizer.VLMRecognizer'>)
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python314\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'cp950' codec can't encode character '\u89c2' in position 27: illegal multibyte sequence
+Call stack:
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pytest\__main__.py", line 9, in <module>
+    raise SystemExit(pytest.console_main())
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\config\__init__.py", line 223, in console_main
+    code = main()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\config\__init__.py", line 199, in main
+    ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 365, in pytest_cmdline_main
+    return wrap_session(config, _main)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 318, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 372, in _main
+    config.hook.pytest_runtestloop(session=session)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 396, in pytest_runtestloop
+    item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 118, in pytest_runtest_protocol
+    runtestprotocol(item, nextitem=nextitem)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 137, in runtestprotocol
+    reports.append(call_and_report(item, "call", log))
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 244, in call_and_report
+    call = CallInfo.from_call(
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 353, in from_call
+    result: TResult | None = func()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 245, in <lambda>
+    lambda: runtest_hook(item=item, **kwds),
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 179, in pytest_runtest_call
+    item.runtest()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\python.py", line 1720, in runtest
+    self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\python.py", line 166, in pytest_pyfunc_call
+    result = testfunction(**testargs)
+  File "D:\nxwitness-demo\tests\test_runner.py", line 137, in test_main_flow
+    translator.execute(flow_name, injected_params=step['params'])
+  File "D:\nxwitness-demo\engine\step_translator.py", line 61, in execute
+    return method(**(injected_params or {}))
+  File "D:\nxwitness-demo\actions\nx_poc_actions.py", line 430, in run_change_language_step
+    self.settings_page.switch_to_appearance_tab()
+  File "D:\nxwitness-demo\pages\desktop\settings_page.py", line 15, in switch_to_appearance_tab
+    success = self.smart_click(
+  File "D:\nxwitness-demo\base\desktop_app.py", line 1956, in smart_click
+    vlm_result = self._try_vlm_recognition(target_text, region, win, clicks, click_type, offset_x, offset_y)
+  File "D:\nxwitness-demo\base\desktop_app.py", line 1281, in _try_vlm_recognition
+    self._safe_log("info", f"[VLM] ¥¿¦b¨Ï¥Î LLM ·j´M¤¸¯À: '{target_text}'")
+  File "D:\nxwitness-demo\base\desktop_app.py", line 29, in _safe_log
+    getattr(self.logger, level)(safe_message)
+Message: "[VLM] ¥¿¦b¨Ï¥Î LLM ·j´M¤¸¯À: '¥~\u89c2'"
+Arguments: ()
+>>> [OK] VLM ªì©l¤Æ¦¨¥\: ollama/llava
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: success=True, confidence=1.0, x=1525, y=511
+>>> [VLM] ¿ëÃÑ¦¨¥\: «Ì¹õµ´¹ï®y¼Ð=(1525, 511), confidence=1.00
+>>> [VLM] region=(0, 0, 1920, 1200)
+>>> [VLM] µ¡¤f¦ì¸m: left=0, top=0, width=1920, height=1200
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1525, 511), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1525, 511), °Ê§@=³æÀ»
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python314\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'cp950' codec can't encode character '\u89c2' in position 24: illegal multibyte sequence
+Call stack:
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pytest\__main__.py", line 9, in <module>
+    raise SystemExit(pytest.console_main())
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\config\__init__.py", line 223, in console_main
+    code = main()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\config\__init__.py", line 199, in main
+    ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 365, in pytest_cmdline_main
+    return wrap_session(config, _main)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 318, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 372, in _main
+    config.hook.pytest_runtestloop(session=session)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\main.py", line 396, in pytest_runtestloop
+    item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 118, in pytest_runtest_protocol
+    runtestprotocol(item, nextitem=nextitem)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 137, in runtestprotocol
+    reports.append(call_and_report(item, "call", log))
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 244, in call_and_report
+    call = CallInfo.from_call(
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 353, in from_call
+    result: TResult | None = func()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 245, in <lambda>
+    lambda: runtest_hook(item=item, **kwds),
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\runner.py", line 179, in pytest_runtest_call
+    item.runtest()
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\python.py", line 1720, in runtest
+    self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\python.py", line 166, in pytest_pyfunc_call
+    result = testfunction(**testargs)
+  File "D:\nxwitness-demo\tests\test_runner.py", line 137, in test_main_flow
+    translator.execute(flow_name, injected_params=step['params'])
+  File "D:\nxwitness-demo\engine\step_translator.py", line 61, in execute
+    return method(**(injected_params or {}))
+  File "D:\nxwitness-demo\actions\nx_poc_actions.py", line 430, in run_change_language_step
+    self.settings_page.switch_to_appearance_tab()
+  File "D:\nxwitness-demo\pages\desktop\settings_page.py", line 15, in switch_to_appearance_tab
+    success = self.smart_click(
+  File "D:\nxwitness-demo\base\desktop_app.py", line 1956, in smart_click
+    vlm_result = self._try_vlm_recognition(target_text, region, win, clicks, click_type, offset_x, offset_y)
+  File "D:\nxwitness-demo\base\desktop_app.py", line 1387, in _try_vlm_recognition
+    self._safe_log("info", f"[VLM] VLM ¿ëÃÑ¦¨¥\¨Ã{action_type}: {target_text} («H¤ß: {result.confidence:.2f}, ¯Ó®É: {result.time_ms:.0f}ms)")
+  File "D:\nxwitness-demo\base\desktop_app.py", line 29, in _safe_log
+    getattr(self.logger, level)(safe_message)
+Message: '[VLM] VLM ¿ëÃÑ¦¨¥\¨ÃÂIÀ»: ¥~\u89c2 («H¤ß: 1.00, ¯Ó®É: 5711ms)'
+Arguments: ()
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1525, 511), °Ê§@=³æÀ»
+>>> [STAT] [®y¼Ð®w] ¤ñ¨Ò®y¼Ð: x_ratio=0.7943, y_ratio=0.4258 | µ´¹ï®y¼Ð: (1525, 511)
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: True
+>>> [OK] ¦¨¥\ÂIÀ»¥~Æ[¤À­¶
+>>> [CLICK] ­×§ï»y¨¥¬°: ÁcÅé¤¤¤å
+>>> [CLICK] ÂIÀ»»y¨¥¤U©Ô¿ï³æ...
+>>> [OK_SCRIPT] ¹Á¸Õ¨Ï¥Î OK Script ¹Ï¤ù¿ëÃÑ: desktop_settings/language_dropdown.png
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_settings\language_dropdown.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: None, ¤èªk: None
+>>> [OK_SCRIPT] ¹Ï¤ù¿ëÃÑ¥¢±Ñ¡AÄ~Äò¹Á¸Õ¨ä¥L¤èªk
+>>> [OK_SCRIPT] ¹Á¸Õ¨Ï¥Î OK Script ¹Ï¤ù¿ëÃÑ: desktop_settings/language_dropdown.png
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_settings\language_dropdown.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: None, ¤èªk: None
+>>> [OK_SCRIPT] ¹Ï¤ù¿ëÃÑ¥¢±Ñ¡AÄ~Äò¹Á¸Õ¨ä¥L¤èªk
+>>> [OK_SCRIPT] ¹Á¸Õ¨Ï¥Î OK Script ¹Ï¤ù¿ëÃÑ: desktop_settings/language_dropdown.png
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_settings\language_dropdown.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: None, ¤èªk: None
+>>> [OK_SCRIPT] ¹Ï¤ù¿ëÃÑ¥¢±Ñ¡AÄ~Äò¹Á¸Õ¨ä¥L¤èªk
+>>> [COORD] ©Ò¦³¿ëÃÑ¤èªk³£¥¢±Ñ¡A¨Ï¥Î®y¼Ð«O©³ (x_ratio=0.5793, y_ratio=0.1936, clicks=1)
+>>> [COORD] °õ¦æµøµ¡¤ñ¨ÒÂIÀ»: ­ì©l®y¼Ð=(1112, 232), °¾²¾=(offset_x=0, offset_y=0), clicks=1
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1112, 232), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1112, 232), °Ê§@=³æÀ»
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1112, 232), °Ê§@=³æÀ»
+>>> [COORD] ®y¼Ð«O©³ÂIÀ»¦¨¥\: ³Ì²×®y¼Ð=(1112, 232)
+>>> [OK] ¦¨¥\ÂIÀ»»y¨¥¤U©Ô¿ï³æ
+>>> [CLICK] ¿ï¾Ü»y¨¥: ÁcÅé¤¤¤å
+>>> [DEBUG] ÀË¬d VLM ±ø¥ó: vlm_enabled=True, vlm_priority=2, target_text='ÁcÅé¤¤¤å'
+[SMART_CLICK] [DEBUG] ÀË¬d VLM ±ø¥ó: vlm_enabled=True, vlm_priority=2, target_text='ÁcÅé¤¤¤å'
+>>> [VLM] Àu¥ý¨Ï¥Î LLM ¿ëÃÑ¤å¦r: 'ÁcÅé¤¤¤å'
+>>> [DEBUG] _try_vlm_recognition ³Q½Õ¥Î: target_text='ÁcÅé¤¤¤å', region=(0, 0, 1920, 1200)
+>>> [DEBUG] _get_vlm_engine() ªð¦^: <base.vlm_recognizer.VLMRecognizer object at 0x000001E6E835B230> (Ãþ«¬: <class 'base.vlm_recognizer.VLMRecognizer'>)
+>>> [VLM] ¥¿¦b¨Ï¥Î LLM ·j´M¤¸¯À: 'ÁcÅé¤¤¤å'
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: success=False, confidence=0.0, x=0.0, y=0.0
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: False
+[33mChecking connectivity to the model hosters, this may take a while. To bypass this check, set `DISABLE_MODEL_SOURCE_CHECK` to `True`.[0m
+>>> [WARN] OCR ¤ÞÀºªì©l¤Æ¥¢±Ñ: No module named 'paddle'
+>>> [OK_SCRIPT] ¹Á¸Õ¨Ï¥Î OK Script ¹Ï¤ù¿ëÃÑ: desktop_settings/traditional_chinese.png
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_settings\traditional_chinese.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: None, ¤èªk: None
+>>> [OK_SCRIPT] ¹Ï¤ù¿ëÃÑ¥¢±Ñ¡AÄ~Äò¹Á¸Õ¨ä¥L¤èªk
+>>> [COORD] ©Ò¦³¿ëÃÑ¤èªk³£¥¢±Ñ¡A¨Ï¥Î®y¼Ð«O©³ (x_ratio=0, y_ratio=75, clicks=1)
+>>> [COORD] °õ¦æ¬Û¹ï®y¼ÐÂIÀ»: ­ì©l®y¼Ð=(1112, 307), °¾²¾=(offset_x=0, offset_y=0), clicks=1
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1112, 307), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1112, 307), °Ê§@=³æÀ»
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1112, 307), °Ê§@=³æÀ»
+>>> [COORD] ®y¼Ð«O©³ÂIÀ»¦¨¥\: ³Ì²×®y¼Ð=(1112, 307)
+>>> [OK] ¦¨¥\¿ï¾Ü ÁcÅé¤¤¤å
+>>> [CLICK] ÂIÀ»®M¥Î«ö¶s...
+>>> [OK_SCRIPT] ¹Á¸Õ¨Ï¥Î OK Script ¹Ï¤ù¿ëÃÑ: desktop_settings/apply_btn.png
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_settings\apply_btn.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: True, ¤èªk: ok_script
+>>> [DEBUG] OK Script ¿ëÃÑ¦¨¥\¡A¶}©lÅçÃÒ®y¼Ð...
+>>> [DEBUG] ®y¼ÐÅçÃÒ³q¹L: ¥ª¤W¨¤=(1067, 932), ¤¤¤ßÂI=(1114, 950)¡A°õ¦æÂIÀ»...
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1114, 950), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1114, 950), °Ê§@=³æÀ»
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1114, 950), °Ê§@=³æÀ»
+>>> [DEBUG] ÂIÀ»°õ¦æ§¹¦¨
+>>> [OK] OK_SCRIPT ¿ëÃÑ¦¨¥\¨ÃÂIÀ»: apply_btn.png («H¤ß: 1.00, ¯Ó®É: 239.7ms)
+>>> [STAT] [®y¼Ð®w] ¤ñ¨Ò®y¼Ð: x_ratio=0.5802, y_ratio=0.7917 | µøµ¡¤Ø¤o: 1920x1200 | µ´¹ï®y¼Ð: (1114, 950)
+>>> [OK_SCRIPT] ¹Ï¤ù¿ëÃÑ¦¨¥\
+>>> [WAIT] µ¥«Ý­«±Ò¼uµ¡...
+>>> [CLICK] ÂIÀ»¡u¥ß§Y­«·s±Ò°Ê¡v«ö¶s...
+>>> [OK_SCRIPT] ¹Á¸Õ¨Ï¥Î OK Script ¹Ï¤ù¿ëÃÑ: desktop_settings/restart_now.png
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_settings\restart_now.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: True, ¤èªk: ok_script
+>>> [DEBUG] OK Script ¿ëÃÑ¦¨¥\¡A¶}©lÅçÃÒ®y¼Ð...
+>>> [DEBUG] ®y¼ÐÅçÃÒ³q¹L: ¥ª¤W¨¤=(827, 149), ¤¤¤ßÂI=(897, 168)¡A°õ¦æÂIÀ»...
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (897, 168), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (897, 168), °Ê§@=³æÀ»
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (897, 168), °Ê§@=³æÀ»
+>>> [DEBUG] ÂIÀ»°õ¦æ§¹¦¨
+>>> [OK] OK_SCRIPT ¿ëÃÑ¦¨¥\¨ÃÂIÀ»: restart_now.png («H¤ß: 0.78, ¯Ó®É: 327.6ms)
+>>> [STAT] [®y¼Ð®w] ¤ñ¨Ò®y¼Ð: x_ratio=0.4672, y_ratio=0.1400 | µøµ¡¤Ø¤o: 1920x1200 | µ´¹ï®y¼Ð: (897, 168)
+>>> [OK_SCRIPT] ¹Ï¤ù¿ëÃÑ¦¨¥\
+>>> [OK] ¦¨¥\ÂIÀ»¥ß§Y­«·s±Ò°Ê
+>>> [OK] »y¨t¤Á´«¬yµ{§¹¦¨

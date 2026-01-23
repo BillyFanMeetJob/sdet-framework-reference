@@ -872,24 +872,390 @@ class NxCloudWebPage(BasePage):
             self.logger.error(f"[NX_CLOUD_WEB] [ERROR] 點擊 usb-cam 時發生異常: {e}")
             return False
     
+    def verify_video_playback_status(self, timeout: int = 20) -> bool:
+        """
+        [Web] 驗證頁面上的 <video> 物件是否載入完成且可播放
+        
+        策略：
+        1. 尋找頁面上的 <video> 元素
+        2. 使用 JavaScript 檢查 video 元素的內部狀態：
+           - readyState >= 3 (HAVE_FUTURE_DATA) 或 4 (HAVE_ENOUGH_DATA)
+           - duration > 0 (有效影片長度)
+           - error == null (無載入錯誤)
+        3. 在指定 timeout 內循環檢查，直到滿足條件或超時
+        
+        Args:
+            timeout: 等待超時時間 (秒)，默認為 20 秒
+        
+        Returns:
+            bool: 影片是否載入成功且可播放
+        """
+        self.logger.info(f"[NX_CLOUD_WEB] [VIDEO] 開始檢查影片載入狀態 (Timeout: {timeout}s)...")
+        
+        if not self.driver:
+            self.logger.error("[NX_CLOUD_WEB] [ERROR] WebDriver 未初始化")
+            return False
+        
+        start_time = time.time()
+        
+        while time.time() - start_time < timeout:
+            try:
+                # 1. 尋找 <video> 元素
+                # 如果頁面有多個 video，可能需要更精確的 XPath，這裡預設找第一個
+                video_element = self.driver.find_element(By.TAG_NAME, "video")
+                
+                # 2. 執行 JavaScript 檢查內部狀態
+                # readyState >= 3: HAVE_FUTURE_DATA (可以開始播放)
+                # readyState >= 4: HAVE_ENOUGH_DATA (有足夠資料可以播放)
+                # duration > 0: 有效長度
+                # error == null: 無錯誤
+                video_status = self.driver.execute_script("""
+                    var v = arguments[0];
+                    return {
+                        readyState: v.readyState,
+                        duration: v.duration,
+                        error: v.error,
+                        paused: v.paused,
+                        src: v.currentSrc
+                    };
+                """, video_element)
+                
+                # 3. [關鍵修改] 安全獲取數值類型
+                ready_state = video_status.get('readyState', 0)
+                
+                # 安全處理 duration: 如果是 None 則設為 0.0
+                raw_duration = video_status.get('duration')
+                if raw_duration is None:
+                    duration = 0.0
+                else:
+                    try:
+                        duration = float(raw_duration)
+                        # 處理 Infinity 或 NaN 的情況
+                        if not (duration >= 0 and duration != float('inf')):
+                            duration = 0.0
+                    except (ValueError, TypeError):
+                        duration = 0.0
+                
+                error = video_status.get('error')
+                paused = video_status.get('paused', True)
+                src = video_status.get('src', '')
+                
+                # 記錄當前狀態（確保 duration 是數字類型，可以安全格式化）
+                duration_str = f"{duration:.2f}s" if duration != float('inf') else "Infinity"
+                self.logger.info(f"[NX_CLOUD_WEB] [VIDEO] 當前狀態: ReadyState={ready_state}, Duration={duration_str}, Paused={paused}, Src={src[:50]}...")
+                
+                # 檢查是否有錯誤
+                if error:
+                    error_msg = error.get('message', 'Unknown error') if isinstance(error, dict) else str(error)
+                    self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] 影片載入錯誤: {error_msg}")
+                    return False
+                
+                # 檢查是否已準備好播放
+                # readyState >= 3 表示至少有未來資料可以播放（HAVE_FUTURE_DATA 或 HAVE_ENOUGH_DATA）
+                # 對於直播流，duration 可能是 0 或 Infinity，所以主要依賴 readyState 判斷
+                is_ready = ready_state >= 3
+                
+                if is_ready:
+                    self.logger.info(f"[NX_CLOUD_WEB] [OK] 影片載入成功且可播放! (ReadyState: {ready_state}, Duration: {duration_str})")
+                    return True
+                
+                # 還沒準備好，繼續等待
+                elapsed = time.time() - start_time
+                # 詳細記錄為什麼不滿足條件
+                reasons = []
+                if ready_state < 3:
+                    reasons.append(f"ReadyState={ready_state} < 3")
+                reason_str = ", ".join(reasons) if reasons else "未知原因"
+                self.logger.info(f"[NX_CLOUD_WEB] [VIDEO] [WAIT] 影片載入中... (已等待: {elapsed:.1f}s, 原因: {reason_str})")
+                
+            except NoSuchElementException:
+                # 可能是還沒 render 出來
+                elapsed = time.time() - start_time
+                self.logger.info(f"[NX_CLOUD_WEB] [VIDEO] [WAIT] 尚未找到 video 元素 (已等待: {elapsed:.1f}s)")
+                
+                # 每 5 秒記錄一次頁面狀態
+                if int(elapsed) % 5 == 0:
+                    try:
+                        current_url = self.driver.current_url
+                        self.logger.info(f"[NX_CLOUD_WEB] [VIDEO] [WAIT] 當前 URL: {current_url}")
+                    except:
+                        pass
+            except Exception as e:
+                # 其他異常
+                elapsed = time.time() - start_time
+                self.logger.debug(f"[NX_CLOUD_WEB] [VIDEO] [WAIT] 檢查影片狀態時發生異常: {e} (已等待: {elapsed:.1f}s)")
+            
+            time.sleep(1.0)
+        
+        # 超時 - 進行詳細診斷
+        self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] [TIMEOUT] 等待影片載入超時 ({timeout}s)")
+        
+        # 🎯 診斷：檢查頁面上是否有 video 元素
+        try:
+            current_url = self.driver.current_url
+            page_title = self.driver.title
+            self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] [DEBUG] 當前 URL: {current_url}")
+            self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] [DEBUG] 頁面標題: {page_title}")
+        except Exception as e:
+            self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] [DEBUG] 無法獲取頁面信息: {e}")
+        
+        # 🎯 診斷：檢查頁面上是否有 video 元素
+        try:
+            all_videos = self.driver.find_elements(By.TAG_NAME, "video")
+            self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] [DEBUG] 頁面上找到 {len(all_videos)} 個 <video> 元素")
+            
+            if len(all_videos) > 0:
+                # 如果有 video 元素，檢查它們的狀態
+                for i, video in enumerate(all_videos):
+                    try:
+                        video_status = self.driver.execute_script("""
+                            var v = arguments[0];
+                            return {
+                                readyState: v.readyState,
+                                duration: v.duration,
+                                error: v.error ? (v.error.message || v.error.code || 'Unknown error') : null,
+                                paused: v.paused,
+                                src: v.currentSrc || v.src || '',
+                                networkState: v.networkState,
+                                videoWidth: v.videoWidth,
+                                videoHeight: v.videoHeight
+                            };
+                        """, video)
+                        
+                        ready_state = video_status.get('readyState', 0)
+                        
+                        # 安全處理 duration
+                        raw_duration = video_status.get('duration')
+                        if raw_duration is None:
+                            duration = 0.0
+                        else:
+                            try:
+                                duration = float(raw_duration)
+                                if not (duration >= 0 and duration != float('inf')):
+                                    duration = 0.0
+                            except (ValueError, TypeError):
+                                duration = 0.0
+                        
+                        error = video_status.get('error')
+                        paused = video_status.get('paused', True)
+                        src = video_status.get('src', '')
+                        network_state = video_status.get('networkState', -1)
+                        video_width = video_status.get('videoWidth', 0)
+                        video_height = video_status.get('videoHeight', 0)
+                        
+                        self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] [DEBUG] Video {i+1} 詳細狀態:")
+                        self.logger.error(f"   - ReadyState: {ready_state} (0=HAVE_NOTHING, 1=HAVE_METADATA, 2=HAVE_CURRENT_DATA, 3=HAVE_FUTURE_DATA, 4=HAVE_ENOUGH_DATA)")
+                        duration_str = f"{duration:.2f}s" if duration != float('inf') else "Infinity"
+                        self.logger.error(f"   - Duration: {duration_str}")
+                        self.logger.error(f"   - NetworkState: {network_state} (0=EMPTY, 1=IDLE, 2=LOADING, 3=NO_SOURCE)")
+                        self.logger.error(f"   - VideoSize: {video_width}x{video_height}")
+                        self.logger.error(f"   - Paused: {paused}")
+                        self.logger.error(f"   - Src: {src[:100]}...")
+                        if error:
+                            error_msg = error.get('message', 'Unknown error') if isinstance(error, dict) else str(error)
+                            self.logger.error(f"   - Error: {error_msg}")
+                        else:
+                            self.logger.error(f"   - Error: None")
+                        
+                        # 檢查為什麼不滿足條件
+                        if ready_state < 3:
+                            self.logger.error(f"   - ❌ ReadyState 不足: {ready_state} < 3 (需要至少 HAVE_FUTURE_DATA)")
+                        if error:
+                            self.logger.error(f"   - ❌ 有錯誤: {error_msg if error else 'Unknown'}")
+                    except Exception as video_e:
+                        self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] [DEBUG] 檢查 video {i+1} 時發生錯誤: {video_e}")
+            else:
+                # 沒有找到 video 元素
+                self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] [DEBUG] ❌ 頁面上沒有找到 <video> 元素")
+                
+                # 🎯 診斷：嘗試查找可能的視頻相關元素
+                try:
+                    # 查找可能的視頻容器
+                    video_containers = self.driver.find_elements(By.XPATH, "//*[contains(@class,'video') or contains(@class,'player') or contains(@class,'playback')]")
+                    self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] [DEBUG] 找到 {len(video_containers)} 個可能的視頻容器元素")
+                    for i, container in enumerate(video_containers[:5]):  # 只顯示前5個
+                        try:
+                            class_attr = container.get_attribute('class')
+                            tag_name = container.tag_name
+                            self.logger.error(f"   - 容器 {i+1}: Tag={tag_name}, Class='{class_attr}'")
+                        except:
+                            pass
+                except Exception as container_e:
+                    self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] [DEBUG] 查找視頻容器時發生錯誤: {container_e}")
+                
+                # 🎯 診斷：檢查頁面源碼中是否有 video 相關內容
+                try:
+                    page_source = self.driver.page_source
+                    if '<video' in page_source.lower():
+                        self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] [DEBUG] 頁面源碼中包含 '<video' 標籤，但 Selenium 無法找到元素（可能是動態加載）")
+                    else:
+                        self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] [DEBUG] 頁面源碼中沒有找到 '<video' 標籤")
+                except Exception as source_e:
+                    self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] [DEBUG] 無法檢查頁面源碼: {source_e}")
+                
+        except Exception as debug_e:
+            self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] [DEBUG] 診斷時發生錯誤: {debug_e}")
+            import traceback
+            self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] [DEBUG] 錯誤詳情: {traceback.format_exc()[:500]}")
+        
+        # 🎯 診斷：截圖保存（如果可能）
+        try:
+            screenshot_path = os.path.join(EnvConfig.LOG_PATH, f"video_timeout_{int(time.time())}.png")
+            self.driver.save_screenshot(screenshot_path)
+            self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] [DEBUG] 超時截圖已保存: {screenshot_path}")
+        except Exception as screenshot_e:
+            self.logger.error(f"[NX_CLOUD_WEB] [VIDEO] [DEBUG] 保存截圖失敗: {screenshot_e}")
+        
+        return False
+    
     def close_webdriver(self):
         """
-        關閉 WebDriver（但保留瀏覽器視窗）
+        關閉 WebDriver 和瀏覽器視窗（強制清理版）
+        
+        功能：
+        1. 嘗試透過 Selenium 標準的 quit() 斷開連接
+        2. 針對 Debug 模式，執行 taskkill 強制關閉 Chrome 進程，確保視窗不殘留
         
         注意：
-        1. 為了保持瀏覽器打開以便後續步驟使用，此方法不會真正關閉瀏覽器
-        2. 只會記錄日誌，不清除引用，讓瀏覽器保持打開狀態
-        3. 如果需要真正關閉瀏覽器，可以手動調用 browser.quit() 或 driver.quit()
+        - 使用 debuggerAddress 連接 Chrome 後，driver.quit() 只會斷開連接，不會真正關閉瀏覽器視窗
+        - 因此需要在 quit() 之後執行系統級的 taskkill 來強制關閉 Chrome 進程
         """
-        # 🎯 不清除 browser 和 driver 引用，保持瀏覽器打開以便後續步驟使用
-        # 不調用 quit()，讓瀏覽器保持打開
-        self.logger.info("[NX_CLOUD_WEB] [INFO] 保留瀏覽器視窗，不清除引用以便後續步驟使用")
+        if not self.logger:
+            try:
+                from toolkit.logger import get_logger
+                self.logger = get_logger(self.__class__.__name__)
+            except:
+                import logging
+                self.logger = logging.getLogger(self.__class__.__name__)
         
-        # 注意：如果需要真正關閉瀏覽器，可以手動調用：
-        # if hasattr(self, 'browser') and self.browser:
-        #     self.browser.quit()
-        #     self.browser = None
-        # if self.driver:
-        #     self.driver.quit()
-        #     self.driver = None
-        #     self.wait = None
+        self.logger.info("[NX_CLOUD_WEB] [CLOSE] 開始關閉瀏覽器與清理環境...")
+        
+        # 1. 先嘗試正規的 Selenium 關閉（這在 Debug 模式下通常只會 Detach）
+        try:
+            if hasattr(self, 'browser') and self.browser:
+                try:
+                    self.browser.quit()
+                    self.logger.info("[NX_CLOUD_WEB] [CLOSE] WebDriver 連接已斷開（通過 Browser）")
+                except Exception as browser_e:
+                    self.logger.warning(f"[NX_CLOUD_WEB] [CLOSE] Browser.quit() 發生異常: {browser_e}")
+            elif self.driver:
+                try:
+                    self.driver.quit()
+                    self.logger.info("[NX_CLOUD_WEB] [CLOSE] WebDriver 連接已斷開（通過 Driver）")
+                except Exception as driver_e:
+                    self.logger.warning(f"[NX_CLOUD_WEB] [CLOSE] Driver.quit() 發生異常: {driver_e}")
+            else:
+                self.logger.warning("[NX_CLOUD_WEB] [CLOSE] 沒有找到可關閉的 WebDriver 實例")
+        except Exception as e:
+            self.logger.warning(f"[NX_CLOUD_WEB] [CLOSE] WebDriver quit() 發生異常（不影響後續強制清理）: {e}")
+        finally:
+            # 清除引用
+            if hasattr(self, 'browser'):
+                self.browser = None
+            self.driver = None
+            if hasattr(self, 'wait'):
+                self.wait = None
+            
+            # 2. [關鍵修正] 執行系統級強制關閉
+            # 因為在 debuggerAddress 模式下，quit() 不會關閉視窗，必須手動殺進程
+            self.logger.info("[NX_CLOUD_WEB] [CLOSE] 執行系統級強制清理 (taskkill chrome)...")
+            try:
+                import os
+                import subprocess
+                import time
+                
+                if os.name == 'nt':  # Windows
+                    # 🎯 策略 1: 使用 /t 參數終止進程樹（更強力）
+                    # /f: 強制終止
+                    # /t: 終止指定的進程及其所有子進程
+                    # /im: 指定映像名稱
+                    self.logger.info("[NX_CLOUD_WEB] [CLOSE] 嘗試終止 Chrome 進程樹...")
+                    result1 = subprocess.run(
+                        ["taskkill", "/f", "/t", "/im", "chrome.exe"],
+                        capture_output=True,
+                        text=True,
+                        timeout=10
+                    )
+                    
+                    # 等待一下，讓進程有時間關閉
+                    time.sleep(1.0)
+                    
+                    # 🎯 策略 2: 如果第一次失敗，再嘗試一次（可能是進程正在關閉中）
+                    if result1.returncode != 0:
+                        self.logger.info("[NX_CLOUD_WEB] [CLOSE] 第一次嘗試失敗，再次嘗試...")
+                        time.sleep(0.5)
+                        result2 = subprocess.run(
+                            ["taskkill", "/f", "/t", "/im", "chrome.exe"],
+                            capture_output=True,
+                            text=True,
+                            timeout=10
+                        )
+                        if result2.returncode == 0:
+                            self.logger.info("[NX_CLOUD_WEB] [CLOSE] ✅ Chrome 進程已強制終止（第二次嘗試成功）")
+                        else:
+                            # 檢查是否是因為進程不存在
+                            if "找不到進程" in result2.stderr or "not found" in result2.stderr.lower() or "找不到" in result2.stderr:
+                                self.logger.info("[NX_CLOUD_WEB] [CLOSE] ✅ Chrome 進程不存在（可能已關閉）")
+                            else:
+                                self.logger.warning(f"[NX_CLOUD_WEB] [CLOSE] ⚠️ 第二次嘗試也失敗: {result2.stderr}")
+                    else:
+                        self.logger.info("[NX_CLOUD_WEB] [CLOSE] ✅ Chrome 進程已強制終止（第一次嘗試成功）")
+                    
+                    # 🎯 策略 3: 驗證 Chrome 進程是否真的被關閉
+                    time.sleep(0.5)
+                    check_result = subprocess.run(
+                        ["tasklist", "/fi", "imagename eq chrome.exe"],
+                        capture_output=True,
+                        text=True,
+                        timeout=5
+                    )
+                    if "chrome.exe" in check_result.stdout:
+                        # 還有 Chrome 進程存在，嘗試更強力的方法
+                        self.logger.warning("[NX_CLOUD_WEB] [CLOSE] ⚠️ 仍有 Chrome 進程存在，嘗試更強力的關閉方法...")
+                        # 使用 os.system 作為最後手段（可能會更強力）
+                        os.system("taskkill /f /t /im chrome.exe >nul 2>&1")
+                        time.sleep(1.0)
+                        # 再次檢查
+                        check_result2 = subprocess.run(
+                            ["tasklist", "/fi", "imagename eq chrome.exe"],
+                            capture_output=True,
+                            text=True,
+                            timeout=5
+                        )
+                        if "chrome.exe" in check_result2.stdout:
+                            self.logger.error("[NX_CLOUD_WEB] [CLOSE] ❌ Chrome 進程仍然存在，可能需要手動關閉")
+                        else:
+                            self.logger.info("[NX_CLOUD_WEB] [CLOSE] ✅ Chrome 進程已完全關閉（使用 os.system）")
+                    else:
+                        self.logger.info("[NX_CLOUD_WEB] [CLOSE] ✅ 驗證：Chrome 進程已完全關閉")
+                        
+                else:  # Linux/Mac
+                    # Linux/Mac 使用 pkill，並嘗試多次
+                    result1 = subprocess.run(
+                        ["pkill", "-9", "-f", "chrome"],
+                        capture_output=True,
+                        text=True,
+                        timeout=10
+                    )
+                    time.sleep(1.0)
+                    if result1.returncode != 0:
+                        # 再試一次
+                        result2 = subprocess.run(
+                            ["pkill", "-9", "-f", "chrome"],
+                            capture_output=True,
+                            text=True,
+                            timeout=10
+                        )
+                        if result2.returncode == 0:
+                            self.logger.info("[NX_CLOUD_WEB] [CLOSE] ✅ Chrome 進程已強制終止（第二次嘗試成功）")
+                        else:
+                            self.logger.warning(f"[NX_CLOUD_WEB] [CLOSE] ⚠️ pkill 返回非 0（可能進程不存在）")
+                    else:
+                        self.logger.info("[NX_CLOUD_WEB] [CLOSE] ✅ Chrome 進程已強制終止（第一次嘗試成功）")
+                        
+            except subprocess.TimeoutExpired:
+                self.logger.error("[NX_CLOUD_WEB] [CLOSE] ❌ 強制清理超時")
+            except Exception as kill_e:
+                self.logger.error(f"[NX_CLOUD_WEB] [CLOSE] ❌ 強制清理失敗: {kill_e}")
+                import traceback
+                self.logger.error(f"[NX_CLOUD_WEB] [CLOSE] 錯誤詳情: {traceback.format_exc()}")

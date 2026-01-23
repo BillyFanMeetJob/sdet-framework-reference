@@ -688,6 +688,12 @@ class NxPocActions(BaseAction):
         5. 等待播放 5-10 秒後，暫停回放
         """
         playback_duration = kwargs.get("playback_duration", 7)  # 預設 7 秒（在 5-10 秒之間）
+        # 🎯 確保 playback_duration 是數字類型（Excel 可能讀取為字符串）
+        try:
+            playback_duration = float(playback_duration) if playback_duration else 7
+        except (ValueError, TypeError):
+            self.logger.warning(f"[CASE_1-5] 無法轉換 playback_duration '{playback_duration}' 為數字，使用預設值 7")
+            playback_duration = 7
         self.logger.info(f"[CASE_1-5] 執行 Case 1-5: 回放錄影事件後停止（播放持續時間: {playback_duration} 秒）")
         
         # 🎯 獲取 TestReporter 實例（由 test_runner.py 初始化並設置）
@@ -1334,6 +1340,75 @@ class NxPocActions(BaseAction):
                     status="pass",
                     message="成功點擊 usb-cam"
                 )
+            step_no += 1
+            
+            # 步驟 4: 驗證 video 播放狀態
+            self.logger.info(f"[CASE_2-2] 步驟 {step_no}: 驗證 video 播放狀態...")
+            if not self.nx_cloud_web_page.verify_video_playback_status(timeout=20):
+                error_msg = "驗證 video 播放狀態失敗"
+                self.logger.error(f"[CASE_2-2] [ERROR] {error_msg}")
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="驗證 video 播放狀態",
+                        status="fail",
+                        message=error_msg
+                    )
+                raise AssertionError(f"[ERROR] {error_msg}")
+            
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="驗證 video 播放狀態",
+                    status="pass",
+                    message="影片已載入完成且可播放"
+                )
+            step_no += 1
+            
+            # 步驟 5: 等待影片播放 7 秒
+            playback_wait_time = 7
+            self.logger.info(f"[CASE_2-2] 步驟 {step_no}: 等待影片播放 {playback_wait_time} 秒...")
+            import time
+            time.sleep(playback_wait_time)
+            self.logger.info(f"[CASE_2-2] [OK] 已等待影片播放 {playback_wait_time} 秒")
+            
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="等待影片播放",
+                    status="pass",
+                    message=f"已等待影片播放 {playback_wait_time} 秒"
+                )
+            step_no += 1
+            
+            # 步驟 6: 關閉瀏覽器（Case 2-2 是最後一步，沒有後續步驟，需要關閉瀏覽器）
+            self.logger.info(f"[CASE_2-2] 步驟 {step_no}: 關閉瀏覽器...")
+            browser_closed = False
+            try:
+                # 🎯 使用 close_webdriver() 方法，它會執行系統級的 taskkill 來強制關閉 Chrome
+                self.nx_cloud_web_page.close_webdriver()
+                browser_closed = True
+                self.logger.info("[CASE_2-2] [OK] 瀏覽器已關閉（通過 close_webdriver）")
+                
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="關閉瀏覽器",
+                        status="pass",
+                        message="瀏覽器已成功關閉"
+                    )
+            except Exception as e:
+                error_msg = f"關閉瀏覽器時發生錯誤: {e}"
+                self.logger.error(f"[CASE_2-2] [ERROR] {error_msg}")
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="關閉瀏覽器",
+                        status="fail",
+                        message=error_msg
+                    )
+                # 關閉瀏覽器失敗不影響測試結果，只記錄警告
+                self.logger.warning("[CASE_2-2] [WARN] 關閉瀏覽器失敗，但測試繼續完成")
             
         except AssertionError:
             raise
@@ -1341,6 +1416,11 @@ class NxPocActions(BaseAction):
             self.logger.error(f"[CASE_2-2] [ERROR] 執行失敗: {e}")
             import traceback
             traceback.print_exc()
+            # 即使失敗也嘗試關閉瀏覽器
+            try:
+                self.nx_cloud_web_page.close_webdriver()
+            except:
+                pass
             raise
         
         self.logger.info("✅ Case 2-2 完成：調閱一個錄影事件回放")

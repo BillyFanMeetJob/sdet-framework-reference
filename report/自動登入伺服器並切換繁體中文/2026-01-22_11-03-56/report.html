@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>測試報告 - 自動登入伺服器並切換繁體中文</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+        .header-info {
+            display: flex;
+            gap: 30px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary-card h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 14px;
+            font-weight: normal;
+        }
+        .summary-card .value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .summary-card.passed .value { color: #4CAF50; }
+        .summary-card.failed .value { color: #f44336; }
+        .summary-card.warning .value { color: #FF9800; }
+        .summary-card.total .value { color: #2196F3; }
+        .steps {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .step {
+            border-bottom: 1px solid #e0e0e0;
+            padding: 20px;
+        }
+        .step:last-child {
+            border-bottom: none;
+        }
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .step-number {
+            background: #2196F3;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .step-name {
+            font-size: 18px;
+            font-weight: bold;
+            flex: 1;
+        }
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-pass {
+            background: #4CAF50;
+            color: white;
+        }
+        .status-fail {
+            background: #f44336;
+            color: white;
+        }
+        .status-warning {
+            background: #FF9800;
+            color: white;
+        }
+        .step-message {
+            color: #666;
+            margin: 10px 0;
+        }
+        .step-screenshot {
+            margin-top: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .step-screenshot img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: opacity 0.3s;
+        }
+        .step-screenshot img:hover {
+            opacity: 0.8;
+        }
+        .step-screenshot a {
+            display: block;
+            text-decoration: none;
+        }
+        .verification-items {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .verification-items h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .verification-item {
+            display: inline-block;
+            background: #e3f2fd;
+            padding: 5px 10px;
+            margin: 5px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .timestamp {
+            color: #999;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 測試報告</h1>
+        <div>測試案例: 自動登入伺服器並切換繁體中文</div>
+        <div class="header-info">
+            <div>開始時間: 2026-01-22 11:03:56</div>
+            <div>結束時間: 2026-01-22 11:04:40</div>
+            <div>執行時長: 44.53 秒</div>
+        </div>
+    </div>
+    
+    <div class="summary">
+        <div class="summary-card passed">
+            <h3>通過步驟</h3>
+            <div class="value">1</div>
+        </div>
+        <div class="summary-card failed">
+            <h3>失敗步驟</h3>
+            <div class="value">1</div>
+        </div>
+        <div class="summary-card warning">
+            <h3>警告步驟</h3>
+            <div class="value">0</div>
+        </div>
+        <div class="summary-card total">
+            <h3>總步驟數</h3>
+            <div class="value">2</div>
+        </div>
+    </div>
+    
+    <div class="steps">
+        <h2 style="padding: 20px; margin: 0; border-bottom: 2px solid #667eea;">測試步驟詳情</h2>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <div class="step-name">ensure_login</div>
+                <div class="status-badge status-pass">PASS</div>
+            </div>
+            <div class="step-message">步驟執行成功（連續失敗: 0）</div>
+            
+            <div class="step-screenshot">
+                <img src="screenshots/step_001_1769051056.png" alt="步驟 1 截圖">
+            </div>
+            <div class="timestamp">執行時間: 2026-01-22T11:04:16.623469</div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <div class="step-name">change_language</div>
+                <div class="status-badge status-fail">FAIL</div>
+            </div>
+            <div class="step-message">連續 5 次圖像辨識失敗</div>
+            
+            <div class="step-screenshot">
+                <img src="screenshots/step_002_1769051080.png" alt="步驟 2 截圖">
+            </div>
+            <div class="timestamp">執行時間: 2026-01-22T11:04:40.974888</div>
+        </div>
+
+    </div>
+
+    <div class="steps" style="margin-top: 20px;">
+        <h2 style="padding: 20px; margin: 0; border-bottom: 2px solid #667eea;">物件辨識截圖</h2>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <div class="step-name">server_tile.png</div>
+                <div class="status-badge status-pass">辨識成功</div>
+            </div>
+            <div class="step-message">
+                <strong>辨識方式：</strong>OK_SCRIPT<br>
+                <strong>物件位置：</strong>(490, 766) | 
+                <strong>物件尺寸：</strong>433x106 | 
+                <strong>辨識時間：</strong>2026-01-22 11:04:09
+            </div>
+            <div class="step-screenshot">
+                <a href="screenshots/recognition_001_1769051049.png" target="_blank" title="點擊查看大圖">
+                    <img src="screenshots/recognition_001_1769051049.png" alt="辨識截圖 1" style="cursor: pointer;">
+                </a>
+                <div style="margin-top: 10px; text-align: center;">
+                    <a href="screenshots/recognition_001_1769051049.png" target="_blank" download="recognition_001_1769051049.png" 
+                       style="color: #2196F3; text-decoration: none; font-size: 12px;">
+                        📥 下載截圖 (recognition_001_1769051049.png)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <div class="step-name">menu_icon.png</div>
+                <div class="status-badge status-pass">辨識成功</div>
+            </div>
+            <div class="step-message">
+                <strong>辨識方式：</strong>OK_SCRIPT<br>
+                <strong>物件位置：</strong>(24, 18) | 
+                <strong>物件尺寸：</strong>48x37 | 
+                <strong>辨識時間：</strong>2026-01-22 11:04:16
+            </div>
+            <div class="step-screenshot">
+                <a href="screenshots/recognition_002_1769051056.png" target="_blank" title="點擊查看大圖">
+                    <img src="screenshots/recognition_002_1769051056.png" alt="辨識截圖 2" style="cursor: pointer;">
+                </a>
+                <div style="margin-top: 10px; text-align: center;">
+                    <a href="screenshots/recognition_002_1769051056.png" target="_blank" download="recognition_002_1769051056.png" 
+                       style="color: #2196F3; text-decoration: none; font-size: 12px;">
+                        📥 下載截圖 (recognition_002_1769051056.png)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="steps" style="margin-top: 20px;">
+        <h2 style="padding: 20px; margin: 0; border-bottom: 2px solid #667eea;">執行日誌</h2>
+        <div class="step">
+            <div class="step-message">
+                <a href="terminal_output.log" target="_blank" style="color: #2196F3; text-decoration: none; font-weight: bold;">
+                    📄 查看完整執行日誌 (terminal_output.log)
+                </a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

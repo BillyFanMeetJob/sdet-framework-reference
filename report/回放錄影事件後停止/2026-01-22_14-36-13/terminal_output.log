@@ -1,0 +1,138 @@
+================================================================================
+æ¸¬è©¦æ¡ˆä¾‹: å›žæ”¾éŒ„å½±äº‹ä»¶å¾Œåœæ­¢
+åŸ·è¡Œæ™‚é–“: 2026-01-22 14:36:12
+åŸ·è¡Œå‘½ä»¤: C:\Python314\python.exe -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name å›žæ”¾éŒ„å½±äº‹ä»¶å¾Œåœæ­¢ -v -s --tb=short
+å·¥ä½œç›®éŒ„: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+tests/test_runner.py::test_main_flow[\u56de\u653e\u9304\u5f71\u4e8b\u4ef6\u5f8c\u505c\u6b62-steps0] >>> [DEBUG] ÀË¬dµn¿ýª¬ºA¡]¥Ø¼Ð¦øªA¾¹: LAPTOP-QRJN5735¡^
+>>> [OK] ÅçÃÒ¦¨¥\¡G§ä¨ì¹w´Á¤¸¯À desktop_main/server_icon.png
+>>> [OK] ¤w¦b¥Dµe­±¡AµL»Ý­«·sµn¿ý¡]¤w³q¹L¥Dµe­±¤¸¯ÀÅçÃÒ¡^
+>>> [CASE_1-5] °õ¦æ Case 1-5: ¦^©ñ¿ý¼v¨Æ¥ó«á°±¤î¡]¼½©ñ«ùÄò®É¶¡: 7 ¬í¡^
+>>> [CASE_1-5] ¨BÆJ 0: ÀË¬d¿ý¼vµe­±¬O§_¤w¶}±Ò...
+>>> [RECORDING_VIEW] ÀË¬d¿ý¼vµe­±¬O§_¤w¶}±Ò...
+>>> [RECORDING_VIEW] ¤¤¶¡µøÀW°Ï°ì¥­§¡«G«×: 0.00, ìH­È: 30, µe­±ª¬ºA: ¥¼¶}±Ò¡]¥þ¶Â¡^
+>>> [CASE_1-5] ¿ý¼vµe­±¥¼¶}±Ò¡]¥þ¶Â¡^¡AÂùÀ» usb_cam ¥´¶}¿ý¼vµe­±...
+>>> [CLICK] ÂùÀ»Äá¼v¾÷: usb_cam...
+>>> [SMART_CLICK] [START] Finding target: text='usb', image='desktop_main/usb_cam_item.png', timeout=3s
+>>> [SMART_CLICK] [TEXT] Trying Text Strategy: 'usb' (Priority: VLM)...
+>>> [DEBUG] _try_vlm_recognition ³Q½Õ¥Î: target_text='usb', region=(0, 0, 1920, 1200)
+>>> [DEBUG] VLM ±Ò¥Îª¬ºA: True
+>>> [DEBUG] ªì©l¤Æ VLM: backend=ollama, model=llava
+>>> [OK] VLM ¤ÞÀºªì©l¤Æ¦¨¥\ (ollama/llava)
+>>> [DEBUG] Ollama ¥i¥Î¡A¤w¦w¸Ë¼Ò«¬: ["model='llava:latest' modified_at=datetime.datetime(2026, 1, 17, 17, 11, 23, 171732, tzinfo=TzInfo(28800)) digest='8dd30f6b0cb19f555f2c7a7ebda861449ea2cc76bf1f44e262931f45fc81d081' size=4733363377 details=ModelDetails(parent_model='', format='gguf', family='llama', families=['llama', 'clip'], parameter_size='7B', quantization_level='Q4_0')"]
+>>> [DEBUG] _get_vlm_engine() ªð¦^: <base.vlm_recognizer.VLMRecognizer object at 0x000002BBAFD127B0> (Ãþ«¬: <class 'base.vlm_recognizer.VLMRecognizer'>)
+>>> [VLM] ¥¿¦b¨Ï¥Î LLM ·j´M¤¸¯À: 'usb'
+>>> [OK] VLM ªì©l¤Æ¦¨¥\: ollama/llava
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: success=True, confidence=0.85, x=646, y=1198
+>>> [VLM] ¿ëÃÑ¦¨¥\: «Ì¹õµ´¹ï®y¼Ð=(646, 1198), confidence=0.85
+>>> [VLM] region=(0, 0, 1920, 1200)
+>>> [VLM] µ¡¤f¦ì¸m: left=0, top=0, width=1920, height=1200
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (646, 1198), °Ê§@=ÂùÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (646, 1198), °Ê§@=ÂùÀ»
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (646, 1198), °Ê§@=ÂùÀ»
+>>> [VLM] VLM ¿ëÃÑ¦¨¥\¨ÃÂùÀ»: usb («H¤ß: 0.85, ¯Ó®É: 2929ms)
+>>> [STAT] [®y¼Ð®w] ¤ñ¨Ò®y¼Ð: x_ratio=0.3365, y_ratio=0.9983 | µ´¹ï®y¼Ð: (646, 1198)
+>>> [SMART_CLICK] [TEXT] Success.
+>>> [OK] ÂùÀ»Äá¼v¾÷: usb_cam (smart_click ªð¦^¦¨¥\)
+>>> [RECORDING_VIEW] ÀË¬d¿ý¼vµe­±¬O§_¤w¶}±Ò...
+>>> [RECORDING_VIEW] ¤¤¶¡µøÀW°Ï°ì¥­§¡«G«×: 0.00, ìH­È: 30, µe­±ª¬ºA: ¥¼¶}±Ò¡]¥þ¶Â¡^
+>>> [CASE_1-5] ÂùÀ» usb_cam «á¡A¿ý¼vµe­±¤´µM¥þ¶Â¡A¦ýÄ~Äò°õ¦æ
+>>> [CASE_1-5] ¨BÆJ 1: ÂIÀ»¥k¤U¨¤¤é¾ä¹Ï¼Ð...
+================================================================================
+[CLICK_CALENDAR_ICON] ========== click_calendar_icon() ¤èªk³Q½Õ¥Î¡I==========
+================================================================================
+>>> [CLICK_CALENDAR_ICON] ¤èªk¶}©l°õ¦æ
+>>> [CALENDAR] ÂIÀ»¥k¤U¨¤¤é¾ä¹Ï¼Ð...
+>>> [SMART_CLICK] [START] Finding target: text='None', image='desktop_main/calendar_icon.png', timeout=1.0s
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/calendar_icon.png...
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/calendar_icon.png...
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/calendar_icon.png...
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/calendar_icon.png...
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/calendar_icon.png...
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/calendar_icon.png...
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/calendar_icon.png...
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/calendar_icon.png...
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (1.0s), attempted strategies: 8
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Image Recognition (PyAutoGUI: desktop_main/calendar_icon.png), Image Recognition (PyAutoGUI: desktop_main/calendar_icon.png), Image Recognition (PyAutoGUI: desktop_main/calendar_icon.png), Image Recognition (PyAutoGUI: desktop_main/calendar_icon.png), Image Recognition (PyAutoGUI: desktop_main/calendar_icon.png), Image Recognition (PyAutoGUI: desktop_main/calendar_icon.png), Image Recognition (PyAutoGUI: desktop_main/calendar_icon.png), Image Recognition (PyAutoGUI: desktop_main/calendar_icon.png)
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.920, 0.040)...
+>>> [CLICK_COORD] ­ì©l®y¼Ð: (1766, 1152), °¾²¾: (offset_x=-10, offset_y=0), ³Ì²×®y¼Ð: (1756, 1152), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ­ì©l®y¼Ð: (1766, 1152), °¾²¾: (offset_x=-10, offset_y=0), ³Ì²×®y¼Ð: (1756, 1152), °Ê§@=³æÀ»
+[CLICK_COORD] ­ì©l®y¼Ð: (1766, 1152), °¾²¾: (offset_x=-10, offset_y=0), ³Ì²×®y¼Ð: (1756, 1152), °Ê§@=³æÀ»
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (1756, 1152)
+>>> [CALENDAR] ¦¨¥\ÂIÀ»¤é¾ä¹Ï¼Ð¡]¨Ï¥Î®y¼Ð«O©³¡^
+>>> [CASE_1-5] ¨BÆJ 2: ¦b¤é¾ä¤¤¿ï¾Ü¦³ºñ¦â¼Ð°Oªº¤é´Á...
+================================================================================
+[SELECT_DATE_WITH_RECORDING] ========== select_date_with_recording() ¤èªk³Q½Õ¥Î¡I==========
+================================================================================
+>>> [SELECT_DATE_WITH_RECORDING] ¤èªk¶}©l°õ¦æ
+>>> [CALENDAR] ¿ï¾Ü¦³¿ý¼v¨Æ¥óªº¤é´Á...
+>>> [CALENDAR] Àu¥ý¨Ï¥ÎµøÄ±ÅX°Ê¤è¦¡´M§ä¦³¿ý¼v¼Ð°Oªº¤é´Á...
+================================================================================
+[SELECT_FIRST_DATE_WITH_RECORDING] ========== select_first_date_with_recording() ¤èªk³Q½Õ¥Î¡I==========
+================================================================================
+>>> [SELECT_FIRST_DATE_WITH_RECORDING] ¤èªk¶}©l°õ¦æ
+>>> [CALENDAR_VISUAL] ¶}©l¨Ï¥ÎµøÄ±ÅX°Ê¤è¦¡´M§ä¦³¿ý¼v¼Ð°Oªº¤é´Á...
+>>> [CALENDAR] [ROI] Calculating region using anchor image...
+>>> [CALENDAR] [ROI] Looking for anchor image: desktop_main/calendar_header.png...
+>>> [OPENCV] [COORD] Image: calendar_header.png
+>>> [OPENCV] [COORD] Search region: Full screen (no region)
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (407, 95)
+>>> [CALENDAR] [ROI] OK Script failed, trying PyAutoGUI...
+>>> [CALENDAR] [ROI] Anchor image not found: desktop_main/calendar_header.png
+>>> [CALENDAR] [ROI] Anchor not found, using fallback: config-based region...
+>>> [CALENDAR] [ROI] Fallback region (config-based): left=1344, top=240, width=576, height=400
+>>> [CALENDAR] [ROI] Fallback¥kÃä¬É: 1920 (µøµ¡¼e«×: 1920, RIGHT_RATIO: 1.0)
+>>> [CALENDAR_VISUAL] Anchor°Ï°ì: left=1344, top=240, width=576, height=400
+>>> [CALENDAR_VISUAL] Anchor¥kÃä¬É: 1920 (½T«OÂÐ»\¨ì¿Ã¹õ³Ì¥k°¼)
+>>> [CALENDAR_VISUAL] ³Ì²×¤é¾ä±½´y°Ï°ì: left=1344, top=240, width=576, height=400, right=1920
+>>> [CALENDAR_VISUAL] §ä¨ìºñ¦â¼Ð°O¹³¯À: ®y¼Ð=(1599, 240), RGB=(229, 232, 235)
+>>> [CALENDAR_VISUAL] [COORD] Green pixel screen absolute: (1599, 240), region offset: (1344, 240)
+>>> [CALENDAR_VISUAL] [COORD] Final click coordinate: (1599, 225) (screen absolute, calculated from calendar region)
+>>> [CALENDAR] µøÄ±ÅX°Ê¦¨¥\§ä¨ì¤é´Á¡AÂIÀ»®y¼Ð: (1599, 225)
+>>> [CALENDAR] ¦¨¥\ÂIÀ»¤é´Á®y¼Ð (1599, 225)
+>>> [CALENDAR] ¤é´ÁÂIÀ»¦¨¥\¡A·Ç³ÆÂIÀ»®É¶¡¶b...
+>>> [TIMELINE] ÂIÀ»®É¶¡¶b¦ì¸m: center
+>>> [TIMELINE] ÂIÀ»®y¼Ð: (960, 1095) (­ì©l Y=1080, ¦V¤U°¾²¾ 15px Á×§K¤p½bÀY)
+>>> [CASE_1-5] ¨BÆJ 3: ¦b©³³¡¶i«×±ø¤¤ÂIÀ»ºñ¦âªº¿ý¼v®É¬q...
+================================================================================
+[CLICK_GREEN_TIMELINE_SEGMENT] ========== click_green_timeline_segment() ¤èªk³Q½Õ¥Î¡I==========
+================================================================================
+>>> [CLICK_GREEN_TIMELINE_SEGMENT] ¤èªk¶}©l°õ¦æ
+>>> [TIMELINE] ÂIÀ»¶i«×±ø¤¤ªººñ¦â¿ý¼v®É¬q...
+>>> [TIMELINE_COLOR] ¶}©l¨Ï¥Î¹³¯ÀÃC¦â°»´ú©w¦ì¿ý¼v®É¬q...
+>>> [TIMELINE_COLOR] ®É¶¡¶b±½´y°Ï°ì: left=288, top=1170, width=1248, height=20
+>>> [TIMELINE_COLOR] ¥¼§ä¨ì²Å¦Xºñ¦â¯S¼xªº¹³¯ÀÂI
+>>> [TIMELINE] [WARN] ÃC¦â°»´ú¥¢±Ñ¡A¹Á¸Õª½±µ±½´y®É¶¡¶b...
+>>> [SCAN_FALLBACK] ¶}©l½u©Ê±½´y®É¶¡¶b´M§äºñ¦â¿ý¼v¬q...
+>>> [SCAN_FALLBACK] ±½´y°Ï°ì: left=288, top=960, width=1248, height=120
+>>> [TIMELINE] ¶}©l±½´y®É¶¡¶b (´M§ä«Gºñ¦â Bright Green)...
+>>> [TIMELINE] ±½´y°Ï°ì: X=288~1536, Y=1020¡A¨Bªø=20px
+>>> [SCAN_FALLBACK] ½u©Ê±½´y¥¼§ä¨ì¥ô¦óºñ¦â¿ý¼v°Ï¶ô
+>>> [SCAN_FALLBACK] ±½´y°Ï°ì: left=288, top=960, width=1248, height=120
+>>> [SCAN_FALLBACK] ¹ê»ÚÃC¦â½d¨Ò: (600, 1020): RGB(0, 0, 0), (912, 1020): RGB(0, 0, 0), (1224, 1020): RGB(0, 0, 0)
+>>> [TIMELINE] [WARN] ª½±µ±½´y¥¢±Ñ¡A¹Á¸Õ½u©Ê±½´y...
+>>> [SCAN_FALLBACK] ¶}©l½u©Ê±½´y®É¶¡¶b´M§äºñ¦â¿ý¼v¬q...
+>>> [SCAN_FALLBACK] ±½´y°Ï°ì: left=288, top=960, width=1248, height=120
+>>> [TIMELINE] ¶}©l±½´y®É¶¡¶b (´M§ä«Gºñ¦â Bright Green)...
+>>> [TIMELINE] ±½´y°Ï°ì: X=288~1536, Y=1020¡A¨Bªø=20px
+>>> [SCAN_FALLBACK] ½u©Ê±½´y¥¼§ä¨ì¥ô¦óºñ¦â¿ý¼v°Ï¶ô
+>>> [SCAN_FALLBACK] ±½´y°Ï°ì: left=288, top=960, width=1248, height=120
+>>> [SCAN_FALLBACK] ¹ê»ÚÃC¦â½d¨Ò: (600, 1020): RGB(0, 0, 0), (912, 1020): RGB(0, 0, 0), (1224, 1020): RGB(0, 0, 0)
+>>> [TIMELINE] [ERROR] §ä¤£¨ì®É¶¡¶b¤Wªº¿ý¼v¬q¡C©Ò¦³¿ëÃÑ¤èªk³£¥¢±Ñ¡]ÃC¦â°»´ú¡Bª½±µ±½´y¡B½u©Ê±½´y¡^¡C°±¤î´ú¸Õ¡C

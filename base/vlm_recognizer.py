@@ -55,6 +55,7 @@ class VLMResult:
     time_ms: float = 0.0
     description: str = ""
     raw_response: str = ""
+    box: Tuple[int, int, int, int] = None  # 邊界框 (xmin, ymin, xmax, ymax)
 
 
 class VLMRecognizer:
@@ -272,6 +273,34 @@ class VLMRecognizer:
                         # 🎯 驗證轉換後的座標是否在原始截圖範圍內
                         if result.x < 0 or result.x > original_size[0] or result.y < 0 or result.y > original_size[1]:
                             self._log('warning', f"座標轉換後超出原始截圖範圍: ({result.x}, {result.y}), 原始截圖尺寸={original_size}")
+                        
+                        # 🎯 處理邊界框（box）的座標轉換（在 region 處理之前）
+                        if result.box:
+                            box_xmin, box_ymin, box_xmax, box_ymax = result.box
+                            
+                            # 判斷 box 是否為比例座標
+                            is_box_ratio = (0.0 < abs(box_xmin) < 1.0) or (0.0 < abs(box_ymin) < 1.0)
+                            
+                            if is_box_ratio:
+                                # 比例座標：轉換為縮小後圖片的像素座標
+                                box_xmin = box_xmin * resized_size[0]
+                                box_ymin = box_ymin * resized_size[1]
+                                box_xmax = box_xmax * resized_size[0]
+                                box_ymax = box_ymax * resized_size[1]
+                            
+                            # 轉換回原始截圖尺寸
+                            box_xmin = int(box_xmin * scale_x)
+                            box_ymin = int(box_ymin * scale_y)
+                            box_xmax = int(box_xmax * scale_x)
+                            box_ymax = int(box_ymax * scale_y)
+                            
+                            # 暫時保存轉換後的 box（還未加 region 偏移）
+                            result.box = (int(box_xmin), int(box_ymin), int(box_xmax), int(box_ymax))
+                            self._log('debug', f"邊界框轉換（轉換後）: box=({box_xmin}, {box_ymin}, {box_xmax}, {box_ymax})")
+                    else:
+                        # 如果沒有 original_size/resized_size，box 保持原樣（假設已經是像素座標）
+                        if result.box:
+                            self._log('debug', f"邊界框未轉換（無縮放信息）: box={result.box}")
                     
                     # 🎯 加上 region 偏移（如果有）
                     # 注意：如果提供了 region，VLM 返回的座標是相對於 region 截圖的
@@ -306,6 +335,16 @@ class VLMRecognizer:
                         result.x += region_left
                         result.y += region_top
                         self._log('debug', f"加上 region 偏移: region=({region_left}, {region_top}), 轉換前=({coord_before_offset_x:.1f}, {coord_before_offset_y:.1f}), 最終座標=({result.x}, {result.y})")
+                        
+                        # 🎯 為邊界框（box）加上 region 偏移
+                        if result.box:
+                            box_xmin, box_ymin, box_xmax, box_ymax = result.box
+                            box_xmin += region_left
+                            box_ymin += region_top
+                            box_xmax += region_left
+                            box_ymax += region_top
+                            result.box = (int(box_xmin), int(box_ymin), int(box_xmax), int(box_ymax))
+                            self._log('debug', f"邊界框加上 region 偏移: 最終 box=({box_xmin}, {box_ymin}, {box_xmax}, {box_ymax})")
                 
                 return result
                 
@@ -321,18 +360,30 @@ class VLMRecognizer:
         if region:
             region_info = f"\n重要：這是一張局部截圖，只包含螢幕的一部分區域。截圖的尺寸是 {region[2]}x{region[3]} 像素。"
         
+        # 🎯 優化提示詞：對於郵箱地址，提供更明確的指引
+        enhanced_query = query
+        if "@" in query and "gmail" in query.lower():
+            enhanced_query = f"找到郵箱地址文字 '{query}'（通常前面有一個雲圖標或圖標，文字可能是白色或灰色）"
+        
         return f"""你是一個 UI 自動化助手。請分析這張螢幕截圖，找到以下元素：
 
-目標元素：{query}
+目標元素：{enhanced_query}
 {region_info}
+
+重要提示：
+1. 如果目標是郵箱地址，請找到完整的郵箱文字（包括 @ 符號和域名）
+2. 如果目標是按鈕或選單項，請找到可點擊的元素中心點
+3. 座標必須是相對於截圖的像素座標（不是比例座標）
+4. 如果找不到元素，請設置 "found": false
 
 請回覆以下 JSON 格式（只回覆 JSON，不要其他文字）：
 {{
     "found": true/false,
-    "x": 元素中心點 X 座標（像素），
-    "y": 元素中心點 Y 座標（像素），
+    "x": 元素中心點 X 座標（像素，相對於截圖），
+    "y": 元素中心點 Y 座標（像素，相對於截圖），
     "confidence": 信心度 (0.0-1.0),
-    "description": "元素描述"
+    "description": "元素描述",
+    "box": [xmin, ymin, xmax, ymax]
 }}
 
 如果找不到目標元素，回覆：
@@ -341,7 +392,18 @@ class VLMRecognizer:
     "x": 0,
     "y": 0,
     "confidence": 0,
-    "description": "找不到目標元素的原因"
+    "description": "找不到目標元素的原因",
+    "box": null
+}}
+
+如果找不到目標元素，回覆：
+{{
+    "found": false,
+    "x": 0,
+    "y": 0,
+    "confidence": 0,
+    "description": "找不到目標元素的原因",
+    "box": null
 }}
 
 重要規則：
@@ -479,13 +541,25 @@ class VLMRecognizer:
                 # 但需要圖片尺寸才能轉換，所以先保留原始值，在 find_element 中處理
                 # 這裡先標記為浮點數，如果小於 1 則認為是比例座標
                 
+                # 解析邊界框（box）
+                box = None
+                if 'box' in data and data['box']:
+                    try:
+                        box_list = data['box']
+                        if isinstance(box_list, list) and len(box_list) == 4:
+                            # box 格式: [xmin, ymin, xmax, ymax]
+                            box = tuple(map(float, box_list))
+                    except (ValueError, TypeError) as e:
+                        self._log('debug', f"無法解析 box 座標: {e}")
+                
                 return VLMResult(
                     success=data.get('found', False),
                     x=x_float,  # 保留為浮點數，以便判斷是比例還是像素
                     y=y_float,  # 保留為浮點數，以便判斷是比例還是像素
                     confidence=float(data.get('confidence', 0)),
                     description=data.get('description', ''),
-                    raw_response=response
+                    raw_response=response,
+                    box=box  # 邊界框（可能是比例座標或像素座標，需要在 find_element 中轉換）
                 )
         except (json.JSONDecodeError, ValueError) as e:
             self._log('debug', f"解析 VLM 回應失敗: {e}")

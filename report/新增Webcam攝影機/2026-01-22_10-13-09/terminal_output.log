@@ -1,0 +1,55 @@
+================================================================================
+æ¸¬è©¦æ¡ˆä¾‹: æ–°å¢žWebcamæ”å½±æ©Ÿ
+åŸ·è¡Œæ™‚é–“: 2026-01-22 10:13:08
+åŸ·è¡Œå‘½ä»¤: C:\Python314\python.exe -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name æ–°å¢žWebcamæ”å½±æ©Ÿ -v -s --tb=short
+å·¥ä½œç›®éŒ„: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+tests/test_runner.py::test_main_flow[\u65b0\u589eWebcam\u651d\u5f71\u6a5f-steps0] >>> [DEBUG] ÀË¬dµn¿ýª¬ºA¡]¥Ø¼Ð¦øªA¾¹: LAPTOP-QRJN5735¡^
+>>> [WAIT] µ¥«Ý³n¥ó±Ò°Ê...
+>>> [OK] ÅçÃÒ¦¨¥\¡G§ä¨ì¹w´Á¤¸¯À desktop_main/server_icon.png
+>>> [OK] ¤w¦b¥Dµe­±¡AµL»Ý­«·sµn¿ý¡]¤w³q¹L¥Dµe­±¤¸¯ÀÅçÃÒ¡^
+>>> [CASE] °õ¦æ Case 1-2: ±Ò¥Î USB Äá¼v¾÷¦Û°Ê°»´ú
+>>> [CLICK] ¦b Server ¹Ï¥Ü¤WÂIÀ»¥kÁä...
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_main\server_icon.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: True, ¤èªk: ok_script
+>>> [DEBUG] OK Script ¿ëÃÑ¦¨¥\¡A¶}©lÅçÃÒ®y¼Ð...
+>>> [DEBUG] ®y¼ÐÅçÃÒ³q¹L: ¥ª¤W¨¤=(18, 185), ¤¤¤ßÂI=(63, 202)¡A°õ¦æÂIÀ»...
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (63, 202), °Ê§@=¥kÁä
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (63, 202), °Ê§@=¥kÁä
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (63, 202), °Ê§@=¥kÁä
+>>> [DEBUG] ÂIÀ»°õ¦æ§¹¦¨
+>>> [OK] OK_SCRIPT ¿ëÃÑ¦¨¥\¨ÃÂIÀ»: server_icon.png («H¤ß: 0.99, ¯Ó®É: 209.6ms)
+>>> [STAT] [®y¼Ð®w] ¤ñ¨Ò®y¼Ð: x_ratio=0.0328, y_ratio=0.1683 | µøµ¡¤Ø¤o: 1920x1200 | µ´¹ï®y¼Ð: (63, 202)
+>>> [OK] ¿ï³æÅçÃÒ¦¨¥\¡]¹Ï¤ù¤Ç°t¡^
+>>> [CLICK] ÂIÀ»¡u¦øªA¾¹³]©w¡v¿ï³æ¶µ¥Ø...
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_main\server_settings_menu.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: None, ¤èªk: None
+>>> [DEBUG] _try_vlm_recognition ³Q½Õ¥Î: target_text='¦øªA¾¹³]©w', region=(0, 0, 1920, 1200)
+>>> [DEBUG] VLM ±Ò¥Îª¬ºA: True
+>>> [DEBUG] ªì©l¤Æ VLM: backend=ollama, model=llava
+>>> [OK] VLM ¤ÞÀºªì©l¤Æ¦¨¥\ (ollama/llava)
+>>> [DEBUG] Ollama ¥i¥Î¡A¤w¦w¸Ë¼Ò«¬: ["model='llava:latest' modified_at=datetime.datetime(2026, 1, 17, 17, 11, 23, 171732, tzinfo=TzInfo(28800)) digest='8dd30f6b0cb19f555f2c7a7ebda861449ea2cc76bf1f44e262931f45fc81d081' size=4733363377 details=ModelDetails(parent_model='', format='gguf', family='llama', families=['llama', 'clip'], parameter_size='7B', quantization_level='Q4_0')"]
+>>> [DEBUG] _get_vlm_engine() ªð¦^: <base.vlm_recognizer.VLMRecognizer object at 0x000001A6E65927B0> (Ãþ«¬: <class 'base.vlm_recognizer.VLMRecognizer'>)
+>>> [VLM] ¥¿¦b¨Ï¥Î LLM ·j´M¤¸¯À: '¦øªA¾¹³]©w'
+>>> [OK] VLM ªì©l¤Æ¦¨¥\: ollama/llava
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: success=True, confidence=0.7, x=540, y=835
+>>> [VLM] ¿ëÃÑ¦¨¥\: «Ì¹õµ´¹ï®y¼Ð=(540, 835), confidence=0.70
+>>> [VLM] region=(0, 0, 1920, 1200)
+>>> [VLM] µ¡¤f¦ì¸m: left=0, top=0, width=1920, height=1200
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (540, 835), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (540, 835), °Ê§@=³æÀ»
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (540, 835), °Ê§@=³æÀ»
+>>> [VLM] VLM ¿ëÃÑ¦¨¥\¨ÃÂIÀ»: ¦øªA¾¹³]©w («H¤ß: 0.70, ¯Ó®É: 12674ms)
+>>> [STAT] [®y¼Ð®w] ¤ñ¨Ò®y¼Ð: x_ratio=0.2812, y_ratio=0.6958 | µ´¹ï®y¼Ð: (540, 835)
+>>> [DEBUG] smart_click_priority_image ªð¦^: True
+>>> [WARN] µ¥«Ý 5 ¬í«á¥¼§ä¨ìµøµ¡©Îµøµ¡©|¥¼§¹¥þªì©l¤Æ
+>>> [WARN] ¥¼§ä¨ì¦øªA¾¹³]©wµøµ¡¡A¦ýÂIÀ»¤w¦¨¥\¡AÄ~Äò°õ¦æ¡]µøµ¡¥i¯à¤w¶}±Ò¦ý¼ÐÃD¤Ç°t¥¢±Ñ¡^
+>>> [ERROR] ÂIÀ»¿ï³æÅçÃÒ¥¢±Ñ¡G¦øªA¾¹³]©wµøµ¡¥¼¶}±Ò¡]¶W®É: 3¬í¡^

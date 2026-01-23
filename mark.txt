@@ -1,5 +1,0 @@
-站點名稱：LAPTOP-QRJN5735
-localhost:7001
-password:1q2w!Q@W
-# ═══════════════════════════════════════════════════════════════════════════════
-# 🏗️ Excel-Driven Test Automation Framework - Architecture Analysis

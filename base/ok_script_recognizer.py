@@ -259,20 +259,24 @@ class OKScriptRecognizer:
                     except:
                         template_w, template_h = 50, 50  # 預設尺寸
                     
-                    # 🎯 OK Script 的 find_template 可能返回中心點或左上角
-                    # 根據 OK Script 文檔，find_template 返回的是 (x, y) 座標
-                    # 但需要確認是左上角還是中心點
-                    # 為了安全起見，我們假設返回的是中心點，需要轉換為左上角
+                    # 🎯 OK Script 的 find_template 返回的座標
+                    # 根據 OK Script 文檔和實際測試，find_template 返回的是中心點座標
+                    # 需要轉換為左上角座標
                     ok_script_x = loc[0]
                     ok_script_y = loc[1]
                     
-                    # 🎯 嘗試兩種情況：
-                    # 1. 如果返回的是中心點，需要減去寬高的一半
-                    # 2. 如果返回的是左上角，直接使用
-                    # 由於無法確定，我們先假設是左上角（與 OpenCV 一致）
-                    # 如果後續驗證發現不對，會在 camera_page.py 中進行調整
-                    top_left_x = ok_script_x
-                    top_left_y = ok_script_y
+                    # 🎯 轉換中心點為左上角座標
+                    top_left_x = int(ok_script_x - template_w / 2)
+                    top_left_y = int(ok_script_y - template_h / 2)
+                    
+                    # 🎯 詳細日誌：記錄 OK Script 識別到的圖片座標區域
+                    if self.logger:
+                        self.logger.info(f"[OK_SCRIPT] [COORD] Image: {os.path.basename(image_path)}")
+                        self.logger.info(f"[OK_SCRIPT] [COORD] OK Script returned center: ({ok_script_x}, {ok_script_y})")
+                        self.logger.info(f"[OK_SCRIPT] [COORD] Template size: ({template_w}, {template_h})")
+                        self.logger.info(f"[OK_SCRIPT] [COORD] Converted to top_left: ({top_left_x}, {top_left_y})")
+                        self.logger.info(f"[OK_SCRIPT] [COORD] Bounding box: left={top_left_x}, top={top_left_y}, right={top_left_x + template_w}, bottom={top_left_y + template_h}")
+                        self.logger.info(f"[OK_SCRIPT] [COORD] Confidence: {confidence:.2f}, Time: {elapsed_ms:.1f}ms")
                     
                     return RecognitionResult(
                         success=True,
@@ -323,6 +327,16 @@ class OKScriptRecognizer:
                 screenshot = pyautogui.screenshot()
                 offset_x, offset_y = 0, 0
             
+            # 🎯 詳細日誌：記錄 OpenCV 識別前的參數
+            if self.logger:
+                self.logger.info(f"[OPENCV] [COORD] Image: {os.path.basename(image_path)}")
+                if region:
+                    self.logger.info(f"[OPENCV] [COORD] Search region: left={region[0]}, top={region[1]}, width={region[2]}, height={region[3]}")
+                    self.logger.info(f"[OPENCV] [COORD] Region offset: ({offset_x}, {offset_y})")
+                else:
+                    self.logger.info(f"[OPENCV] [COORD] Search region: Full screen (no region)")
+                    self.logger.info(f"[OPENCV] [COORD] Region offset: (0, 0)")
+            
             # 轉換為 OpenCV 格式
             screen_np = np.array(screenshot)
             screen_bgr = cv2.cvtColor(screen_np, cv2.COLOR_RGB2BGR)
@@ -332,6 +346,10 @@ class OKScriptRecognizer:
             template = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
             if template is None:
                 return None
+            
+            template_h, template_w = template.shape[:2]
+            if self.logger:
+                self.logger.info(f"[OPENCV] [COORD] Template size: ({template_w}, {template_h})")
             
             # 多尺度 template matching
             best_match = None
@@ -380,14 +398,34 @@ class OKScriptRecognizer:
                 # 讀取模板尺寸（使用最後匹配的模板）
                 template = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
                 template_h, template_w = template.shape if template is not None else (50, 50)
+                
+                top_left_x = best_match[0]
+                top_left_y = best_match[1]
+                match_confidence = best_match[2]
+                
+                # 🎯 詳細日誌：記錄 OpenCV 識別到的圖片座標區域
+                if self.logger:
+                    self.logger.info(f"[OPENCV] [COORD] Image: {os.path.basename(image_path)}")
+                    self.logger.info(f"[OPENCV] [COORD] Template size: ({template_w}, {template_h})")
+                    if region:
+                        self.logger.info(f"[OPENCV] [COORD] Search region: left={region[0]}, top={region[1]}, width={region[2]}, height={region[3]}")
+                        self.logger.info(f"[OPENCV] [COORD] Region offset: ({offset_x}, {offset_y})")
+                    else:
+                        self.logger.info(f"[OPENCV] [COORD] Search region: Full screen (no region)")
+                        self.logger.info(f"[OPENCV] [COORD] Region offset: (0, 0)")
+                    self.logger.info(f"[OPENCV] [COORD] Match found: confidence={match_confidence:.4f}")
+                    self.logger.info(f"[OPENCV] [COORD] Absolute screen position (top_left): ({top_left_x}, {top_left_y})")
+                    self.logger.info(f"[OPENCV] [COORD] Bounding box: left={top_left_x}, top={top_left_y}, right={top_left_x + template_w}, bottom={top_left_y + template_h}")
+                    self.logger.info(f"[OPENCV] [COORD] Time: {elapsed_ms:.1f}ms")
+                
                 return RecognitionResult(
                     success=True,
                     method='opencv',
-                    x=best_match[0],
-                    y=best_match[1],
+                    x=top_left_x,
+                    y=top_left_y,
                     width=template_w,
                     height=template_h,
-                    confidence=best_match[2],
+                    confidence=match_confidence,
                     time_ms=elapsed_ms,
                     image_path=image_path
                 )

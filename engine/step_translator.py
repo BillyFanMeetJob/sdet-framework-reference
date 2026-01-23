@@ -23,21 +23,34 @@
 # - 無需修改 TestRunner 或其他核心邏輯
 
 from actions.nx_poc_actions import NxPocActions
+from actions.nx_mobile_actions import NxMobileActions
 
 class StepTranslator:
-    def __init__(self, browser_context):
+    def __init__(self, browser_context=None, mobile_driver=None):
+        """
+        初始化 StepTranslator
+        
+        Args:
+            browser_context: Web 瀏覽器上下文（用於桌面/網頁端測試）
+            mobile_driver: Appium WebDriver 實例（用於移動端測試）
+        """
         # 透過 config 拿 TestPlan 路徑
         from config import EnvConfig
         import pandas as pd
         self.translate_df = pd.read_excel(EnvConfig.TEST_PLAN_PATH, sheet_name="Translate")
         
-        # 🎯 註冊 nx_poc 實例，傳入瀏覽器實體
-        # 未來可擴展：
-        # "login": LoginActions(browser_context),
-        # "settings": SettingsActions(browser_context),
-        self.action_map = {
-            "nx_poc": NxPocActions(browser_context)
-        }
+        # 🎯 註冊 Action 實例
+        # - nx_poc: 桌面/網頁端操作（需要 browser_context）
+        # - nx_mobile: 移動端操作（需要 mobile_driver）
+        self.action_map = {}
+        
+        # 註冊桌面/網頁端 Action
+        if browser_context is not None:
+            self.action_map["nx_poc"] = NxPocActions(browser_context)
+        
+        # 註冊移動端 Action
+        if mobile_driver is not None:
+            self.action_map["nx_mobile"] = NxMobileActions(mobile_driver)
 
     def execute(self, flow_name, injected_params=None):
         """

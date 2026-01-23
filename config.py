@@ -10,7 +10,7 @@ def get_project_root():
     1. 正常運行：使用當前檔案（config.py）所在目錄
     2. 打包成 EXE：使用 EXE 檔案所在目錄
     
-    注意：EXE 執行時，會從 EXE 所在目錄查找 DemoData\TestPlan.xlsx
+    注意：EXE 執行時，會從 EXE 所在目錄查找 DemoData\\TestPlan.xlsx
     因此需要確保 EXE 和 DemoData 資料夾在同一目錄下，或放在專案根目錄
     """
     # 檢查是否在打包後的環境中運行（PyInstaller）
@@ -48,18 +48,29 @@ class DevConfig(BaseConfig):
     # ==================== Android Mobile App 配置 ====================
     # Appium Server 配置
     APPIUM_SERVER_URL = "http://localhost:4723"  # Appium Server 地址
-    APPIUM_COMMAND_TIMEOUT = 300  # Appium 命令超時時間（秒）
+    APPIUM_COMMAND_TIMEOUT = 120  # Appium 命令超時時間（秒）
     
     # Android 設備配置
-    ANDROID_PLATFORM_VERSION = "11.0"  # Android 版本
+    ANDROID_PLATFORM_VERSION = None  # Android 版本（如果為 None，則自動使用第一個可用設備的版本）
     ANDROID_DEVICE_NAME = "Android Device"  # 設備名稱
     ANDROID_UDID = None  # 設備 UDID（如果為 None，則使用第一個連接的設備）
     ANDROID_AUTOMATION_NAME = "UiAutomator2"  # 自動化引擎
     
     # Nx Witness App 配置
-    ANDROID_APP_PACKAGE = "com.networkoptix.nxwitness.mobile"  # App Package Name
-    ANDROID_APP_ACTIVITY = "com.networkoptix.nxwitness.mobile.ui.login.LoginActivity"  # 啟動 Activity
+    ANDROID_APP_PACKAGE = "com.networkoptix.nxwitness"  # App Package Name（實際的 Package）
+    ANDROID_APP_ACTIVITY = None  # 啟動 Activity（如果為 None，則讓 Appium 自動找到主 Activity）
     ANDROID_APP_PATH = None  # APK 文件路徑（如果為 None，則使用已安裝的 App）
+    
+    # 登錄頁面特殊配置
+    LOGIN_SURFACEVIEW_TAP_COORDINATES = (550, 1500)  # 破解黑盒子 (SurfaceView) 的座標點擊位置
+    LOGIN_ANIMATION_WAIT_TIME = 3  # 等待動畫轉場時間（秒）
+    
+    # Case 4-2 主頁面點擊服務器座標（第一步點擊 server）
+    CASE4_2_SERVER_CLICK_COORDINATES = (550, 500)
+    
+    # Case 4-2 主頁面點擊攝像頭座標（選擇攝像頭，當 SurfaceView 無法定位時使用）
+    # 如果為 None，則嘗試元素定位；如果提供了座標，則優先使用座標點擊
+    CASE4_2_CAMERA_CLICK_COORDINATES = (540, 800)  # 攝像頭列表中的第一個攝像頭位置（可根據實際情況調整）
     
     # Android 等待超時配置
     ANDROID_DEFAULT_TIMEOUT = 10  # 默認等待超時時間（秒）

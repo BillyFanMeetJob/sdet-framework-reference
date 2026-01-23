@@ -5,6 +5,18 @@ import sys
 from engine.step_translator import StepTranslator
 from config import EnvConfig
 
+# 設置 UTF-8 編碼，避免 Windows cp950 編碼錯誤
+if sys.platform == 'win32':
+    try:
+        # 嘗試設置 stdout 和 stderr 為 UTF-8
+        if hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        if hasattr(sys.stderr, 'reconfigure'):
+            sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        # 如果設置失敗，使用環境變數
+        os.environ['PYTHONIOENCODING'] = 'utf-8'
+
 def get_test_data():
     # 🎯 抓取命令行 --test_name 參數
     target_test = None
@@ -80,21 +92,101 @@ def test_main_flow(test_name, steps, browser_context):
     驗證規則：
     1. 連續三個需要圖像辨識的物件，沒有使用圖像辨識成功，就判定Fail
     2. 保底座標使用率不應過高（> 50% 視為失敗）
+    
+    Args:
+        test_name: 測試名稱
+        steps: 測試步驟列表
+        browser_context: Web 瀏覽器上下文（用於桌面/網頁端測試）
     """
     from engine.test_reporter import TestReporter
     from base.ok_script_recognizer import get_recognizer
     
-    # 初始化測試報告生成器
-    reporter = TestReporter(test_name)
     html_path = None  # 用於保存報告路徑
     overall_status = "pass"  # 預設為通過
+    mobile_driver = None  # 移動端 driver（按需初始化）
+    reporter = None  # 初始化為 None，確保 finally 中可以檢查
     
     try:
-        # 註冊 reporter 到 DesktopApp（用於自動截圖）
-        from base.desktop_app import DesktopApp
-        DesktopApp.set_reporter(reporter)
+        # 🎯 檢測是否需要移動端測試（通過檢查步驟中的 ActionKey）
+        needs_mobile = False
+        try:
+            translate_df = pd.read_excel(EnvConfig.TEST_PLAN_PATH, sheet_name="Translate")
+            for step in steps:
+                flow_name = step.get('flow_name', '')
+                row = translate_df[translate_df['FlowName'] == flow_name]
+                if not row.empty and row.iloc[0]['ActionKey'] == 'nx_mobile':
+                    needs_mobile = True
+                    break
+        except Exception as e:
+            print(f"[WARN] 檢測移動端需求時發生錯誤: {e}")
         
-        translator = StepTranslator(browser_context)
+        # 🎯 先初始化測試報告生成器（確保即使後續步驟失敗也能記錄）
+        reporter = TestReporter(test_name, mobile_driver=None)
+        
+        # 如果需要移動端，初始化 Appium WebDriver
+        if needs_mobile:
+            import time
+            mobile_init_start = time.time()
+            try:
+                print(f"\n[系統] [時間戳: {time.strftime('%H:%M:%S')}] 偵測到移動端測試需求，啟動 Appium WebDriver...")
+            except UnicodeEncodeError:
+                print(f"\n[系統] [時間戳: {time.strftime('%H:%M:%S')}] 偵測到移動端測試需求，啟動 Appium WebDriver...")
+            
+            try:
+                from toolkit.mobile_toolkit import create_appium_driver
+                mobile_driver, wait = create_appium_driver()
+                mobile_init_elapsed = time.time() - mobile_init_start
+                try:
+                    print(f"[系統] [耗時: {mobile_init_elapsed:.2f}s] [OK] Appium WebDriver 初始化成功")
+                except UnicodeEncodeError:
+                    print(f"[系統] [耗時: {mobile_init_elapsed:.2f}s] [OK] Appium WebDriver 初始化成功")
+                # 更新 reporter 的 mobile_driver 引用（用於截圖）
+                reporter.mobile_driver = mobile_driver
+            except Exception as e:
+                error_msg = f"Appium WebDriver 初始化失敗: {str(e)}"
+                try:
+                    print(f"[系統] [ERROR] {error_msg}")
+                except UnicodeEncodeError:
+                    print(f"[系統] [ERROR] Appium WebDriver 初始化失敗")
+                import sys
+                try:
+                    sys.stdout.flush()  # 確保日誌立即輸出
+                except:
+                    pass
+                # 記錄錯誤到報告
+                try:
+                    reporter.add_step(
+                        step_no=0,
+                        step_name="Appium WebDriver 初始化",
+                        status="fail",
+                        message=error_msg
+                    )
+                except Exception as report_error:
+                    # 如果記錄報告也失敗，至少記錄到日誌
+                    try:
+                        print(f"[ERROR] 記錄錯誤到報告失敗: {report_error}")
+                    except:
+                        pass
+                overall_status = "fail"
+                # 設置 mobile_driver 為 None，後續步驟會因為缺少 driver 而失敗
+                mobile_driver = None
+                # 不重新拋出異常，讓測試繼續執行以便生成完整報告
+                # 但由於缺少 mobile_driver，後續步驟無法執行，所以直接跳過所有步驟
+                try:
+                    print("[系統] [WARN] 由於 Appium WebDriver 初始化失敗，跳過所有測試步驟")
+                    sys.stdout.flush()
+                except:
+                    pass
+                # 跳過後續步驟，直接執行 finally 塊生成報告
+                # 通過設置一個標記來跳過步驟執行循環
+        
+        # 註冊 reporter 到 DesktopApp（用於自動截圖，僅桌面端需要）
+        if browser_context is not None:
+            from base.desktop_app import DesktopApp
+            DesktopApp.set_reporter(reporter)
+        
+        # 初始化 StepTranslator（支持桌面端和移動端）
+        translator = StepTranslator(browser_context=browser_context, mobile_driver=mobile_driver)
         
         # 執行前記錄初始統計
         recognizer = get_recognizer()
@@ -102,10 +194,19 @@ def test_main_flow(test_name, steps, browser_context):
         initial_coordinate_hits = recognizer.stats.coordinate_hits
         initial_total_attempts = recognizer.stats.total_attempts
         
-        # 執行所有步驟
+        # 執行所有步驟（只有在 Appium 初始化成功或不需要 mobile 時才執行）
         step_no = 1
+        skip_steps = (needs_mobile and mobile_driver is None)  # 如果需要 mobile 但初始化失敗，跳過步驟
+        
+        if skip_steps:
+            print("[系統] [WARN] 跳過所有測試步驟（Appium WebDriver 未初始化）")
+            import sys
+            sys.stdout.flush()
         
         for step in steps:
+            # 如果需要 mobile 但初始化失敗，跳過所有步驟
+            if skip_steps:
+                break
             flow_name = step['flow_name']
             
             # 檢查連續失敗次數（在執行前檢查）
@@ -128,7 +229,7 @@ def test_main_flow(test_name, steps, browser_context):
                     message=error_msg
                 )
                 
-                print(f"\n❌ {error_msg}")
+                print(f"\n[ERROR] {error_msg}")
                 overall_status = "fail"
                 break  # 立即停止測試
             
@@ -167,7 +268,7 @@ def test_main_flow(test_name, steps, browser_context):
                     message=error_msg
                 )
                 overall_status = "fail"
-                print(f"\n❌ {error_msg}")
+                print(f"\n[ERROR] {error_msg}")
                 break
             
             step_no += 1
@@ -198,33 +299,105 @@ def test_main_flow(test_name, steps, browser_context):
                     f"這表示大部分操作無法找到正確的 UI 元素。\n"
                     f"當前閾值: 50%"
                 )
-                print(f"\n❌ {error_msg}")
+                print(f"\n[ERROR] {error_msg}")
                 overall_status = "fail"
             else:
                 # 如果使用率在 30%-50% 之間，發出警告但不失敗
                 if coordinate_rate > 30.0:
-                    warning_msg = f"⚠️ 警告：保底座標使用率較高 ({coordinate_rate:.1f}%)，建議檢查圖片辨識資源"
+                    warning_msg = f"[WARN] 警告：保底座標使用率較高 ({coordinate_rate:.1f}%)，建議檢查圖片辨識資源"
                     print(f"\n{warning_msg}")
     
     finally:
+        # 清理移動端 driver（如果已初始化）
+        if mobile_driver is not None:
+            print("\n[系統] 關閉 Appium WebDriver...")
+            try:
+                mobile_driver.quit()
+                print("[系統] [OK] Appium WebDriver 已關閉")
+            except Exception as e:
+                print(f"[系統] [WARN] 關閉 Appium WebDriver 失敗: {e}")
+        
         # 確保總是生成報告（無論測試是否失敗）
         try:
+            # 如果 reporter 未初始化（例如測試在 collection 階段失敗），嘗試創建一個最小化的報告
+            if reporter is None:
+                print("\n[WARN] TestReporter 未初始化，嘗試創建最小化報告...")
+                try:
+                    reporter = TestReporter(test_name, mobile_driver=None)
+                    # 添加一個失敗步驟說明測試未執行
+                    reporter.add_step(
+                        step_no=0,
+                        step_name="測試初始化失敗",
+                        status="fail",
+                        message="測試在初始化階段失敗，可能是因為缺少依賴（如 appium 模組）或配置錯誤。請檢查錯誤日誌。"
+                    )
+                    overall_status = "fail"
+                except Exception as e:
+                    print(f"[ERROR] 無法創建 TestReporter: {e}")
+                    import traceback
+                    traceback.print_exc()
+            
             # 優先使用 Terminal log（從環境變數獲取）
             log_file_path = None
             if 'TEST_TERMINAL_LOG' in os.environ:
                 terminal_log = os.environ.get('TEST_TERMINAL_LOG')
+                print(f"[REPORT] 從環境變數獲取 Terminal log: {terminal_log}")
                 if os.path.exists(terminal_log):
                     log_file_path = terminal_log
+                    file_size = os.path.getsize(terminal_log)
+                    print(f"[REPORT] Terminal log 文件存在，大小: {file_size} bytes")
+                else:
+                    print(f"[WARNING] Terminal log 文件不存在: {terminal_log}")
                 # 清除環境變數，避免影響下一個測試
                 del os.environ['TEST_TERMINAL_LOG']
             
             # 如果沒有 Terminal log，嘗試從預設位置獲取 automation.log
             if not log_file_path:
                 automation_log = os.path.join(EnvConfig.PROJECT_ROOT, "logs", "automation.log")
+                print(f"[REPORT] 嘗試使用預設 automation.log: {automation_log}")
                 if os.path.exists(automation_log):
                     log_file_path = automation_log
+                    file_size = os.path.getsize(automation_log)
+                    print(f"[REPORT] automation.log 文件存在，大小: {file_size} bytes")
+                else:
+                    print(f"[WARNING] automation.log 文件不存在: {automation_log}")
             
-            html_path = reporter.finish(overall_status, log_file_path=log_file_path)
+            # 只有在 reporter 存在時才調用 finish
+            if reporter is not None:
+                try:
+                    print(f"[REPORT] 開始生成報告，log_file_path: {log_file_path}")
+                    html_path = reporter.finish(overall_status, log_file_path=log_file_path)
+                except Exception as finish_error:
+                    print(f"[ERROR] 生成報告時發生錯誤: {finish_error}")
+                    import traceback
+                    try:
+                        traceback.print_exc()
+                    except:
+                        pass
+                    html_path = None
+            else:
+                print("[ERROR] 無法生成報告：TestReporter 未初始化")
+                # 即使 reporter 不存在，也嘗試手動保存 log（如果有的話）
+                if log_file_path and os.path.exists(log_file_path):
+                    try:
+                        import shutil
+                        from datetime import datetime
+                        # 創建一個基本的報告目錄
+                        safe_test_name = test_name.replace("/", "_").replace("\\", "_")
+                        report_base = os.path.join(EnvConfig.PROJECT_ROOT, "report")
+                        test_dir = os.path.join(report_base, safe_test_name)
+                        time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                        report_dir = os.path.join(test_dir, time_str)
+                        os.makedirs(report_dir, exist_ok=True)
+                        
+                        # 複製 log 文件
+                        report_log_path = os.path.join(report_dir, "terminal_output.log")
+                        shutil.copy2(log_file_path, report_log_path)
+                        print(f"[REPORT] Log 已手動保存到: {report_log_path}")
+                    except Exception as e:
+                        print(f"[ERROR] 手動保存 log 失敗: {e}")
+                        import traceback
+                        traceback.print_exc()
             # 🎯 Demo 友好結束：打印完整的報告路徑，方便點擊開啟
             if html_path and os.path.exists(html_path):
                 # 轉換為絕對路徑並標準化

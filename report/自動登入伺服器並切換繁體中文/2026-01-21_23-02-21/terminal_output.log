@@ -1,0 +1,15 @@
+================================================================================
+測試案例: 自動登入伺服器並切換繁體中文
+執行時間: 2026-01-21 23:02:20
+執行命令: C:\Python314\python.exe -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name 自動登入伺服器並切換繁體中文 -v -s --tb=short
+工作目錄: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+tests/test_runner.py::test_main_flow[\u81ea\u52d5\u767b\u5165\u4f3a\u670d\u5668\u4e26\u5207\u63db\u7e41\u9ad4\u4e2d\u6587-steps0] 

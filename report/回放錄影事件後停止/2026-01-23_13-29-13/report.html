@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>測試報告 - 回放錄影事件後停止</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+        .header-info {
+            display: flex;
+            gap: 30px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary-card h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 14px;
+            font-weight: normal;
+        }
+        .summary-card .value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .summary-card.passed .value { color: #4CAF50; }
+        .summary-card.failed .value { color: #f44336; }
+        .summary-card.warning .value { color: #FF9800; }
+        .summary-card.total .value { color: #2196F3; }
+        .steps {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .step {
+            border-bottom: 1px solid #e0e0e0;
+            padding: 20px;
+        }
+        .step:last-child {
+            border-bottom: none;
+        }
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .step-number {
+            background: #2196F3;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .step-name {
+            font-size: 18px;
+            font-weight: bold;
+            flex: 1;
+        }
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-pass {
+            background: #4CAF50;
+            color: white;
+        }
+        .status-fail {
+            background: #f44336;
+            color: white;
+        }
+        .status-warning {
+            background: #FF9800;
+            color: white;
+        }
+        .step-message {
+            color: #666;
+            margin: 10px 0;
+        }
+        .step-screenshot {
+            margin-top: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .step-screenshot img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: opacity 0.3s;
+        }
+        .step-screenshot img:hover {
+            opacity: 0.8;
+        }
+        .step-screenshot a {
+            display: block;
+            text-decoration: none;
+        }
+        .verification-items {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .verification-items h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .verification-item {
+            display: inline-block;
+            background: #e3f2fd;
+            padding: 5px 10px;
+            margin: 5px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .timestamp {
+            color: #999;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 測試報告</h1>
+        <div>測試案例: 回放錄影事件後停止</div>
+        <div class="header-info">
+            <div>開始時間: 2026-01-23 13:29:13</div>
+            <div>結束時間: 2026-01-23 13:29:33</div>
+            <div>執行時長: 19.44 秒</div>
+        </div>
+    </div>
+    
+    <div class="summary">
+        <div class="summary-card passed">
+            <h3>通過步驟</h3>
+            <div class="value">8</div>
+        </div>
+        <div class="summary-card failed">
+            <h3>失敗步驟</h3>
+            <div class="value">0</div>
+        </div>
+        <div class="summary-card warning">
+            <h3>警告步驟</h3>
+            <div class="value">0</div>
+        </div>
+        <div class="summary-card total">
+            <h3>總步驟數</h3>
+            <div class="value">8</div>
+        </div>
+    </div>
+    
+    <div class="steps">
+        <h2 style="padding: 20px; margin: 0; border-bottom: 2px solid #667eea;">測試步驟詳情</h2>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <div class="step-name">ensure_login</div>
+                <div class="status-badge status-pass">PASS</div>
+            </div>
+            <div class="step-message">步驟執行成功（連續失敗: 0）</div>
+            
+            <div class="step-screenshot">
+                <img src="screenshots/step_001_1769146156.png" alt="步驟 1 截圖">
+            </div>
+            <div class="timestamp">執行時間: 2026-01-23T13:29:16.579988</div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <div class="step-name">雙擊 usb_cam 打開錄影畫面</div>
+                <div class="status-badge status-pass">PASS</div>
+            </div>
+            <div class="step-message">成功雙擊 usb_cam，錄影畫面已開啟</div>
+            <div class="verification-items"><h4>檢核物件：</h4><span class="verification-item">usb_cam</span></div>
+            <div class="step-screenshot">
+                <img src="screenshots/step_002_1769146159.png" alt="步驟 2 截圖">
+            </div>
+            <div class="timestamp">執行時間: 2026-01-23T13:29:19.440373</div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <div class="step-name">點擊右下角日曆圖標</div>
+                <div class="status-badge status-pass">PASS</div>
+            </div>
+            <div class="step-message">成功點擊右下角日曆圖標</div>
+            <div class="verification-items"><h4>檢核物件：</h4><span class="verification-item">右下角日曆</span></div>
+            <div class="step-screenshot">
+                <img src="screenshots/step_003_1769146160.png" alt="步驟 3 截圖">
+            </div>
+            <div class="timestamp">執行時間: 2026-01-23T13:29:20.942322</div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">4</div>
+                <div class="step-name">選擇有錄影事件的日期</div>
+                <div class="status-badge status-pass">PASS</div>
+            </div>
+            <div class="step-message">成功選中有錄影事件的日期（通常是 17-20 號）</div>
+            <div class="verification-items"><h4>檢核物件：</h4><span class="verification-item">錄影日期</span></div>
+            <div class="step-screenshot">
+                <img src="screenshots/step_004_1769146162.png" alt="步驟 4 截圖">
+            </div>
+            <div class="timestamp">執行時間: 2026-01-23T13:29:22.693878</div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">5</div>
+                <div class="step-name">點擊錄影時段（綠色條）</div>
+                <div class="status-badge status-pass">PASS</div>
+            </div>
+            <div class="step-message">成功點擊時間軸上的綠色錄影時段，開始播放錄影</div>
+            <div class="verification-items"><h4>檢核物件：</h4><span class="verification-item">錄影時段選擇</span></div>
+            <div class="step-screenshot">
+                <img src="screenshots/step_005_1769146164.png" alt="步驟 5 截圖">
+            </div>
+            <div class="timestamp">執行時間: 2026-01-23T13:29:24.644100</div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">6</div>
+                <div class="step-name">暫停回放</div>
+                <div class="status-badge status-pass">PASS</div>
+            </div>
+            <div class="step-message">使用空白鍵成功暫停回放（已播放 7.0 秒）</div>
+            
+            <div class="step-screenshot">
+                <img src="screenshots/step_006_1769146173.png" alt="步驟 6 截圖">
+            </div>
+            <div class="timestamp">執行時間: 2026-01-23T13:29:33.143581</div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">6</div>
+                <div class="step-name">暫停回放</div>
+                <div class="status-badge status-pass">PASS</div>
+            </div>
+            <div class="step-message">成功播放錄影 7.0 秒後暫停</div>
+            <div class="verification-items"><h4>檢核物件：</h4><span class="verification-item">暫停按鈕</span></div>
+            <div class="step-screenshot">
+                <img src="screenshots/step_006_1769146173.png" alt="步驟 6 截圖">
+            </div>
+            <div class="timestamp">執行時間: 2026-01-23T13:29:33.241619</div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <div class="step-name">playback_recording</div>
+                <div class="status-badge status-pass">PASS</div>
+            </div>
+            <div class="step-message">步驟執行成功（連續失敗: 0）</div>
+            
+            <div class="step-screenshot">
+                <img src="screenshots/step_002_1769146173.png" alt="步驟 2 截圖">
+            </div>
+            <div class="timestamp">執行時間: 2026-01-23T13:29:33.347633</div>
+        </div>
+
+    </div>
+
+    <div class="steps" style="margin-top: 20px;">
+        <h2 style="padding: 20px; margin: 0; border-bottom: 2px solid #667eea;">物件辨識截圖</h2>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <div class="step-name">點擊位置 [雙擊]</div>
+                <div class="status-badge status-pass">辨識成功</div>
+            </div>
+            <div class="step-message">
+                <strong>辨識方式：</strong>座標點擊<br>
+                <strong>物件位置：</strong>(97, 236) | 
+                <strong>物件尺寸：</strong>20x20 | 
+                <strong>辨識時間：</strong>2026-01-23 13:29:16
+            </div>
+            <div class="step-screenshot">
+                <a href="screenshots/click_20260123_132916_848.png" target="_blank" title="點擊查看大圖">
+                    <img src="screenshots/click_20260123_132916_848.png" alt="辨識截圖 1" style="cursor: pointer;">
+                </a>
+                <div style="margin-top: 10px; text-align: center;">
+                    <a href="screenshots/click_20260123_132916_848.png" target="_blank" download="click_20260123_132916_848.png" 
+                       style="color: #2196F3; text-decoration: none; font-size: 12px;">
+                        📥 下載截圖 (click_20260123_132916_848.png)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <div class="step-name">usb_cam_item.png</div>
+                <div class="status-badge status-pass">辨識成功</div>
+            </div>
+            <div class="step-message">
+                <strong>辨識方式：</strong>OK_SCRIPT<br>
+                <strong>物件位置：</strong>(97, 236) | 
+                <strong>物件尺寸：</strong>116x35 | 
+                <strong>辨識時間：</strong>2026-01-23 13:29:17
+            </div>
+            <div class="step-screenshot">
+                <a href="screenshots/recognition_002_1769146157.png" target="_blank" title="點擊查看大圖">
+                    <img src="screenshots/recognition_002_1769146157.png" alt="辨識截圖 2" style="cursor: pointer;">
+                </a>
+                <div style="margin-top: 10px; text-align: center;">
+                    <a href="screenshots/recognition_002_1769146157.png" target="_blank" download="recognition_002_1769146157.png" 
+                       style="color: #2196F3; text-decoration: none; font-size: 12px;">
+                        📥 下載截圖 (recognition_002_1769146157.png)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <div class="step-name">點擊位置 [單擊]</div>
+                <div class="status-badge status-pass">辨識成功</div>
+            </div>
+            <div class="step-message">
+                <strong>辨識方式：</strong>座標點擊<br>
+                <strong>物件位置：</strong>(1876, 1176) | 
+                <strong>物件尺寸：</strong>20x20 | 
+                <strong>辨識時間：</strong>2026-01-23 13:29:19
+            </div>
+            <div class="step-screenshot">
+                <a href="screenshots/click_20260123_132919_551.png" target="_blank" title="點擊查看大圖">
+                    <img src="screenshots/click_20260123_132919_551.png" alt="辨識截圖 3" style="cursor: pointer;">
+                </a>
+                <div style="margin-top: 10px; text-align: center;">
+                    <a href="screenshots/click_20260123_132919_551.png" target="_blank" download="click_20260123_132919_551.png" 
+                       style="color: #2196F3; text-decoration: none; font-size: 12px;">
+                        📥 下載截圖 (click_20260123_132919_551.png)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">4</div>
+                <div class="step-name">calendar_icon.png</div>
+                <div class="status-badge status-pass">辨識成功</div>
+            </div>
+            <div class="step-message">
+                <strong>辨識方式：</strong>PyAutoGUI<br>
+                <strong>物件位置：</strong>(1876, 1176) | 
+                <strong>物件尺寸：</strong>65x32 | 
+                <strong>辨識時間：</strong>2026-01-23 13:29:19
+            </div>
+            <div class="step-screenshot">
+                <a href="screenshots/recognition_004_1769146159.png" target="_blank" title="點擊查看大圖">
+                    <img src="screenshots/recognition_004_1769146159.png" alt="辨識截圖 4" style="cursor: pointer;">
+                </a>
+                <div style="margin-top: 10px; text-align: center;">
+                    <a href="screenshots/recognition_004_1769146159.png" target="_blank" download="recognition_004_1769146159.png" 
+                       style="color: #2196F3; text-decoration: none; font-size: 12px;">
+                        📥 下載截圖 (recognition_004_1769146159.png)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">5</div>
+                <div class="step-name">Calendar Header (Anchor)</div>
+                <div class="status-badge status-pass">辨識成功</div>
+            </div>
+            <div class="step-message">
+                <strong>辨識方式：</strong>OK Script / OpenCV<br>
+                <strong>物件位置：</strong>(1508, 585) | 
+                <strong>物件尺寸：</strong>407x95 | 
+                <strong>辨識時間：</strong>2026-01-23 13:29:21
+            </div>
+            <div class="step-screenshot">
+                <a href="screenshots/recognition_005_1769146161.png" target="_blank" title="點擊查看大圖">
+                    <img src="screenshots/recognition_005_1769146161.png" alt="辨識截圖 5" style="cursor: pointer;">
+                </a>
+                <div style="margin-top: 10px; text-align: center;">
+                    <a href="screenshots/recognition_005_1769146161.png" target="_blank" download="recognition_005_1769146161.png" 
+                       style="color: #2196F3; text-decoration: none; font-size: 12px;">
+                        📥 下載截圖 (recognition_005_1769146161.png)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">6</div>
+                <div class="step-name">有錄影標記的日期（視覺驅動）</div>
+                <div class="status-badge status-pass">辨識成功</div>
+            </div>
+            <div class="step-message">
+                <strong>辨識方式：</strong>像素顏色掃描<br>
+                <strong>物件位置：</strong>(1754, 819) | 
+                <strong>物件尺寸：</strong>40x30 | 
+                <strong>辨識時間：</strong>2026-01-23 13:29:21
+            </div>
+            <div class="step-screenshot">
+                <a href="screenshots/recognition_006_1769146161.png" target="_blank" title="點擊查看大圖">
+                    <img src="screenshots/recognition_006_1769146161.png" alt="辨識截圖 6" style="cursor: pointer;">
+                </a>
+                <div style="margin-top: 10px; text-align: center;">
+                    <a href="screenshots/recognition_006_1769146161.png" target="_blank" download="recognition_006_1769146161.png" 
+                       style="color: #2196F3; text-decoration: none; font-size: 12px;">
+                        📥 下載截圖 (recognition_006_1769146161.png)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">7</div>
+                <div class="step-name">活動錄影段</div>
+                <div class="status-badge status-pass">辨識成功</div>
+            </div>
+            <div class="step-message">
+                <strong>辨識方式：</strong>像素辨識<br>
+                <strong>物件位置：</strong>(318, 1170) | 
+                <strong>物件尺寸：</strong>50x20 | 
+                <strong>辨識時間：</strong>2026-01-23 13:29:23
+            </div>
+            <div class="step-screenshot">
+                <a href="screenshots/recognition_007_1769146163.png" target="_blank" title="點擊查看大圖">
+                    <img src="screenshots/recognition_007_1769146163.png" alt="辨識截圖 7" style="cursor: pointer;">
+                </a>
+                <div style="margin-top: 10px; text-align: center;">
+                    <a href="screenshots/recognition_007_1769146163.png" target="_blank" download="recognition_007_1769146163.png" 
+                       style="color: #2196F3; text-decoration: none; font-size: 12px;">
+                        📥 下載截圖 (recognition_007_1769146163.png)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">8</div>
+                <div class="step-name">點擊位置 [單擊]</div>
+                <div class="status-badge status-pass">辨識成功</div>
+            </div>
+            <div class="step-message">
+                <strong>辨識方式：</strong>座標點擊<br>
+                <strong>物件位置：</strong>(318, 1170) | 
+                <strong>物件尺寸：</strong>20x20 | 
+                <strong>辨識時間：</strong>2026-01-23 13:29:23
+            </div>
+            <div class="step-screenshot">
+                <a href="screenshots/click_20260123_132923_374.png" target="_blank" title="點擊查看大圖">
+                    <img src="screenshots/click_20260123_132923_374.png" alt="辨識截圖 8" style="cursor: pointer;">
+                </a>
+                <div style="margin-top: 10px; text-align: center;">
+                    <a href="screenshots/click_20260123_132923_374.png" target="_blank" download="click_20260123_132923_374.png" 
+                       style="color: #2196F3; text-decoration: none; font-size: 12px;">
+                        📥 下載截圖 (click_20260123_132923_374.png)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="steps" style="margin-top: 20px;">
+        <h2 style="padding: 20px; margin: 0; border-bottom: 2px solid #667eea;">執行日誌</h2>
+        <div class="step">
+            <div class="step-message">
+                <a href="terminal_output.log" target="_blank" style="color: #2196F3; text-decoration: none; font-weight: bold;">
+                    📄 查看完整執行日誌 (terminal_output.log)
+                </a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

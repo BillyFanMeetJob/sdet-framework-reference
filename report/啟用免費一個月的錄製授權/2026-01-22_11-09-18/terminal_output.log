@@ -1,0 +1,158 @@
+================================================================================
+æ¸¬è©¦æ¡ˆä¾‹: å•Ÿç”¨å…è²»ä¸€å€‹æœˆçš„éŒ„è£½æŽˆæ¬Š
+åŸ·è¡Œæ™‚é–“: 2026-01-22 11:09:17
+åŸ·è¡Œå‘½ä»¤: C:\Python314\python.exe -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name å•Ÿç”¨å…è²»ä¸€å€‹æœˆçš„éŒ„è£½æŽˆæ¬Š -v -s --tb=short
+å·¥ä½œç›®éŒ„: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+tests/test_runner.py::test_main_flow[\u555f\u7528\u514d\u8cbb\u4e00\u500b\u6708\u7684\u9304\u88fd\u6388\u6b0a-steps0] >>> [DEBUG] ÀË¬dµn¿ýª¬ºA¡]¥Ø¼Ð¦øªA¾¹: LAPTOP-QRJN5735¡^
+>>> [OK] ÅçÃÒ¦¨¥\¡G§ä¨ì¹w´Á¤¸¯À desktop_login/server_tile.png
+>>> [WARN] µøµ¡¦s¦b¦ý¤´¦bµn¿ýµe­±¡A»Ý­n°õ¦æµn¿ý
+>>> [WARN] ¥¼ÀË´ú¨ì¥Dµe­±©Î³n¥ó©|¥¼§¹¥þ±Ò°Ê¡A°õ¦æµn¿ý...
+>>> [CASE_1-1] °õ¦æ Case 1-1 µn¿ý¬yµ{
+>>> [OK] ³n¥ó¤w¦b¹B¦æ¡A±Nµøµ¡¸m³»¡]µøµ¡: 'Nx Witness Client', ¤Ø¤o: 1920x1200¡^
+>>> [OK] µøµ¡¤w¸m³»
+>>> [LOGIN] Àu¥ý¹Á¸ÕÂIÀ»¦øªA¾¹¥d¤ù: LAPTOP-QRJN5735
+>>> [DEBUG] ¨Ï¥Î¹Ï¤ùÀu¥ýµ¦²¤¡GOK Script > PyAutoGUI > VLM > OCR
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_login\server_tile.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: True, ¤èªk: ok_script
+>>> [DEBUG] OK Script ¿ëÃÑ¦¨¥\¡A¶}©lÅçÃÒ®y¼Ð...
+>>> [DEBUG] ®y¼ÐÅçÃÒ³q¹L: ¥ª¤W¨¤=(274, 713), ¤¤¤ßÂI=(490, 766)¡A°õ¦æÂIÀ»...
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (490, 766), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (490, 766), °Ê§@=³æÀ»
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (490, 766), °Ê§@=³æÀ»
+>>> [DEBUG] ÂIÀ»°õ¦æ§¹¦¨
+>>> [OK] OK_SCRIPT ¿ëÃÑ¦¨¥\¨ÃÂIÀ»: server_tile.png («H¤ß: 0.92, ¯Ó®É: 280.1ms)
+>>> [STAT] [®y¼Ð®w] ¤ñ¨Ò®y¼Ð: x_ratio=0.2552, y_ratio=0.6383 | µøµ¡¤Ø¤o: 1920x1200 | µ´¹ï®y¼Ð: (490, 766)
+>>> [DEBUG] smart_click ªð¦^µ²ªG: True
+>>> [VERIFY] ÅçÃÒÂIÀ»µ²ªG¡GÀË¬d¬O§_»~ÂIÀ»¤F¡u³s±µªA°È¾¹¡v...
+>>> [OK] ¥¼ÀË´ú¨ì³s±µªA°È¾¹¹ï¸Ü®Ø¡A½T»{¦¨¥\ÂIÀ»¤F¡uLAPTOP-QRJN5735¡v
+>>> [OK] ¦øªA¾¹ÂIÀ»¦¨¥\¡Aµ¥«Ý¨t²Î¸ü¤J...
+>>> [OK] §ä¨ì¥Dµe­±µøµ¡¡AÄ~ÄòÅçÃÒ...
+>>> [OK] §ä¨ì¥Ø¼Ðµøµ¡: Nx Witness Client (1920x1200)
+>>> [OK] ÅçÃÒ¦¨¥\¡G§ä¨ì¹w´Á¤¸¯À desktop_main/server_icon.png
+>>> [OK] µn¿ýÅçÃÒ¦¨¥\¡G§ä¨ì¥Dµe­±¹Ï¥Ü
+>>> [OK] µn¿ýÅçÃÒ¦¨¥\¡G¤w¶i¤J¥Dµe­±¡]µøµ¡¼ÐÃDÅçÃÒ³q¹L¡^
+>>> [CASE] °õ¦æ Case 1-3: ±Ò¥Î§K¶O¿ý»s±ÂÅv
+>>> [CLICK] ¦b LAPTOP ¤W¥kÁä¶}±Ò¯¸ÂIºÞ²z...
+>>> [SMART_CLICK] [START] Finding target: text='LAPTOP', image='None', timeout=3s
+>>> [SMART_CLICK] [TEXT] Trying Text Strategy: 'LAPTOP' (Priority: VLM)...
+>>> [DEBUG] _try_vlm_recognition ³Q½Õ¥Î: target_text='LAPTOP', region=(0, 0, 1920, 1200)
+>>> [DEBUG] VLM ±Ò¥Îª¬ºA: True
+>>> [DEBUG] ªì©l¤Æ VLM: backend=ollama, model=llava
+>>> [OK] VLM ¤ÞÀºªì©l¤Æ¦¨¥\ (ollama/llava)
+>>> [DEBUG] Ollama ¥i¥Î¡A¤w¦w¸Ë¼Ò«¬: ["model='llava:latest' modified_at=datetime.datetime(2026, 1, 17, 17, 11, 23, 171732, tzinfo=TzInfo(28800)) digest='8dd30f6b0cb19f555f2c7a7ebda861449ea2cc76bf1f44e262931f45fc81d081' size=4733363377 details=ModelDetails(parent_model='', format='gguf', family='llama', families=['llama', 'clip'], parameter_size='7B', quantization_level='Q4_0')"]
+>>> [DEBUG] _get_vlm_engine() ªð¦^: <base.vlm_recognizer.VLMRecognizer object at 0x00000225AEE567B0> (Ãþ«¬: <class 'base.vlm_recognizer.VLMRecognizer'>)
+>>> [VLM] ¥¿¦b¨Ï¥Î LLM ·j´M¤¸¯À: 'LAPTOP'
+>>> [OK] VLM ªì©l¤Æ¦¨¥\: ollama/llava
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: success=True, confidence=0.9, x=1641, y=620
+>>> [VLM] ¿ëÃÑ¦¨¥\: «Ì¹õµ´¹ï®y¼Ð=(1641, 620), confidence=0.90
+>>> [VLM] region=(0, 0, 1920, 1200)
+>>> [VLM] µ¡¤f¦ì¸m: left=0, top=0, width=1920, height=1200
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1641, 620), °Ê§@=¥kÁä
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1641, 620), °Ê§@=¥kÁä
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1641, 620), °Ê§@=¥kÁä
+>>> [VLM] VLM ¿ëÃÑ¦¨¥\¨ÃÂIÀ»: LAPTOP («H¤ß: 0.90, ¯Ó®É: 6023ms)
+>>> [STAT] [®y¼Ð®w] ¤ñ¨Ò®y¼Ð: x_ratio=0.8547, y_ratio=0.5167 | µ´¹ï®y¼Ð: (1641, 620)
+>>> [SMART_CLICK] [TEXT] Success.
+>>> [SMART_CLICK] [START] Finding target: text='¯¸ÂIºÞ²z', image='desktop_settings/system_admin_menu.png', timeout=3s
+>>> [SMART_CLICK] [TEXT] Trying Text Strategy: '¯¸ÂIºÞ²z' (Priority: VLM)...
+>>> [DEBUG] _try_vlm_recognition ³Q½Õ¥Î: target_text='¯¸ÂIºÞ²z', region=(0, 0, 1920, 1200)
+>>> [DEBUG] _get_vlm_engine() ªð¦^: <base.vlm_recognizer.VLMRecognizer object at 0x00000225AEE567B0> (Ãþ«¬: <class 'base.vlm_recognizer.VLMRecognizer'>)
+>>> [VLM] ¥¿¦b¨Ï¥Î LLM ·j´M¤¸¯À: '¯¸ÂIºÞ²z'
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: success=True, confidence=0.75, x=1415, y=525
+>>> [VLM] ¿ëÃÑ¦¨¥\: «Ì¹õµ´¹ï®y¼Ð=(1415, 525), confidence=0.75
+>>> [VLM] region=(0, 0, 1920, 1200)
+>>> [VLM] µ¡¤f¦ì¸m: left=0, top=0, width=1920, height=1200
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1415, 525), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1415, 525), °Ê§@=³æÀ»
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1415, 525), °Ê§@=³æÀ»
+>>> [VLM] VLM ¿ëÃÑ¦¨¥\¨ÃÂIÀ»: ¯¸ÂIºÞ²z («H¤ß: 0.75, ¯Ó®É: 3551ms)
+>>> [STAT] [®y¼Ð®w] ¤ñ¨Ò®y¼Ð: x_ratio=0.7370, y_ratio=0.4375 | µ´¹ï®y¼Ð: (1415, 525)
+>>> [SMART_CLICK] [TEXT] Success.
+>>> [OK] ¦¨¥\ÂIÀ»¨t²ÎºÞ²z¿ï¶µ
+>>> [OK] µøµ¡¤w¥X²{¨Ã§¹¥þªì©l¤Æ: Nx Witness Client (1920x1200)
+>>> [OK] ¨t²ÎºÞ²zµøµ¡¤w¶}±Ò: Nx Witness Client
+>>> [CLICK] ÂIÀ»¡u±ÂÅv¡v¤À­¶...
+>>> [SMART_CLICK] [START] Finding target: text='±ÂÅv', image='desktop_settings/license_tab.png', timeout=2s
+>>> [SMART_CLICK] [TEXT] Trying Text Strategy: '±ÂÅv' (Priority: VLM)...
+>>> [DEBUG] _try_vlm_recognition ³Q½Õ¥Î: target_text='±ÂÅv', region=(0, 0, 1920, 1200)
+>>> [DEBUG] _get_vlm_engine() ªð¦^: <base.vlm_recognizer.VLMRecognizer object at 0x00000225AEE567B0> (Ãþ«¬: <class 'base.vlm_recognizer.VLMRecognizer'>)
+>>> [VLM] ¥¿¦b¨Ï¥Î LLM ·j´M¤¸¯À: '±ÂÅv'
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: success=False, confidence=0.0, x=0, y=0
+>>> [SMART_CLICK] [TEXT] Failed.
+[33mChecking connectivity to the model hosters, this may take a while. To bypass this check, set `DISABLE_MODEL_SOURCE_CHECK` to `True`.[0m
+>>> [WARN] OCR ¤ÞÀºªì©l¤Æ¥¢±Ñ: No module named 'paddle'
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/license_tab.png...
+>>> [DEBUG] ¹Á¸Õ OK Script ¹Ï¹³¿ëÃÑ: D:\nxwitness-demo\res\desktop_settings\license_tab.png
+>>> [DEBUG] OK Script ¿ëÃÑµ²ªG: None, ¤èªk: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (2s), attempted strategies: 2
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Text/VLM Recognition ('±ÂÅv'), Image Recognition (OK Script: desktop_settings/license_tab.png)
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.280, 0.080)...
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (537, 96), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (537, 96), °Ê§@=³æÀ»
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (537, 96), °Ê§@=³æÀ»
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (537, 96)
+>>> [OK] ¦¨¥\¤Á´«¨ì±ÂÅv¤À­¶
+>>> [CLICK] ¹Á¸Õ´M§ä¡u±Ò¥Î§K¶O±ÂÅv¡v«ö¶s...
+>>> [SMART_CLICK] [START] Finding target: text='±Ò°Ê¸Õ¥Î±ÂÅv', image='desktop_settings/activate_free_license_btn.png', timeout=2s
+>>> [SMART_CLICK] [TEXT] Trying Text Strategy: '±Ò°Ê¸Õ¥Î±ÂÅv' (Priority: VLM)...
+>>> [DEBUG] _try_vlm_recognition ³Q½Õ¥Î: target_text='±Ò°Ê¸Õ¥Î±ÂÅv', region=(0, 0, 1920, 1200)
+>>> [DEBUG] _get_vlm_engine() ªð¦^: <base.vlm_recognizer.VLMRecognizer object at 0x00000225AEE567B0> (Ãþ«¬: <class 'base.vlm_recognizer.VLMRecognizer'>)
+>>> [VLM] ¥¿¦b¨Ï¥Î LLM ·j´M¤¸¯À: '±Ò°Ê¸Õ¥Î±ÂÅv'
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: success=False, confidence=0.0, x=0.0, y=0.0
+>>> [SMART_CLICK] [TEXT] Failed.
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (2s), attempted strategies: 1
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Text/VLM Recognition ('±Ò°Ê¸Õ¥Î±ÂÅv')
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.200, 0.350)...
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (384, 420), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (384, 420), °Ê§@=³æÀ»
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (384, 420), °Ê§@=³æÀ»
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (384, 420)
+>>> [OK] ¦¨¥\ÂIÀ»±Ò¥Î§K¶O±ÂÅv«ö¶s
+>>> [OK] ¥¿¦b±Ò¥Î§K¶O±ÂÅv...
+>>> [CLICK] ½T»{±ÂÅv±Ò°Ê...
+>>> [SMART_CLICK] [START] Finding target: text='½T»{', image='None', timeout=2s
+>>> [SMART_CLICK] [TEXT] Trying Text Strategy: '½T»{' (Priority: VLM)...
+>>> [DEBUG] _try_vlm_recognition ³Q½Õ¥Î: target_text='½T»{', region=(0, 0, 1920, 1200)
+>>> [DEBUG] _get_vlm_engine() ªð¦^: <base.vlm_recognizer.VLMRecognizer object at 0x00000225AEE567B0> (Ãþ«¬: <class 'base.vlm_recognizer.VLMRecognizer'>)
+>>> [VLM] ¥¿¦b¨Ï¥Î LLM ·j´M¤¸¯À: '½T»{'
+>>> ®y¼ÐÂà´««á¶W¥X­ì©lºI¹Ï½d³ò: (481920, 586), ­ì©lºI¹Ï¤Ø¤o=(1920, 1200)
+>>> VLM ªð¦^®y¼Ð¶W¥X region ½d³ò: (481920.0, 586.0), region ¤Ø¤o=(1920, 1200)
+>>> ÀË´ú¨ì x ®y¼Ð©úÅã¶W¥X region ¼e«×¡]¶W¹L 50px¡^¡A¥i¯à¬O VLM ªð¦^¤F¿ù»~ªº®y¼Ð¡A±N©Úµ´¦¹µ²ªG
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: success=False, confidence=0.767, x=481920, y=586
+>>> [SMART_CLICK] [TEXT] Failed.
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (2s), attempted strategies: 1
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Text/VLM Recognition ('½T»{')
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.650, 0.850)...
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1248, 1020), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1248, 1020), °Ê§@=³æÀ»
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1248, 1020), °Ê§@=³æÀ»
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (1248, 1020)
+>>> [OK] ¤w½T»{±ÂÅv±Ò°Ê
+>>> [OK] ±ÂÅv±Ò°Ê¦¨¥\
+>>> [CLICK] Ãö³¬¨t²ÎºÞ²zµøµ¡...
+>>> [SMART_CLICK] [START] Finding target: text='½T»{', image='None', timeout=2s
+>>> [SMART_CLICK] [TEXT] Trying Text Strategy: '½T»{' (Priority: VLM)...
+>>> [DEBUG] _try_vlm_recognition ³Q½Õ¥Î: target_text='½T»{', region=(0, 0, 1920, 1200)
+>>> [DEBUG] _get_vlm_engine() ªð¦^: <base.vlm_recognizer.VLMRecognizer object at 0x00000225AEE567B0> (Ãþ«¬: <class 'base.vlm_recognizer.VLMRecognizer'>)
+>>> [VLM] ¥¿¦b¨Ï¥Î LLM ·j´M¤¸¯À: '½T»{'
+>>> [DEBUG] VLM ¿ëÃÑµ²ªG: success=False, confidence=0.0, x=0, y=0
+>>> [SMART_CLICK] [TEXT] Failed.
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (2s), attempted strategies: 1
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Text/VLM Recognition ('½T»{')
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.720, 0.950)...
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1382, 1140), °Ê§@=³æÀ»
+>>> [CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1382, 1140), °Ê§@=³æÀ»
+[CLICK_COORD] ¹ê»ÚÂIÀ»®y¼Ð: (1382, 1140), °Ê§@=³æÀ»
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (1382, 1140)
+>>> [OK] ¦¨¥\Ãö³¬¨t²ÎºÞ²zµøµ¡
+>>> [OK] Case 1-3 §¹¦¨

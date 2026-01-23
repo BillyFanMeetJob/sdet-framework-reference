@@ -265,6 +265,89 @@ class PlaybackPage(BaseMobilePage):
         self.logger.warning("[PLAYBACK_PAGE] ⚠️ 無法確認視頻是否正在播放")
         return False
     
+    def verify_video_opened_by_screenshot_comparison(
+        self,
+        screenshot_interval: float = 2.0,
+        difference_threshold: float = 0.01
+    ) -> bool:
+        """
+        通過截圖比對驗證影片是否成功打開
+        
+        流程：
+        1. 拍攝第一張截圖
+        2. 等待指定時間（默認 2 秒）
+        3. 拍攝第二張截圖
+        4. 比對兩張截圖的差異
+        5. 如果差異超過閾值（默認 1%），視為影片成功打開
+        
+        Args:
+            screenshot_interval: 兩張截圖的時間間隔（秒），默認 2.0 秒
+            difference_threshold: 差異閾值（0.0-1.0），默認 0.01 (1%)
+            
+        Returns:
+            bool: 影片是否成功打開（差異超過閾值）
+        """
+        import time
+        import os
+        from datetime import datetime
+        
+        self.logger.info(
+            f"[PLAYBACK_PAGE] 開始驗證影片是否打開（截圖間隔: {screenshot_interval} 秒，"
+            f"差異閾值: {difference_threshold*100:.1f}%）..."
+        )
+        
+        # 創建診斷目錄
+        diagnostic_dir = os.path.join(os.getcwd(), "report", "diagnostics")
+        os.makedirs(diagnostic_dir, exist_ok=True)
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        screenshot1_path = os.path.join(diagnostic_dir, f"video_check_1_{timestamp}.png")
+        screenshot2_path = os.path.join(diagnostic_dir, f"video_check_2_{timestamp}.png")
+        
+        try:
+            # 步驟 1: 拍攝第一張截圖
+            self.logger.info("[PLAYBACK_PAGE] 拍攝第一張截圖...")
+            if not self.take_screenshot(screenshot1_path):
+                self.logger.error("[PLAYBACK_PAGE] ❌ 第一張截圖失敗")
+                return False
+            
+            # 步驟 2: 等待指定時間
+            self.logger.info(f"[PLAYBACK_PAGE] 等待 {screenshot_interval} 秒...")
+            time.sleep(screenshot_interval)
+            
+            # 步驟 3: 拍攝第二張截圖
+            self.logger.info("[PLAYBACK_PAGE] 拍攝第二張截圖...")
+            if not self.take_screenshot(screenshot2_path):
+                self.logger.error("[PLAYBACK_PAGE] ❌ 第二張截圖失敗")
+                return False
+            
+            # 步驟 4: 比對兩張截圖
+            self.logger.info("[PLAYBACK_PAGE] 比對兩張截圖...")
+            exceeds_threshold, actual_difference = self.compare_screenshots(
+                screenshot1_path,
+                screenshot2_path,
+                threshold=difference_threshold
+            )
+            
+            if exceeds_threshold:
+                self.logger.info(
+                    f"[PLAYBACK_PAGE] ✅ 影片驗證成功！差異度 {actual_difference*100:.2f}% "
+                    f"超過閾值 {difference_threshold*100:.1f}%，影片已成功打開"
+                )
+                return True
+            else:
+                self.logger.warning(
+                    f"[PLAYBACK_PAGE] ❌ 影片驗證失敗！差異度 {actual_difference*100:.2f}% "
+                    f"未超過閾值 {difference_threshold*100:.1f}%，影片可能未成功打開"
+                )
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"[PLAYBACK_PAGE] ❌ 影片驗證過程發生異常: {e}")
+            import traceback
+            self.logger.debug(traceback.format_exc())
+            return False
+    
     def play_recorded_video(self, days_ago: int = 1) -> bool:
         """
         播放錄製的視頻（完整流程）
@@ -298,3 +381,102 @@ class PlaybackPage(BaseMobilePage):
         
         self.logger.info("[PLAYBACK_PAGE] ✅ 視頻播放成功")
         return True
+    
+    def pause_playback(self) -> bool:
+        """
+        暫停視頻播放（PDF Step 66-67）
+        
+        策略：
+        1. 點擊視頻容器中心以顯示控制按鈕
+        2. 點擊暫停按鈕
+        
+        Returns:
+            bool: 暫停是否成功
+        """
+        self.logger.info("[PLAYBACK_PAGE] 暫停視頻播放（PDF Step 66-67）...")
+        
+        # 步驟 1: 點擊視頻容器中心以顯示控制按鈕
+        if not self.driver:
+            self.logger.error("[PLAYBACK_PAGE] WebDriver 未初始化")
+            return False
+        
+        try:
+            # 獲取屏幕尺寸
+            size = self.driver.get_window_size()
+            center_x = size['width'] // 2
+            center_y = size['height'] // 2
+            
+            # 點擊視頻容器中心
+            self.logger.info(f"[PLAYBACK_PAGE] 點擊視頻容器中心 ({center_x}, {center_y}) 以顯示控制按鈕...")
+            if not self.tap_at_coordinates(center_x, center_y):
+                self.logger.warning("[PLAYBACK_PAGE] 點擊視頻容器中心失敗，但繼續嘗試點擊暫停按鈕...")
+            
+            # 等待控制按鈕出現
+            import time
+            time.sleep(0.5)
+            
+            # 步驟 2: 點擊暫停按鈕
+            # 策略 1: 優先使用 Resource ID 定位
+            if self.click_by_id(self.PAUSE_BUTTON_ID, timeout=3):
+                self.logger.info("[PLAYBACK_PAGE] ✅ 成功點擊暫停按鈕（PDF Step 67）")
+                return True
+            
+            # 策略 2: 如果 Resource ID 定位失敗，嘗試使用文字定位
+            self.logger.warning("[PLAYBACK_PAGE] Resource ID 定位失敗，嘗試文字定位...")
+            if self.click_by_text("暫停") or self.click_by_text("Pause"):
+                self.logger.info("[PLAYBACK_PAGE] ✅ 成功點擊暫停按鈕（PDF Step 67）")
+                return True
+            
+            # 策略 3: 嘗試查找包含暫停圖標的元素
+            self.logger.warning("[PLAYBACK_PAGE] 文字定位失敗，嘗試查找暫停圖標...")
+            element = self.find_element_by_xpath('//*[contains(@content-desc, "pause") or contains(@content-desc, "暫停")]')
+            if element:
+                if self.click_element(element):
+                    self.logger.info("[PLAYBACK_PAGE] ✅ 成功點擊暫停按鈕（PDF Step 67）")
+                    return True
+            
+            self.logger.error("[PLAYBACK_PAGE] ❌ 無法找到暫停按鈕（PDF Step 67）")
+            return False
+            
+        except Exception as e:
+            self.logger.error(f"[PLAYBACK_PAGE] ❌ 暫停視頻播放失敗: {e}")
+            return False
+    
+    def is_playback_paused(self, timeout: int = 5) -> bool:
+        """
+        檢查視頻是否已暫停（PDF Step 67 驗證）
+        
+        策略：
+        1. 檢查播放按鈕是否存在（如果存在，表示視頻已暫停）
+        2. 檢查暫停按鈕是否不存在（如果不存在，表示視頻已暫停）
+        
+        Args:
+            timeout: 超時時間（秒）
+            
+        Returns:
+            bool: 視頻是否已暫停
+        """
+        self.logger.info("[PLAYBACK_PAGE] 檢查視頻是否已暫停（PDF Step 67 驗證）...")
+        
+        # 策略 1: 檢查播放按鈕是否存在（如果存在，表示視頻已暫停）
+        if self.wait_for_element_visible(resource_id=self.PLAY_BUTTON_ID, timeout=timeout):
+            self.logger.info("[PLAYBACK_PAGE] ✅ 視頻已暫停（播放按鈕可見）")
+            return True
+        
+        # 策略 2: 檢查暫停按鈕是否不存在（如果不存在，表示視頻已暫停）
+        try:
+            from selenium.webdriver.support.ui import WebDriverWait
+            from selenium.webdriver.support import expected_conditions as EC
+            from appium.webdriver.common.appiumby import AppiumBy
+            
+            wait = WebDriverWait(self.driver, timeout)
+            # 等待暫停按鈕消失
+            wait.until_not(
+                EC.presence_of_element_located((AppiumBy.ID, self.PAUSE_BUTTON_ID))
+            )
+            self.logger.info("[PLAYBACK_PAGE] ✅ 視頻已暫停（暫停按鈕已消失）")
+            return True
+        except Exception:
+            # 如果暫停按鈕仍然存在，表示視頻可能還在播放
+            self.logger.warning("[PLAYBACK_PAGE] ⚠️ 無法確認視頻是否已暫停（暫停按鈕仍然存在）")
+            return False

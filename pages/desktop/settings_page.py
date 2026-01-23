@@ -7,26 +7,31 @@ from config import EnvConfig
 
 class SettingsPage(DesktopApp):
     def switch_to_appearance_tab(self):
-        """點擊「外觀」或「界面」分頁"""
+        """點擊「外觀」或「界面」分頁 - 圖片優先，VLM 為輔"""
         self.logger.info("🖱️ 點擊「外觀」分頁...")
         
-        # smart_click 會自動優先使用文字辨識，失敗則使用圖片辨識
-        # 先嘗試「外观」（簡體中文）
+        # 🎯 策略：圖片優先，VLM 為輔
+        # 設置 use_vlm=False 以啟用「圖片優先」模式
+        # 在圖片優先模式下，smart_click 會先嘗試圖片，失敗後再嘗試 VLM
         success = self.smart_click(
             x_ratio=0.1686,
             y_ratio=0.0720,
-            target_text="外观",  # 文字辨識優先
-            image_path="desktop_settings/appearance_tab.png",  # 圖片辨識作為備選
+            target_text="界面外观",  # 保留文字，作為 VLM 備選
+            image_path="desktop_settings/appearance_tab.png",  # 圖片優先
+            use_ok_script=True,  # 啟用圖片辨識
+            use_vlm=False,  # 設置為 False 以啟用「圖片優先」模式（VLM 作為備選）
             timeout=3.0
         )
         
-        # 如果失敗，嘗試「界面」（繁體中文）
+        # 如果失敗，嘗試繁體中文
         if not success:
             success = self.smart_click(
                 x_ratio=0.1686,
                 y_ratio=0.0720,
-                target_text="界面",  # 文字辨識優先
-                image_path="desktop_settings/appearance_tab.png",  # 圖片辨識作為備選
+                target_text="界面外觀",  # 保留文字，作為 VLM 備選
+                image_path="desktop_settings/appearance_tab.png",  # 圖片優先
+                use_ok_script=True,  # 啟用圖片辨識
+                use_vlm=False,  # 設置為 False 以啟用「圖片優先」模式
                 timeout=3.0
             )
         
@@ -59,26 +64,96 @@ class SettingsPage(DesktopApp):
         
         if success:
             self.logger.info("✅ 成功點擊語言下拉選單")
-            # 智能等待下拉選單展開
-            self.wait_for_condition(lambda: True, timeout=0.8)
+            # 智能等待下拉選單展開（增加等待時間確保完全展開）
+            import time
+            time.sleep(0.5)  # 固定等待 0.5 秒
+            self.wait_for_condition(lambda: True, timeout=0.5)  # 額外等待最多 0.5 秒
         else:
             self.logger.warning("⚠️ 可能未成功點擊語言下拉選單")
         
         # 2. 選擇目標語言
         self.logger.info(f"🖱️ 選擇語言: {language}")
-        # 注意：繁體中文選項座標 x_ratio=0.1171, y_ratio=0.7385 是在下拉選單中（538x65 視窗）
-        # 這個座標是相對於下拉選單的，保持使用 is_relative=True
-        success = self.smart_click(
-            x_ratio=0,
-            y_ratio=75,
-            target_text=language,  # 保留 OCR，用於尋找不同語言選項
-            image_path="desktop_settings/traditional_chinese.png",
-            is_relative=True,
-            timeout=2
-        )
+        
+        # 🎯 策略：圖片優先，VLM 為輔，OCR 備選，座標保底
+        # 已知下拉選單只有兩個選項，不需要捲動
+        success = False
+        
+        # 策略 1: 圖片辨識優先（最穩定）
+        # 繁體中文通常是第一個選項，位置在語言下拉選單下方約 30-50 像素處
+        if "繁體" in language or "Traditional" in language:
+            self.logger.info("[語言選擇] 嘗試圖片辨識：traditional_chinese.png")
+            # 使用相對座標，從上次點擊位置（語言下拉選單）向下偏移
+            success = self.smart_click(
+                x_ratio=0,  # 保持 X 座標不變（相對於上次點擊）
+                y_ratio=40,  # 向下偏移 40 像素（第一個選項位置）
+                target_text=None,  # 禁用文字辨識，優先圖片
+                image_path="desktop_settings/traditional_chinese.png",
+                is_relative=True,  # 使用相對座標
+                use_ok_script=True,
+                use_vlm=False,  # 圖片優先模式
+                timeout=2
+            )
+        
+        # 策略 2: 如果圖片失敗，嘗試 VLM（理解自然語言）
+        if not success:
+            self.logger.info(f"[語言選擇] 圖片失敗，嘗試 VLM 備選: '{language}'")
+            # 構建多語言搜索文本
+            search_texts = []
+            if "繁體" in language or "Traditional" in language:
+                search_texts = ["繁體中文", "Chinese (Traditional)", "Traditional Chinese", "Traditional"]
+            elif "简体" in language or "Simplified" in language:
+                search_texts = ["简体中文", "Chinese (Simplified)", "Simplified Chinese", "Simplified"]
+            elif "English" in language or "英文" in language:
+                search_texts = ["English", "英文"]
+            
+            for search_text in search_texts:
+                self.logger.info(f"[語言選擇] VLM 搜索: '{search_text}'")
+                success = self.smart_click(
+                    x_ratio=0.5,  # 下拉選單中央
+                    y_ratio=0.5,  # 下拉選單中央
+                    target_text=search_text,
+                    image_path=None,  # 不使用圖片
+                    use_ok_script=False,
+                    use_vlm=True,  # 啟用 VLM
+                    timeout=2
+                )
+                if success:
+                    break
+        
+        # 策略 3: 如果 VLM 失敗，嘗試 OCR
+        if not success:
+            self.logger.info(f"[語言選擇] VLM 失敗，嘗試 OCR 備選: '{language}'")
+            success = self.smart_click(
+                x_ratio=0.5,
+                y_ratio=0.5,
+                target_text=language,
+                image_path=None,
+                use_ok_script=False,
+                use_vlm=False,  # 禁用 VLM，只使用 OCR
+                timeout=2
+            )
+        
+        # 策略 4: 如果都失敗，使用座標保底（已知下拉選單只有兩個選項）
+        if not success:
+            self.logger.warning(f"[語言選擇] 所有辨識方法失敗，使用座標保底")
+            # 繁體中文通常是第一個選項，座標在中央偏上
+            win = self.get_nx_window()
+            if win:
+                # 計算下拉選單中央位置（假設下拉選單在對話框中央）
+                center_x = win.left + (win.width // 2)
+                center_y = win.top + int(win.height * 0.25)  # 第一個選項通常在 25% 高度處
+                import pyautogui
+                pyautogui.click(center_x, center_y)
+                self.logger.info(f"[語言選擇] 座標保底點擊: ({center_x}, {center_y})")
+                success = True
+            else:
+                self.logger.error("[語言選擇] 無法獲取視窗，座標保底失敗")
         
         if success:
             self.logger.info(f"✅ 成功選擇 {language}")
+        else:
+            self.logger.error(f"❌ 選擇語言失敗: {language}")
+            raise AssertionError(f"無法選擇語言: {language}")
         
         # 3. 點擊套用按鈕
         self.logger.info("🖱️ 點擊套用按鈕...")

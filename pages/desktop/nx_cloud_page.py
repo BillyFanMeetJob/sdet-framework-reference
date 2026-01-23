@@ -5,6 +5,7 @@ from config import EnvConfig
 import time
 import pygetwindow as gw
 import pyautogui
+import pyperclip
 
 
 class NxCloudPage(DesktopApp):
@@ -170,3 +171,57 @@ class NxCloudPage(DesktopApp):
         
         self.logger.error(f"[NX_CLOUD] [ERROR] 等待 Chrome 視窗超時（{timeout} 秒）")
         return False
+    
+    def get_current_browser_url(self) -> str:
+        """
+        [Desktop] 從當前活動的瀏覽器視窗獲取 URL
+        
+        策略：
+        1. 確保焦點在瀏覽器視窗上（假設剛彈出來，焦點已經在上面）
+        2. 模擬鍵盤操作：Ctrl+L (聚焦網址列) -> Ctrl+C (複製) -> 讀取剪貼簿
+        3. 獲取完後，關閉不受控的瀏覽器視窗 (Ctrl+W)，以免干擾後續 Selenium 開的新視窗
+        
+        Returns:
+            str: 獲取到的 URL，如果失敗則返回 None
+        """
+        self.logger.info("[NX_CLOUD] [GET_URL] 嘗試從瀏覽器獲取 URL...")
+        
+        try:
+            # 確保焦點在瀏覽器上（假設剛彈出來，焦點已經在上面）
+            # 如果不確定，可以先 click_account_menu 之後等待幾秒
+            time.sleep(2.0)
+            
+            # 模擬鍵盤操作：Ctrl+L (聚焦網址列)
+            self.logger.info("[NX_CLOUD] [GET_URL] 發送熱鍵 Ctrl+L (聚焦網址列)")
+            pyautogui.hotkey('ctrl', 'l')
+            time.sleep(0.5)
+            
+            # 模擬鍵盤操作：Ctrl+C (複製網址)
+            self.logger.info("[NX_CLOUD] [GET_URL] 發送熱鍵 Ctrl+C (複製網址)")
+            pyautogui.hotkey('ctrl', 'c')
+            time.sleep(0.5)
+            
+            # 從剪貼簿讀取
+            try:
+                url = pyperclip.paste()
+                if url and "http" in url:
+                    self.logger.info(f"[NX_CLOUD] [GET_URL] 成功獲取 URL: {url}")
+                    
+                    # 獲取完後，建議關閉這個不受控的視窗 (Ctrl+W)，以免干擾後續 Selenium 開的新視窗
+                    self.logger.info("[NX_CLOUD] [GET_URL] 關閉不受控的瀏覽器視窗 (Ctrl+W)...")
+                    pyautogui.hotkey('ctrl', 'w')
+                    time.sleep(1.0)
+                    
+                    return url
+                else:
+                    self.logger.error(f"[NX_CLOUD] [GET_URL] 剪貼簿內容無效或非 URL: {url}")
+                    return None
+            except Exception as e:
+                self.logger.error(f"[NX_CLOUD] [GET_URL] 讀取剪貼簿失敗: {e}")
+                return None
+                
+        except Exception as e:
+            self.logger.error(f"[NX_CLOUD] [GET_URL] 獲取 URL 時發生異常: {e}")
+            import traceback
+            traceback.print_exc()
+            return None

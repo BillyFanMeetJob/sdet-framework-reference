@@ -155,17 +155,21 @@ class DesktopApp:
                                 "警告" in win.title or
                                 "本地設置" in win.title
                             )
-                            # 排除編輯器和文本編輯器窗口
-                            is_editor = any(keyword in title_lower for keyword in [
-                                "cursor", "editor", "code", "vscode", "visual studio", 
+                            # 排除編輯器、測試啟動器（含 "Nx Witness" 但非 Nx Witness 客戶端）
+                            is_excluded = any(kw in win.title for kw in [
+                                "cursor", "editor", "code", "vscode", "visual studio",
+                                "pycharm", "sublime", "notepad", "notepad++", "mark.txt",
+                                "自動化測試主控台", "自動化測試"  # 排除測試案例啟動器 GUI
+                            ]) or any(kw in title_lower for kw in [
+                                "cursor", "editor", "code", "vscode", "visual studio",
                                 "pycharm", "sublime", "notepad", "notepad++", "mark.txt"
                             ])
                             
-                            if has_nx_keyword and not is_editor:
+                            if has_nx_keyword and not is_excluded:
                                 self.logger.debug(f"[WINDOW] 找到 Nx Witness 視窗: '{t}' ({win.width}x{win.height})")
                                 return win
                             else:
-                                self.logger.debug(f"[WINDOW] 跳過非 Nx Witness 窗口: '{win.title}' (has_nx={has_nx_keyword}, is_editor={is_editor})")
+                                self.logger.debug(f"[WINDOW] 跳過非 Nx Witness 窗口: '{win.title}' (has_nx={has_nx_keyword}, is_excluded={is_excluded})")
                         else:
                             self.logger.debug(f"[WINDOW] 跳過小窗口: '{t}' ({win.width}x{win.height})")
                     except Exception:
@@ -186,13 +190,15 @@ class DesktopApp:
                 title_lower = w.title.lower()
                 # 必須包含 "nx witness" 或 "nxwitness"
                 has_nx_witness = "nx witness" in title_lower or "nxwitness" in title_lower
-                # 排除編輯器和文本編輯器窗口
-                is_editor = any(keyword in title_lower for keyword in [
-                    "cursor", "editor", "code", "vscode", "visual studio", 
-                    "pycharm", "sublime", "notepad", "notepad++", "mark.txt"
-                ])
+                # 排除編輯器、測試啟動器（自動化測試主控台）
+                is_excluded = (
+                    any(kw in title_lower for kw in [
+                        "cursor", "editor", "code", "vscode", "visual studio",
+                        "pycharm", "sublime", "notepad", "notepad++", "mark.txt"
+                    ]) or "自動化測試主控台" in w.title or "自動化測試" in w.title
+                )
                 
-                if has_nx_witness and not is_editor:
+                if has_nx_witness and not is_excluded:
                     # 額外驗證：窗口必須足夠大（避免選到小彈窗）
                     try:
                         if w.width > 800 and w.height > 600:
@@ -247,9 +253,12 @@ class DesktopApp:
                         "警告" in win.title or
                         "本地設置" in win.title
                     )
-                    is_editor = any(keyword in title_lower for keyword in ["cursor", "editor", "code", "vscode", "visual studio", "pycharm", "sublime"])
+                    is_excluded = (
+                        any(kw in title_lower for kw in ["cursor", "editor", "code", "vscode", "visual studio", "pycharm", "sublime"])
+                        or "自動化測試主控台" in win.title or "自動化測試" in win.title
+                    )
                     
-                    if is_nx_witness and not is_editor:
+                    if is_nx_witness and not is_excluded:
                         self.logger.info(f"✅ 軟件已在運行，將視窗置頂（視窗: '{win.title}', 尺寸: {win.width}x{win.height}）")
                         # 將視窗置頂
                         try:

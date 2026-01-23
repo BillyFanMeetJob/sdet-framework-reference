@@ -3,6 +3,7 @@ import time
 import os
 import pygetwindow as gw
 from config import EnvConfig
+import numpy as np
 
 class CameraPage(DesktopApp):
     def open_add_camera_dialog(self):
@@ -29,74 +30,39 @@ class CameraPage(DesktopApp):
             is_relative=True  # 相對於右鍵位置
         )
     
-    def right_click_camera(self, camera_name="usb_cam"):
+    # 注意：_ensure_camera_visible_and_interact 方法已移至基類 DesktopApp
+    # 此類直接繼承使用，無需重複實現（符合 DRY 原則）
+    
+    def right_click_camera(self, camera_name: str = None) -> bool:
         """
-        🎯 右鍵點擊攝影機項目
-        優先級：圖片辨識 > OCR 文字 > 座標保底
+        右鍵點擊攝影機項目（使用智慧展開邏輯）
+        
+        此方法使用基類的智慧展開邏輯，自動檢查相機是否可見，
+        如果不可見則先展開 Server，然後執行右鍵點擊操作。
+        
+        Args:
+            camera_name: 相機名稱，如果為 None 則使用配置中的預設值
+        
+        Returns:
+            bool: 如果成功點擊返回 True，否則返回 False
+        
+        Note:
+            - 使用配置中的等待時間，避免硬編碼
+            - 繼承自基類的 _ensure_camera_visible_and_interact 方法（DRY 原則）
         """
+        # 使用配置中的預設相機名稱（避免硬編碼）
+        if camera_name is None:
+            camera_name = EnvConfig.CAMERA_SETTINGS.DEFAULT_CAMERA_NAME
+        
         self.logger.info(f"🖱️ 右鍵點擊攝影機: {camera_name}...")
         
-        # 🎯 優先使用圖片辨識，限制搜索區域到左側面板，避免點擊到 Server
-        win = self.get_nx_window()
-        if win:
-            # 限制搜索區域到左側面板（攝影機列表區域）
-            # 左側面板大約是視窗的左側 1/3 區域
-            # 🎯 關鍵：從 Server 下方開始搜索，避免點擊到 Server
-            # Server 通常在 y_ratio=0.08 附近，usb_cam 在 y_ratio=0.18 附近
-            left_panel_region = (win.left, win.top + int(win.height * 0.10), int(win.width * 0.3), int(win.height * 0.20))
-            self._safe_log("info", f"[DEBUG] 限制搜索區域到左側面板（Server 下方）: {left_panel_region}")
-            print(f"[RIGHT_CLICK_CAMERA] 限制搜索區域: {left_panel_region}")
-            
-            # 🎯 使用 smart_click_priority_image，並手動限制圖片辨識區域
-            # 這樣可以確保圖片辨識只在左側面板的 usb_cam 區域進行
-            success = self.smart_click_priority_image(
-                x_ratio=0.10,  # 左側面板位置
-                y_ratio=0.18,  # 攝影機項目位置（Server 下方）
-                target_text=None,  # 不使用文字辨識（避免 VLM 在全螢幕找到錯誤的 "usb"）
-                image_path="desktop_main/usb_cam_item.png",  # 優先使用圖片辨識
-                click_type='right',  # 右鍵點擊
-                timeout=3
-            )
-            
-            # 🎯 如果圖片辨識失敗，嘗試在限制區域內手動調用圖片辨識
-            if not success:
-                self._safe_log("warning", "[WARN] smart_click_priority_image 失敗，嘗試在限制區域內手動圖片辨識...")
-                from base.ok_script_recognizer import get_recognizer
-                recognizer = get_recognizer()
-                full_img = os.path.normpath(os.path.join(EnvConfig.RES_PATH, "desktop_main", "usb_cam_item.png"))
-                if os.path.exists(full_img):
-                    result = recognizer.locate_on_screen(full_img, region=left_panel_region, confidence=0.7)
-                    if result and result.success:
-                        # 計算中心點並點擊
-                        center_x = result.x + result.width // 2
-                        center_y = result.y + result.height // 2
-                        self._safe_log("info", f"[OK] 在限制區域內找到 usb_cam: 左上角=({result.x}, {result.y}), 中心點=({center_x}, {center_y})")
-                        print(f"[RIGHT_CLICK_CAMERA] 在限制區域內找到 usb_cam: 中心點=({center_x}, {center_y})")
-                        self._perform_click(center_x, center_y, clicks=1, click_type='right')
-                        success = True
-                    else:
-                        self._safe_log("warning", "[WARN] 在限制區域內圖片辨識失敗")
-                else:
-                    self._safe_log("warning", f"[WARN] 圖片文件不存在: {full_img}")
-            
-            if not success:
-                self._safe_log("warning", "[WARN] 圖片辨識失敗，請確認 usb_cam_item.png 是否存在且正確")
-                return False
-        else:
-            # 如果無法獲取視窗，使用原始的 smart_click_priority_image（不限制區域）
-            success = self.smart_click_priority_image(
-                x_ratio=0.10,
-                y_ratio=0.18,
-                target_text=None,  # 不使用文字辨識
-                image_path="desktop_main/usb_cam_item.png",
-                click_type='right',
-                timeout=3
-            )
+        # 🎯 使用基類的智慧展開邏輯（DRY：避免重複實現）
+        success = self._ensure_camera_visible_and_interact(action="right_click", camera_name=camera_name)
         
         if success:
             self.logger.info("✅ 右鍵點擊攝影機成功")
-            # 等待右鍵選單出現
-            time.sleep(0.8)  # 增加等待時間，確保選單完全展開
+            # 使用配置中的等待時間（避免硬編碼）
+            time.sleep(EnvConfig.THRESHOLDS.MENU_WAIT_TIME)
             return True
         else:
             self.logger.warning("⚠️ 右鍵點擊攝影機失敗")

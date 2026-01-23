@@ -1,0 +1,39 @@
+================================================================================
+測試案例: Mobile-Nx Witness mobile 登入 Nx Cloud
+執行時間: 2026-01-23 12:40:56
+執行命令: C:\Python314\python.exe -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name Mobile-Nx Witness mobile 登入 Nx Cloud -v -s --tb=short
+工作目錄: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+tests/test_runner.py::test_main_flow[Mobile-Nx Witness mobile \u767b\u5165 Nx Cloud-steps0] 
+[系統] [時間戳: 12:40:57] 偵測到移動端測試需求，啟動 Appium WebDriver...
+>>> [MOBILE_TOOLKIT] [時間戳: 12:40:57] 開始初始化 Appium WebDriver...
+>>> [MOBILE_TOOLKIT] 未指定 Android 版本，將使用第一個可用設備的版本
+>>> [MOBILE_TOOLKIT] [時間戳: 12:40:57] 未指定 Activity，嘗試自動查找主 Activity...
+>>> [MOBILE_TOOLKIT] 找到主 Activity: com.nxvms.mobile.QnActivity
+>>> [MOBILE_TOOLKIT] [耗時: 0.80s] 使用已安裝的 App: com.networkoptix.nxwitness/com.nxvms.mobile.QnActivity
+>>> [MOBILE_TOOLKIT] 已設置 dontStopAppOnReset=True，防止 App 被停止
+>>> [MOBILE_TOOLKIT] 已設置 autoLaunch=True
+>>> [MOBILE_TOOLKIT] [診斷] 原始 URL: http://localhost:4723
+>>> [MOBILE_TOOLKIT] [診斷] 嘗試使用路徑: http://localhost:4723/wd/hub
+>>> [MOBILE_TOOLKIT] [時間戳: 12:40:58] 檢查 Appium Server 是否可用: localhost:4723
+>>> [MOBILE_TOOLKIT] [OK] 端口 4723 已開放
+>>> [MOBILE_TOOLKIT] [診斷] 嘗試檢查 Appium Server 狀態: http://localhost:4723/status
+>>> [MOBILE_TOOLKIT] [診斷] 狀態碼: 404
+>>> [MOBILE_TOOLKIT] [診斷] 嘗試檢查 Appium Server 狀態: http://localhost:4723/wd/hub/status
+>>> [MOBILE_TOOLKIT] [診斷] 狀態碼: 200
+>>> [MOBILE_TOOLKIT] [OK] Appium Server 狀態正常 (路徑: /wd/hub/status)
+>>> [MOBILE_TOOLKIT] Appium Server 版本: 3.1.2
+>>> [MOBILE_TOOLKIT] [診斷] 檢測到 Appium 使用 /wd/hub 路徑，更新連接 URL: http://localhost:4723/wd/hub
+
+================================================================================
+退出碼: 1
+執行結果: 失敗或被中斷
+================================================================================

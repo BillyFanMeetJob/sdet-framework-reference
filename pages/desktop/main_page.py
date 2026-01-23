@@ -483,7 +483,7 @@ class MainPage(DesktopApp):
         # - x_ratio=0.92 (視窗寬度 92% 處)
         # - y_ratio=0.04 (視窗底部向上 4% 處)
         # - from_bottom=True (強制由底部起算)
-        # - offset_x=-10 (向左像素微調，精準命中圖標中心)
+        # - offset_x=0 (向右偏移 10 像素，從原本的 -10 改為 0)
         # - image_path 僅供報告截圖標註使用，不參與辨識（設置 use_ok_script=False 禁用圖片辨識）
         success = self.smart_click(
             x_ratio=0.92,  # 視窗寬度 92% 處
@@ -492,7 +492,7 @@ class MainPage(DesktopApp):
             image_path="desktop_main/calendar_icon.png",  # 僅供報告截圖標註使用
             timeout=1.0,  # 短超時，快速失敗後使用保底座標
             from_bottom=True,  # 強制由底部起算
-            offset_x=-10,  # 向左像素微調，精準命中圖標中心
+            offset_x=0,  # 向右偏移 10 像素（從原本的 -10 改為 0）
             offset_y=0,  # Y 軸不需要偏移
             use_ok_script=False,  # 禁用圖片辨識，避免誤點左上角選單
             use_vlm=False  # 禁用 VLM，避免誤點左上角選單
@@ -1710,21 +1710,32 @@ class MainPage(DesktopApp):
     
     def pause_playback(self, playback_duration=7):
         """
-        🎯 [修正版] 暫停回放
-        修正重點：先點擊畫面中央確保 Focus，再按空白鍵。
+        🎯 暫停回放（簡化版）
+        流程：點完進度條後等待指定時間，然後直接按空格鍵暫停
+        不需要點擊任何地方，避免誤點到讓進度條隱藏的按鈕
         
         Args:
             playback_duration: 播放持續時間（秒），預設 7 秒（在 5-10 秒之間）
         """
+        # 🎯 確保 playback_duration 是數字類型（Excel 可能讀取為字符串）
+        try:
+            playback_duration = float(playback_duration) if playback_duration else 7
+        except (ValueError, TypeError):
+            self.logger.warning(f"[PLAYBACK] 無法轉換 playback_duration '{playback_duration}' 為數字，使用預設值 7")
+            playback_duration = 7
+        
         self._log_method_entry("pause_playback", f"播放持續時間: {playback_duration} 秒")
         
-        # 1. 等待播放
+        # 1. 等待播放指定時間
         self.logger.info(f"[PLAYBACK] ⏳ 正在播放... (等待 {playback_duration} 秒)")
         time.sleep(playback_duration)
         
-        # 🎯 優先使用專門的 click_pause 方法
-        if self.click_pause():
-            self.logger.info("[PLAYBACK] [OK] 使用暫停按鈕成功暫停回放")
+        # 2. 直接按空格鍵暫停（不需要點擊任何地方）
+        self.logger.info("[PLAYBACK] ⌨️ 發送空白鍵指令暫停回放...")
+        try:
+            pyautogui.press('space')
+            time.sleep(0.3)  # 等待暫停生效
+            
             # 添加報告步驟
             reporter = self.get_reporter()
             if reporter:
@@ -1734,79 +1745,26 @@ class MainPage(DesktopApp):
                         step_no=current_step_no,
                         step_name="暫停回放",
                         status="pass",
-                        message="使用暫停按鈕成功暫停回放"
+                        message=f"使用空白鍵成功暫停回放（已播放 {playback_duration} 秒）"
                     )
                 except Exception as e:
                     self.logger.debug(f"[PLAYBACK] 添加報告步驟失敗: {e}")
-            return True  # 🎯 關鍵修正：明確返回 True，避免測試框架認為失敗
-        
-        # 備選方法：點擊畫面中央 + 空白鍵
-        win = self.get_nx_window()
-        if win:
-            try:
-                # 2. 關鍵動作：點擊畫面正中央
-                # 這能確保視窗取得焦點，且通常點擊影片畫面也會觸發 暫停/播放
-                center_x = win.left + (win.width // 2)
-                center_y = win.top + (win.height // 2)
-                
-                self.logger.info("[PLAYBACK] 🖱️ 點擊畫面中央以取得焦點...")
-                pyautogui.click(center_x, center_y)
-                time.sleep(0.5)
-                
-                # 3. 按空白鍵 (雙重保險)
-                self.logger.info("[PLAYBACK] ⌨️ 發送空白鍵指令...")
-                pyautogui.press('space')
-                
-                # 添加報告步驟
-                reporter = self.get_reporter()
-                if reporter:
-                    try:
-                        current_step_no = len(reporter.steps) + 1 if hasattr(reporter, 'steps') else 1
-                        reporter.add_step(
-                            step_no=current_step_no,
-                            step_name="暫停回放",
-                            status="pass",
-                            message="點擊畫面中央並使用空白鍵成功暫停回放"
-                        )
-                    except:
-                        pass
-                
-                # 驗證：檢查畫面左下角的播放按鈕狀態 (選做)
-                # 這裡簡單返回 True
-                self.logger.info("[PLAYBACK] [OK] 使用備選方法（點擊畫面中央+空白鍵）成功暫停回放")
-                return True
-                
-            except Exception as e:
-                self.logger.error(f"[PLAYBACK] [ERROR] 暫停失敗: {e}")
-                import traceback
-                traceback.print_exc()
-                # 添加報告步驟（失敗）
-                reporter = self.get_reporter()
-                if reporter:
-                    try:
-                        current_step_no = len(reporter.steps) + 1 if hasattr(reporter, 'steps') else 1
-                        reporter.add_step(
-                            step_no=current_step_no,
-                            step_name="暫停回放",
-                            status="fail",
-                            message=f"暫停失敗: {e}"
-                        )
-                    except:
-                        pass
-                return False
-        # 🎯 關鍵修正：如果無法獲取視窗，記錄錯誤並返回 False
-        self.logger.error("[PLAYBACK] [ERROR] 無法獲取視窗，暫停失敗")
-        # 添加報告步驟（失敗）
-        reporter = self.get_reporter()
-        if reporter:
-            try:
-                current_step_no = len(reporter.steps) + 1 if hasattr(reporter, 'steps') else 1
-                reporter.add_step(
-                    step_no=current_step_no,
-                    step_name="暫停回放",
-                    status="fail",
-                    message="無法獲取視窗，暫停失敗"
-                )
-            except:
-                pass
-        return False
+            
+            self.logger.info("[PLAYBACK] [OK] 使用空白鍵成功暫停回放")
+            return True
+        except Exception as e:
+            self.logger.error(f"[PLAYBACK] [ERROR] 發送空白鍵失敗: {e}")
+            # 添加報告步驟（失敗）
+            reporter = self.get_reporter()
+            if reporter:
+                try:
+                    current_step_no = len(reporter.steps) + 1 if hasattr(reporter, 'steps') else 1
+                    reporter.add_step(
+                        step_no=current_step_no,
+                        step_name="暫停回放",
+                        status="fail",
+                        message=f"發送空白鍵失敗: {e}"
+                    )
+                except Exception as e2:
+                    self.logger.debug(f"[PLAYBACK] 添加報告步驟失敗: {e2}")
+            return False

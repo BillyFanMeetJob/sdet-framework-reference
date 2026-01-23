@@ -1,0 +1,16 @@
+================================================================================
+æ¸¬è©¦æ¡ˆä¾‹: èª¿é–±â¼€å€‹éŒ„å½±äº‹ä»¶å›žæ”¾
+åŸ·è¡Œæ™‚é–“: 2026-01-22 20:06:10
+åŸ·è¡Œå‘½ä»¤: C:\Python314\python.exe -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name èª¿é–±â¼€å€‹éŒ„å½±äº‹ä»¶å›žæ”¾ -v -s --tb=short
+å·¥ä½œç›®éŒ„: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+tests/test_runner.py::test_main_flow[\u8abf\u95b1\u2f00\u500b\u9304\u5f71\u4e8b\u4ef6\u56de\u653e-steps0] >>> [CASE_2-2] °õ¦æ Case 2-2: ½Õ¾\¤@­Ó¿ý¼v¨Æ¥ó¦^©ñ
+>>> [CASE_2-2] [ERROR] WebDriver ¥¼ªì©l¤Æ¡A½Ð¥ý°õ¦æ Case 2-1

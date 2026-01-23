@@ -1,0 +1,35 @@
+================================================================================
+測試案例: Mobile-Nx Witness mobile 登入 Nx Cloud
+執行時間: 2026-01-23 09:28:17
+執行命令: C:\Python314\python.exe -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name Mobile-Nx Witness mobile 登入 Nx Cloud -v -s --tb=short
+工作目錄: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+tests/test_runner.py::test_main_flow[Mobile-Nx Witness mobile \u767b\u5165 Nx Cloud-steps0] 
+[系統] [時間戳: 09:28:18] 偵測到移動端測試需求，啟動 Appium WebDriver...
+>>> [MOBILE_TOOLKIT] [時間戳: 09:28:18] 開始初始化 Appium WebDriver...
+>>> [MOBILE_TOOLKIT] 未指定 Android 版本，將使用第一個可用設備的版本
+>>> [MOBILE_TOOLKIT] [時間戳: 09:28:18] 未指定 Activity，嘗試自動查找主 Activity...
+>>> [MOBILE_TOOLKIT] 無法查找主 Activity: 'NoneType' object has no attribute 'split'
+>>> [MOBILE_TOOLKIT] [耗時: 0.42s] 無法自動查找 Activity，讓 Appium 自動處理: com.networkoptix.nxwitness
+>>> [MOBILE_TOOLKIT] 已設置 dontStopAppOnReset=True，防止 App 被停止
+>>> [MOBILE_TOOLKIT] 已設置 autoLaunch=True
+>>> [MOBILE_TOOLKIT] [時間戳: 09:28:18] 檢查 Appium Server 是否可用: localhost:4723
+>>> [MOBILE_TOOLKIT] [OK] 端口 4723 已開放
+>>> [MOBILE_TOOLKIT] 檢查 Appium Server 狀態: http://localhost:4723/status
+>>> [MOBILE_TOOLKIT] [ERROR] 初始化 Appium WebDriver 失敗: 檢查 Appium Server 狀態超時（5 秒），請確認 Appium Server 是否正常運行
+>>> [MOBILE_TOOLKIT] [TIP] 請確認:
+>>>   1. Appium Server 已啟動 (通常運行在 http://localhost:4723)
+>>>   2. Android 設備/模擬器已連接 (使用 'adb devices' 檢查)
+>>>   3. APP_PACKAGE 和 APP_ACTIVITY 配置正確
+>>>   4. 設備已解鎖且允許 USB 調試
+[系統] [ERROR] Appium WebDriver 初始化失敗: 檢查 Appium Server 狀態超時（5 秒），請確認 Appium Server 是否正常運行
+[系統] [WARN] 由於 Appium WebDriver 初始化失敗，跳過所有測試步驟
+[系統] [WARN] 跳過所有測試步驟（Appium WebDriver 未初始化）

@@ -1,0 +1,20 @@
+================================================================================
+æ¸¬è©¦æ¡ˆä¾‹: è‡ªå‹•ç™»å…¥ä¼ºæœå™¨ä¸¦åˆ‡æ›ç¹é«”ä¸­æ–‡
+åŸ·è¡Œæ™‚é–“: 2026-01-21 23:09:19
+åŸ·è¡Œå‘½ä»¤: C:\Python314\python.exe -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name è‡ªå‹•ç™»å…¥ä¼ºæœå™¨ä¸¦åˆ‡æ›ç¹é«”ä¸­æ–‡ -v -s --tb=short
+å·¥ä½œç›®éŒ„: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+tests/test_runner.py::test_main_flow[\u81ea\u52d5\u767b\u5165\u4f3a\u670d\u5668\u4e26\u5207\u63db\u7e41\u9ad4\u4e2d\u6587-steps0] [UIA] ³s±µ¥¢±Ñ: Process "NxWitness.exe" not found!
+>>> [UIA] ³s±µ¥¢±Ñ¡]À³¥Îµ{¦¡¥i¯à©|¥¼±Ò°Ê¡^: Process "NxWitness.exe" not found!
+>>> [DEBUG] ÀË¬dµn¿ýª¬ºA¡]¥Ø¼Ð¦øªA¾¹: LAPTOP-QRJN5735¡^
+>>> [WAIT] µ¥«Ý³n¥ó±Ò°Ê...
+>>> [WARN] ¥¼ÀË´ú¨ì¥Dµe­±©Î³n¥ó©|¥¼§¹¥þ±Ò°Ê¡A°õ¦æµn¿ý...
+>>> [CASE_1-1] °õ¦æ Case 1-1 µn¿ý¬yµ{

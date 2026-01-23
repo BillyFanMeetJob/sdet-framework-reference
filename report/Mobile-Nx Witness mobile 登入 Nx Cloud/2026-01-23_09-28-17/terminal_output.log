@@ -1,0 +1,160 @@
+================================================================================
+測試案例: Mobile-Nx Witness mobile 登入 Nx Cloud
+執行時間: 2026-01-23 09:28:17
+執行命令: C:\Python314\python.exe -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name Mobile-Nx Witness mobile 登入 Nx Cloud -v -s --tb=short
+工作目錄: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+tests/test_runner.py::test_main_flow[Mobile-Nx Witness mobile \u767b\u5165 Nx Cloud-steps0] 
+[系統] [時間戳: 09:28:18] 偵測到移動端測試需求，啟動 Appium WebDriver...
+>>> [MOBILE_TOOLKIT] [時間戳: 09:28:18] 開始初始化 Appium WebDriver...
+>>> [MOBILE_TOOLKIT] 未指定 Android 版本，將使用第一個可用設備的版本
+>>> [MOBILE_TOOLKIT] [時間戳: 09:28:18] 未指定 Activity，嘗試自動查找主 Activity...
+>>> [MOBILE_TOOLKIT] 無法查找主 Activity: 'NoneType' object has no attribute 'split'
+>>> [MOBILE_TOOLKIT] [耗時: 0.42s] 無法自動查找 Activity，讓 Appium 自動處理: com.networkoptix.nxwitness
+>>> [MOBILE_TOOLKIT] 已設置 dontStopAppOnReset=True，防止 App 被停止
+>>> [MOBILE_TOOLKIT] 已設置 autoLaunch=True
+>>> [MOBILE_TOOLKIT] [時間戳: 09:28:18] 檢查 Appium Server 是否可用: localhost:4723
+>>> [MOBILE_TOOLKIT] [OK] 端口 4723 已開放
+>>> [MOBILE_TOOLKIT] 檢查 Appium Server 狀態: http://localhost:4723/status
+>>> [MOBILE_TOOLKIT] [ERROR] 初始化 Appium WebDriver 失敗: 檢查 Appium Server 狀態超時（5 秒），請確認 Appium Server 是否正常運行
+>>> [MOBILE_TOOLKIT] [TIP] 請確認:
+>>>   1. Appium Server 已啟動 (通常運行在 http://localhost:4723)
+>>>   2. Android 設備/模擬器已連接 (使用 'adb devices' 檢查)
+>>>   3. APP_PACKAGE 和 APP_ACTIVITY 配置正確
+>>>   4. 設備已解鎖且允許 USB 調試
+[系統] [ERROR] Appium WebDriver 初始化失敗: 檢查 Appium Server 狀態超時（5 秒），請確認 Appium Server 是否正常運行
+[系統] [WARN] 由於 Appium WebDriver 初始化失敗，跳過所有測試步驟
+[系統] [WARN] 跳過所有測試步驟（Appium WebDriver 未初始化）
+
+============================================================
+[STATS] Image Recognition Statistics Report
+============================================================
+Total Attempts: 1897
+
+[Hit Rate]
+  OK Script/OpenCV: 544/1897 (28.7%)
+  VLM (LLM Vision): 111/1897 (5.9%)
+  pyautogui:        6/1897 (0.3%)
+  OCR:              0/1897 (0.0%)
+  Coordinate:       189/1897 (10.0%)
+
+[Average Recognition Time]
+  OK Script/OpenCV: 197.40 ms
+  VLM (LLM Vision): 3354.01 ms
+  pyautogui:        93.64 ms
+
+[Per-Image Statistics]
+  appearance_tab.png:
+    Attempts: 11, OK Script: 9 (82%), pyautogui: 0 (0%)
+  apply_btn.png:
+    Attempts: 40, OK Script: 30 (75%), pyautogui: 0 (0%)
+  camera_settings_menu.png:
+    Attempts: 142, OK Script: 42 (30%), pyautogui: 1 (1%)
+  language_dropdown.png:
+    Attempts: 22, OK Script: 9 (41%), pyautogui: 0 (0%)
+  license_tab.png:
+    Attempts: 9, OK Script: 0 (0%), pyautogui: 0 (0%)
+  local_settings.png:
+    Attempts: 75, OK Script: 18 (24%), pyautogui: 0 (0%)
+  login_indicator.png:
+    Attempts: 252, OK Script: 0 (0%), pyautogui: 0 (0%)
+  menu_icon.png:
+    Attempts: 16, OK Script: 16 (100%), pyautogui: 0 (0%)
+  ok_btn.png:
+    Attempts: 33, OK Script: 33 (100%), pyautogui: 0 (0%)
+  radio_n.png:
+    Attempts: 29, OK Script: 29 (100%), pyautogui: 0 (0%)
+  recording_tab.png:
+    Attempts: 53, OK Script: 37 (70%), pyautogui: 0 (0%)
+  restart_now.png:
+    Attempts: 18, OK Script: 11 (61%), pyautogui: 0 (0%)
+  schedule_grid_All.png:
+    Attempts: 6, OK Script: 6 (100%), pyautogui: 0 (0%)
+  schedule_grid_corner.png:
+    Attempts: 24, OK Script: 24 (100%), pyautogui: 0 (0%)
+  server_icon.png:
+    Attempts: 327, OK Script: 133 (41%), pyautogui: 5 (2%)
+  server_settings_menu.png:
+    Attempts: 32, OK Script: 31 (97%), pyautogui: 0 (0%)
+  server_tile.png:
+    Attempts: 395, OK Script: 60 (15%), pyautogui: 0 (0%)
+  system_admin_menu.png:
+    Attempts: 312, OK Script: 0 (0%), pyautogui: 0 (0%)
+  traditional_chinese.png:
+    Attempts: 15, OK Script: 8 (53%), pyautogui: 0 (0%)
+  usb_cam_item.png:
+    Attempts: 86, OK Script: 48 (56%), pyautogui: 0 (0%)
+============================================================
+[REPORT] 從環境變數獲取 Terminal log: D:\nxwitness-demo\report\Mobile-Nx Witness mobile 登入 Nx Cloud\2026-01-23_09-28-17\terminal_output.log
+[REPORT] Terminal log 文件存在，大小: 2486 bytes
+[REPORT] 開始生成報告，log_file_path: D:\nxwitness-demo\report\Mobile-Nx Witness mobile 登入 Nx Cloud\2026-01-23_09-28-17\terminal_output.log
+[REPORT] Terminal log 已複製到報告目錄: D:\nxwitness-demo\report\Mobile-Nx Witness mobile 登入 Nx Cloud\2026-01-23_09-28-18\terminal_output.log (2486 bytes)
+
+================================================================================
+[REPORT] 測試報告已生成！
+[REPORT] 報告路徑: D:/nxwitness-demo/report/Mobile-Nx Witness mobile 登入 Nx Cloud/2026-01-23_09-28-18/report.html
+[REPORT] 您可以直接在瀏覽器中打開此文件查看詳細報告
+================================================================================
+
+FAILED
+
+================================== FAILURES ===================================
+____ test_main_flow[Mobile-Nx Witness mobile \u767b\u5165 Nx Cloud-steps0] ____
+tests\test_runner.py:425: in test_main_flow
+    pytest.fail(fail_msg)
+E   Failed: 測試執行失敗，請查看測試報告了解詳情
+E   報告位置: D:\nxwitness-demo\report\Mobile-Nx Witness mobile 登入 Nx Cloud\2026-01-23_09-28-18\report.html
+------------------------------ Captured log call ------------------------------
+INFO     toolkit.mobile_toolkit:mobile_toolkit.py:79 [MOBILE_TOOLKIT] [時間戳: 09:28:18] 開始初始化 Appium WebDriver...
+INFO     toolkit.mobile_toolkit:mobile_toolkit.py:89 [MOBILE_TOOLKIT] 未指定 Android 版本，將使用第一個可用設備的版本
+INFO     toolkit.mobile_toolkit:mobile_toolkit.py:109 [MOBILE_TOOLKIT] [時間戳: 09:28:18] 未指定 Activity，嘗試自動查找主 Activity...
+WARNING  toolkit.mobile_toolkit:mobile_toolkit.py:58 [MOBILE_TOOLKIT] 無法查找主 Activity: 'NoneType' object has no attribute 'split'
+INFO     toolkit.mobile_toolkit:mobile_toolkit.py:118 [MOBILE_TOOLKIT] [耗時: 0.42s] 無法自動查找 Activity，讓 Appium 自動處理: com.networkoptix.nxwitness
+INFO     toolkit.mobile_toolkit:mobile_toolkit.py:138 [MOBILE_TOOLKIT] 已設置 dontStopAppOnReset=True，防止 App 被停止
+INFO     toolkit.mobile_toolkit:mobile_toolkit.py:145 [MOBILE_TOOLKIT] 已設置 autoLaunch=True
+INFO     toolkit.mobile_toolkit:mobile_toolkit.py:159 [MOBILE_TOOLKIT] [時間戳: 09:28:18] 檢查 Appium Server 是否可用: localhost:4723
+INFO     toolkit.mobile_toolkit:mobile_toolkit.py:169 [MOBILE_TOOLKIT] [OK] 端口 4723 已開放
+INFO     toolkit.mobile_toolkit:mobile_toolkit.py:179 [MOBILE_TOOLKIT] 檢查 Appium Server 狀態: http://localhost:4723/status
+ERROR    toolkit.mobile_toolkit:mobile_toolkit.py:300 [MOBILE_TOOLKIT] [ERROR] 初始化 Appium WebDriver 失敗: 檢查 Appium Server 狀態超時（5 秒），請確認 Appium Server 是否正常運行
+WARNING  toolkit.mobile_toolkit:mobile_toolkit.py:301 [MOBILE_TOOLKIT] [TIP] 請確認:
+WARNING  toolkit.mobile_toolkit:mobile_toolkit.py:302   1. Appium Server 已啟動 (通常運行在 http://localhost:4723)
+WARNING  toolkit.mobile_toolkit:mobile_toolkit.py:303   2. Android 設備/模擬器已連接 (使用 'adb devices' 檢查)
+WARNING  toolkit.mobile_toolkit:mobile_toolkit.py:304   3. APP_PACKAGE 和 APP_ACTIVITY 配置正確
+WARNING  toolkit.mobile_toolkit:mobile_toolkit.py:305   4. 設備已解鎖且允許 USB 調試
+============================== warnings summary ===============================
+tests/test_runner.py::test_main_flow[Mobile-Nx Witness mobile \u767b\u5165 Nx Cloud-steps0]
+  C:\Users\usert\AppData\Roaming\Python\Python314\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-1 (_readerthread)
+  
+  Traceback (most recent call last):
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+      self._context.run(self.run)
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+      self._target(*self._args, **self._kwargs)
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+      buffer.append(fh.read())
+                    ~~~~~~~^^
+  UnicodeDecodeError: 'cp950' codec can't decode byte 0xf0 in position 62624: illegal multibyte sequence
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_runner.py::test_main_flow[Mobile-Nx Witness mobile \u767b\u5165 Nx Cloud-steps0]
+======================== 1 failed, 1 warning in 8.31s =========================
+
+================================================================================
+退出碼: 1
+執行結果: 失敗或被中斷
+================================================================================
