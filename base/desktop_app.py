@@ -8,7 +8,7 @@ from toolkit.logger import get_logger
 from config import EnvConfig
 from PIL import Image
 import numpy as np
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List, Dict
 
 class DesktopApp:
     _last_x, _last_y = 0, 0
@@ -45,6 +45,115 @@ class DesktopApp:
         :return: TestReporter 實例或 None
         """
         return cls._reporter
+    
+    def create_verification_item(
+        self,
+        name: str,
+        x: Optional[int] = None,
+        y: Optional[int] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+        center_x: Optional[int] = None,
+        center_y: Optional[int] = None
+    ) -> Dict:
+        """
+        創建檢核項目（verification item）用於測試報告
+        
+        Args:
+            name: 檢核項目名稱
+            x, y: 左上角座標（可選）
+            width, height: 寬度和高度（可選，預設 50x50）
+            center_x, center_y: 中心座標（可選，如果提供會自動計算 x, y）
+            
+        Returns:
+            Dict: 檢核項目字典，格式: {"name": "...", "x": ..., "y": ..., "width": ..., "height": ...}
+            
+        Example:
+            >>> # 使用中心座標
+            >>> item = self.create_verification_item("按鈕", center_x=100, center_y=200, width=80, height=30)
+            >>> # 結果: {"name": "按鈕", "x": 60, "y": 185, "width": 80, "height": 30}
+            
+            >>> # 使用左上角座標
+            >>> item = self.create_verification_item("圖標", x=50, y=100, width=40, height=40)
+            >>> # 結果: {"name": "圖標", "x": 50, "y": 100, "width": 40, "height": 40}
+            
+            >>> # 只提供名稱（用於簡單檢核，不標註座標）
+            >>> item = self.create_verification_item("視窗")
+            >>> # 結果: {"name": "視窗"}
+        """
+        item = {"name": name}
+        
+        # 如果提供了中心座標，轉換為左上角座標
+        if center_x is not None and center_y is not None:
+            w = width or 50
+            h = height or 50
+            x = center_x - w // 2
+            y = center_y - h // 2
+            width = w
+            height = h
+        
+        # 添加座標信息（如果提供）
+        if x is not None:
+            item["x"] = x
+        if y is not None:
+            item["y"] = y
+        if width is not None:
+            item["width"] = width
+        if height is not None:
+            item["height"] = height
+        
+        return item
+    
+    def create_verification_items_from_result(
+        self,
+        name: str,
+        result,
+        default_size: Tuple[int, int] = (50, 50)
+    ) -> List[Dict]:
+        """
+        從辨識結果創建檢核項目列表
+        
+        Args:
+            name: 檢核項目名稱
+            result: 辨識結果物件（OK Script / VLM / OCR 結果）
+            default_size: 預設尺寸 (width, height)，當結果沒有尺寸信息時使用
+            
+        Returns:
+            List[Dict]: 檢核項目列表（通常只有一個項目）
+            
+        Example:
+            >>> # 從 OK Script 結果創建
+            >>> result = recognizer.locate_on_screen(...)
+            >>> items = self.create_verification_items_from_result("按鈕", result)
+        """
+        items = []
+        
+        if result and hasattr(result, 'success') and result.success:
+            # OK Script 結果
+            if hasattr(result, 'center'):
+                center = result.center
+                width = getattr(result, 'width', default_size[0])
+                height = getattr(result, 'height', default_size[1])
+                items.append(self.create_verification_item(
+                    name, center_x=center.x, center_y=center.y, width=width, height=height
+                ))
+            # VLM 結果
+            elif hasattr(result, 'bbox'):
+                bbox = result.bbox  # (xmin, ymin, xmax, ymax)
+                items.append(self.create_verification_item(
+                    name, x=bbox[0], y=bbox[1], width=bbox[2]-bbox[0], height=bbox[3]-bbox[1]
+                ))
+            # OCR 結果
+            elif hasattr(result, 'x') and hasattr(result, 'y'):
+                items.append(self.create_verification_item(
+                    name, x=result.x, y=result.y, width=default_size[0], height=default_size[1]
+                ))
+        
+        # 如果無法從結果提取座標，至少提供名稱
+        if not items:
+            items.append(self.create_verification_item(name))
+        
+        return items
     
     def _get_ocr_engine(self):
         """延遲載入 OCR 引擎，只在需要時初始化"""

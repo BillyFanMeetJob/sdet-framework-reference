@@ -16,13 +16,21 @@ class MainPage(DesktopApp):
     def open_main_menu(self):
         """點擊左上角菜單圖標"""
         self.logger.info("[MAIN_PAGE] [CLICK] Clicking top-left menu icon...")
-        self.logger.info(f"[MAIN_PAGE] [PARAM] Parameters: image='desktop_main/menu_icon.png', timeout=3s")
+        
+        # 🎯 從 LocatorConfig 獲取配置，保留原值作為預設值（安全備案）
+        locator = getattr(EnvConfig, 'LOCATOR_CONFIG', None)
+        menu_x_ratio = getattr(locator, 'MENU_ICON_X_RATIO', 0.02) if locator else 0.02
+        menu_y_ratio = getattr(locator, 'MENU_ICON_Y_RATIO', 0.03) if locator else 0.03
+        menu_image = getattr(locator, 'MENU_ICON_IMAGE', "desktop_main/menu_icon.png") if locator else "desktop_main/menu_icon.png"
+        
+        # 注意：image_path 傳入相對路徑（相對於 res/），smart_click 內部會統一由 RES_PATH 拼接
+        self.logger.info(f"[MAIN_PAGE] [PARAM] Parameters: image='{menu_image}', timeout=3s")
         
         success = self.smart_click(
-            x_ratio=0.02, 
-            y_ratio=0.03,
+            x_ratio=menu_x_ratio, 
+            y_ratio=menu_y_ratio,
             target_text=None,  # 菜單圖標不需要 OCR，加快速度
-            image_path="desktop_main/menu_icon.png",
+            image_path=menu_image,  # 傳入相對路徑，smart_click 內部會統一由 RES_PATH 拼接
             timeout=3  # 增加超時時間，確保圖片辨識有足夠時間
         )
         
@@ -66,6 +74,11 @@ class MainPage(DesktopApp):
         menu_region = (0, 0, 500, 800)
         self.logger.debug(f"[MAIN_PAGE] [REGION] Search region limited to: {menu_region}")
         
+        # 🎯 從 LocatorConfig 獲取配置，保留原值作為預設值（安全備案）
+        locator = getattr(EnvConfig, 'LOCATOR_CONFIG', None)
+        local_settings_x_ratio = getattr(locator, 'LOCAL_SETTINGS_X_RATIO', 0.1) if locator else 0.1
+        local_settings_y_ratio = getattr(locator, 'LOCAL_SETTINGS_Y_RATIO', 0.32) if locator else 0.32
+        
         # 使用配置中的資源路徑（避免硬編碼）
         # 優先使用圖片辨識，如果失敗則嘗試 OCR/VLM（限制在選單區域）
         # 注意：UI 顯示的是「本地设置」（簡體中文），不是「本機設定」（繁體中文）
@@ -73,8 +86,8 @@ class MainPage(DesktopApp):
         self.logger.info(f"[MAIN_PAGE] [CALL] Calling smart_click with image='{EnvConfig.APP_PATHS.LOCAL_SETTINGS}', text='{target_texts[0]}' (fallback: {target_texts[1:]})...")
         self.logger.info(f"[MAIN_PAGE] [STRATEGY] Using image-first strategy (use_vlm=False)")
         success = self.smart_click(
-            x_ratio=0.1, 
-            y_ratio=0.32,
+            x_ratio=local_settings_x_ratio, 
+            y_ratio=local_settings_y_ratio,
             target_text=target_texts[0],  # 優先使用簡體中文「本地设置」
             image_path=EnvConfig.APP_PATHS.LOCAL_SETTINGS,
             timeout=5,  # 增加到 5 秒，給辨識和點擊足夠時間
@@ -478,6 +491,14 @@ class MainPage(DesktopApp):
             except Exception as e:
                 self.logger.debug(f"[CALENDAR] 窗口激活失敗（可能已激活）: {e}")
         
+        # 🎯 從 LocatorConfig 獲取配置，保留原值作為預設值（安全備案）
+        locator = getattr(EnvConfig, 'LOCATOR_CONFIG', None)
+        calendar_x_ratio = getattr(locator, 'CALENDAR_ICON_X_RATIO', 0.92) if locator else 0.92
+        calendar_y_ratio = getattr(locator, 'CALENDAR_ICON_Y_RATIO', 0.04) if locator else 0.04
+        calendar_offset_x = getattr(locator, 'CALENDAR_ICON_OFFSET_X', 0) if locator else 0
+        calendar_offset_y = getattr(locator, 'CALENDAR_ICON_OFFSET_Y', 0) if locator else 0
+        calendar_image = getattr(locator, 'CALENDAR_ICON_IMAGE', "desktop_main/calendar_icon.png") if locator else "desktop_main/calendar_icon.png"
+        
         # 使用 smart_click 強制區域鎖定，直接使用座標保底
         # 設置鎖定參數：
         # - x_ratio=0.92 (視窗寬度 92% 處)
@@ -486,14 +507,14 @@ class MainPage(DesktopApp):
         # - offset_x=0 (向右偏移 10 像素，從原本的 -10 改為 0)
         # - image_path 僅供報告截圖標註使用，不參與辨識（設置 use_ok_script=False 禁用圖片辨識）
         success = self.smart_click(
-            x_ratio=0.92,  # 視窗寬度 92% 處
-            y_ratio=0.04,  # 視窗底部向上 4% 處
+            x_ratio=calendar_x_ratio,  # 視窗寬度 92% 處
+            y_ratio=calendar_y_ratio,  # 視窗底部向上 4% 處
             target_text=None,  # 日曆圖標沒有文字，不使用文字辨識
-            image_path="desktop_main/calendar_icon.png",  # 僅供報告截圖標註使用
+            image_path=calendar_image,  # 僅供報告截圖標註使用
             timeout=1.0,  # 短超時，快速失敗後使用保底座標
             from_bottom=True,  # 強制由底部起算
-            offset_x=0,  # 向右偏移 10 像素（從原本的 -10 改為 0）
-            offset_y=0,  # Y 軸不需要偏移
+            offset_x=calendar_offset_x,  # 向右偏移（從原本的 -10 改為 0）
+            offset_y=calendar_offset_y,  # Y 軸不需要偏移
             use_ok_script=False,  # 禁用圖片辨識，避免誤點左上角選單
             use_vlm=False  # 禁用 VLM，避免誤點左上角選單
         )
@@ -952,6 +973,11 @@ class MainPage(DesktopApp):
         self.logger.info(f"[CALENDAR] [COORD] Using calendar region for search: {calendar_region}")
         self.logger.info(f"[CALENDAR] [COORD] Note: VLM/OCR will return coordinates relative to calendar region, then add region offset to get screen absolute coordinates")
         
+        # 🎯 從 LocatorConfig 獲取日期點擊偏移配置，保留原值作為預設值（安全備案）
+        locator = getattr(EnvConfig, 'LOCATOR_CONFIG', None)
+        date_offset_x = getattr(locator, 'DATE_CLICK_OFFSET_X', 5) if locator else 5
+        date_offset_y = getattr(locator, 'DATE_CLICK_OFFSET_Y', 15) if locator else 15
+        
         # 使用 smart_click 尋找並點擊日期，鎖定搜尋區域在日曆視窗內部
         # 🎯 修正日期點選：點擊日期 "17" 時，傳入 offset_y=15, offset_x=5
         # 理由：補償 VLM 常見的偏左上誤差，確保點中數字的正中心
@@ -961,8 +987,8 @@ class MainPage(DesktopApp):
             y_ratio=calendar_y_ratio,
             target_text=target_date,
             timeout=3,  # 增加超時時間，確保有足夠時間辨識
-            offset_x=5,  # 🎯 向右偏移 5 像素，補償 VLM 常見的偏左誤差
-            offset_y=15,  # 🎯 向下偏移 15 像素，補償 VLM 常見的偏上誤差
+            offset_x=date_offset_x,  # 🎯 向右偏移，補償 VLM 常見的偏左誤差
+            offset_y=date_offset_y,  # 🎯 向下偏移，補償 VLM 常見的偏上誤差
             region=calendar_region  # 🎯 鎖定搜尋區域，避免 VLM 全屏掃描偏移
         )
         
@@ -970,6 +996,10 @@ class MainPage(DesktopApp):
             self.logger.info(f"[CALENDAR] 成功選擇日期 {target_date}")
             time.sleep(0.5)  # 等待日期選擇生效
             return True
+        
+        # 🎯 從 LocatorConfig 獲取備選日期點擊偏移配置，保留原值作為預設值（安全備案）
+        date_fallback_offset_x = getattr(locator, 'DATE_FALLBACK_OFFSET_X', 0) if locator else 0
+        date_fallback_offset_y = getattr(locator, 'DATE_FALLBACK_OFFSET_Y', 0) if locator else 0
         
         # 如果 17 號找不到，嘗試其他日期（18, 19, 20）作為備選
         self.logger.warning(f"[CALENDAR] 無法找到日期 {target_date}，嘗試其他日期...")
@@ -983,8 +1013,8 @@ class MainPage(DesktopApp):
                 y_ratio=calendar_y_ratio,
                 target_text=date_num,
                 timeout=2,
-                offset_x=0,
-                offset_y=0,
+                offset_x=date_fallback_offset_x,
+                offset_y=date_fallback_offset_y,
                 region=calendar_region  # 🎯 鎖定搜尋區域
             )
             
@@ -995,12 +1025,13 @@ class MainPage(DesktopApp):
         
         # 如果所有日期都找不到，使用座標保底
         self.logger.warning("[CALENDAR] 無法找到任何日期，使用座標保底")
+        # 🎯 使用備選偏移配置
         success = self.smart_click(
             x_ratio=calendar_x_ratio,
             y_ratio=calendar_y_ratio,
             timeout=2,
-            offset_x=0,
-            offset_y=0,
+            offset_x=date_fallback_offset_x,
+            offset_y=date_fallback_offset_y,
             region=calendar_region  # 🎯 鎖定搜尋區域
         )
         

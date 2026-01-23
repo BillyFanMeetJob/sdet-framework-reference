@@ -90,8 +90,8 @@ EnvConfig = get_current_config()
 
 # ==================== 新增配置類（追加模式，不覆蓋現有內容）====================
 
-from dataclasses import dataclass
-from typing import Dict
+from dataclasses import dataclass, field
+from typing import Dict, List
 
 
 @dataclass
@@ -225,12 +225,78 @@ class CalendarSettings:
     CALENDAR_REGION_HEIGHT: int = 370  # 向下延伸 370px，不延伸到最下面
 
 
+@dataclass
+class LocatorConfig:
+    """
+    定位器配置（Locator Configuration）
+    
+    收納所有在 MainPage 和 CameraPage 中硬編碼的比例（x_ratio, y_ratio）與偏移量（offset）。
+    使用具備業務意義的變數命名，例如 RECORDING_TAB_REGION 或 CALENDAR_OPEN_BTN。
+    
+    注意：所有 image_path 都應該相對於 RES_PATH，在 Page 層統一拼接。
+    """
+    
+    # ==================== MainPage 定位器 ====================
+    
+    # 主選單圖標（左上角）
+    MENU_ICON_X_RATIO: float = 0.02
+    MENU_ICON_Y_RATIO: float = 0.03
+    MENU_ICON_IMAGE: str = "desktop_main/menu_icon.png"
+    
+    # 本地設置選單項目
+    LOCAL_SETTINGS_X_RATIO: float = 0.1
+    LOCAL_SETTINGS_Y_RATIO: float = 0.32
+    # 注意：LOCAL_SETTINGS_IMAGE 已在 AppPaths 中定義，這裡不重複
+    
+    # 日曆圖標（右下角）
+    CALENDAR_ICON_X_RATIO: float = 0.92  # 視窗寬度 92% 處
+    CALENDAR_ICON_Y_RATIO: float = 0.04  # 視窗底部向上 4% 處
+    CALENDAR_ICON_OFFSET_X: int = 0  # 向右偏移（從原本的 -10 改為 0）
+    CALENDAR_ICON_OFFSET_Y: int = 0  # Y 軸不需要偏移
+    CALENDAR_ICON_IMAGE: str = "desktop_main/calendar_icon.png"
+    
+    # 日期點擊偏移（補償 VLM 常見的偏左上誤差）
+    DATE_CLICK_OFFSET_X: int = 5   # 向右偏移 5 像素，補償 VLM 常見的偏左誤差
+    DATE_CLICK_OFFSET_Y: int = 15  # 向下偏移 15 像素，補償 VLM 常見的偏上誤差
+    
+    # 日期備選點擊偏移（fallback 時使用）
+    DATE_FALLBACK_OFFSET_X: int = 0
+    DATE_FALLBACK_OFFSET_Y: int = 0
+    
+    # ==================== CameraPage 定位器 ====================
+    
+    # 伺服器節點（右鍵點擊以打開添加攝影機對話框）
+    SERVER_NODE_X_RATIO: float = 0.05
+    SERVER_NODE_Y_RATIO: float = 0.15
+    SERVER_NODE_IMAGE: str = "desktop_main/server_node.png"
+    
+    # 添加攝影機選單項目（右鍵選單中）
+    ADD_CAMERA_MENU_X_RATIO: float = 0.1
+    ADD_CAMERA_MENU_Y_RATIO: float = 0.2
+    ADD_CAMERA_MENU_IMAGE: str = "desktop_main/add_camera_menu.png"
+    
+    # 攝影機設定選單項目（右鍵選單中）
+    CAMERA_SETTINGS_MENU_X_RATIO: float = 0.22
+    CAMERA_SETTINGS_MENU_Y_RATIO: float = 0.38
+    CAMERA_SETTINGS_MENU_IMAGE: str = "desktop_main/camera_settings_menu.png"
+    
+    # 錄影分頁簽（攝影機設定視窗中）
+    RECORDING_TAB_X_RATIO: float = 0.25
+    RECORDING_TAB_Y_RATIOS: List[float] = field(default_factory=lambda: [0.10, 0.12, 0.15, 0.08])  # 嘗試多個垂直位置
+    RECORDING_TAB_IMAGE: str = "desktop_settings/recording_tab.png"
+    
+    # Radio Button 'Y' 位置（錄影分頁簽中的啟用錄影選項）
+    RADIO_Y_X_RATIO: float = 0.10  # 左上角偏左一點
+    RADIO_Y_Y_RATIO: float = 0.15  # 分頁簽下方
+
+
 # 創建全局配置實例（追加到現有配置）
 _thresholds = Thresholds()
 _app_paths = AppPaths()
 _camera_settings = CameraSettings()
 _timeline_settings = TimelineSettings()
 _calendar_settings = CalendarSettings()
+_locator_config = LocatorConfig()
 
 # 將新配置添加到 EnvConfig（通過擴展類的方式）
 class ExtendedConfig(DevConfig):
@@ -240,6 +306,7 @@ class ExtendedConfig(DevConfig):
     CAMERA_SETTINGS = _camera_settings
     TIMELINE_SETTINGS = _timeline_settings
     CALENDAR_SETTINGS = _calendar_settings
+    LOCATOR_CONFIG = _locator_config
 
 # 更新全局配置實例
 EnvConfig = ExtendedConfig()

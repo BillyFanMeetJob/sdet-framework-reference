@@ -8,11 +8,20 @@ import numpy as np
 class CameraPage(DesktopApp):
     def open_add_camera_dialog(self):
         """ 右鍵點擊伺服器並選擇添加攝影機 """
+        # 🎯 從 LocatorConfig 獲取配置，保留原值作為預設值（安全備案）
+        locator = getattr(EnvConfig, 'LOCATOR_CONFIG', None)
+        server_node_x_ratio = getattr(locator, 'SERVER_NODE_X_RATIO', 0.05) if locator else 0.05
+        server_node_y_ratio = getattr(locator, 'SERVER_NODE_Y_RATIO', 0.15) if locator else 0.15
+        server_node_image = getattr(locator, 'SERVER_NODE_IMAGE', "desktop_main/server_node.png") if locator else "desktop_main/server_node.png"
+        add_camera_x_ratio = getattr(locator, 'ADD_CAMERA_MENU_X_RATIO', 0.1) if locator else 0.1
+        add_camera_y_ratio = getattr(locator, 'ADD_CAMERA_MENU_Y_RATIO', 0.2) if locator else 0.2
+        add_camera_image = getattr(locator, 'ADD_CAMERA_MENU_IMAGE', "desktop_main/add_camera_menu.png") if locator else "desktop_main/add_camera_menu.png"
+        
         # 步驟 1: 使用 smart_click 定位並右鍵點擊伺服器節點
         success = self.smart_click(
-            x_ratio=0.05, 
-            y_ratio=0.15, 
-            image_path="desktop_main/server_node.png",
+            x_ratio=server_node_x_ratio, 
+            y_ratio=server_node_y_ratio, 
+            image_path=server_node_image,
             target_text="Server",
             click_type='right'  # 直接使用右鍵點擊
         )
@@ -23,9 +32,9 @@ class CameraPage(DesktopApp):
         
         # 步驟 2: 點擊右鍵選單中的『添加攝影機』
         return self.smart_click(
-            x_ratio=0.1, 
-            y_ratio=0.2, 
-            image_path="desktop_main/add_camera_menu.png",
+            x_ratio=add_camera_x_ratio, 
+            y_ratio=add_camera_y_ratio, 
+            image_path=add_camera_image,
             target_text="添加攝影機",
             is_relative=True  # 相對於右鍵位置
         )
@@ -97,13 +106,19 @@ class CameraPage(DesktopApp):
         else:
             self._safe_log("warning", "[CLICK_MENU] 無法獲取視窗，使用全屏搜索")
         
+        # 🎯 從 LocatorConfig 獲取配置，保留原值作為預設值（安全備案）
+        locator = getattr(EnvConfig, 'LOCATOR_CONFIG', None)
+        camera_settings_x_ratio = getattr(locator, 'CAMERA_SETTINGS_MENU_X_RATIO', 0.22) if locator else 0.22
+        camera_settings_y_ratio = getattr(locator, 'CAMERA_SETTINGS_MENU_Y_RATIO', 0.38) if locator else 0.38
+        camera_settings_image = getattr(locator, 'CAMERA_SETTINGS_MENU_IMAGE', "desktop_main/camera_settings_menu.png") if locator else "desktop_main/camera_settings_menu.png"
+        
         # 優先使用圖片辨識（右鍵選單出現後，圖片辨識更可靠）
         print("[CLICK_MENU] 調用 smart_click 點擊「攝影機設定」選單...")
         success = self.smart_click(
-            x_ratio=0.22,
-            y_ratio=0.38,
+            x_ratio=camera_settings_x_ratio,
+            y_ratio=camera_settings_y_ratio,
             target_text=None,  # 不使用文字辨識（優先圖片辨識）
-            image_path="desktop_main/camera_settings_menu.png",  # 優先使用圖片辨識
+            image_path=camera_settings_image,  # 優先使用圖片辨識
             is_relative=False,
             timeout=3
         )
@@ -125,10 +140,10 @@ class CameraPage(DesktopApp):
                 self._safe_log("warning", "[WARN] 限制區域內文字辨識失敗，嘗試全屏搜索...")
                 print("[CLICK_MENU] 限制區域內 VLM 失敗，嘗試全屏搜索...")
                 success = self.smart_click(
-                    x_ratio=0.22,
-                    y_ratio=0.38,
+                    x_ratio=camera_settings_x_ratio,
+                    y_ratio=camera_settings_y_ratio,
                     target_text="攝影機設定",  # 文字辨識（全屏搜索）
-                    image_path="desktop_main/camera_settings_menu.png",  # 圖片辨識作為備選
+                    image_path=camera_settings_image,  # 圖片辨識作為備選
                     is_relative=False,
                     timeout=3
                 )
@@ -150,10 +165,10 @@ class CameraPage(DesktopApp):
                 self._safe_log("warning", "[WARN] 限制區域內英文文字辨識失敗，嘗試全屏搜索...")
                 print("[CLICK_MENU] 限制區域內英文 VLM 失敗，嘗試全屏搜索...")
                 success = self.smart_click(
-                    x_ratio=0.22,
-                    y_ratio=0.38,
+                    x_ratio=camera_settings_x_ratio,
+                    y_ratio=camera_settings_y_ratio,
                     target_text="Camera Settings",  # 文字辨識（全屏搜索）
-                    image_path="desktop_main/camera_settings_menu.png",  # 圖片辨識作為備選
+                    image_path=camera_settings_image,  # 圖片辨識作為備選
                     is_relative=False,
                     timeout=3
                 )
@@ -371,17 +386,22 @@ class CameraPage(DesktopApp):
         # 🔧 關鍵修復：不使用 smart_click 的全視窗搜索，因為會在全視窗內找到錯誤位置的「錄影」文字
         # （例如視窗底部的確認按鈕旁也可能有「錄影」相關文字）
         
+        # 🎯 從 LocatorConfig 獲取錄影分頁簽配置，保留原值作為預設值（安全備案）
+        locator = getattr(EnvConfig, 'LOCATOR_CONFIG', None)
+        recording_tab_x_ratio = getattr(locator, 'RECORDING_TAB_X_RATIO', 0.25) if locator else 0.25
+        recording_tab_y_ratios = getattr(locator, 'RECORDING_TAB_Y_RATIOS', [0.10, 0.12, 0.15, 0.08]) if locator else [0.10, 0.12, 0.15, 0.08]
+        recording_tab_image_config = getattr(locator, 'RECORDING_TAB_IMAGE', "desktop_settings/recording_tab.png") if locator else "desktop_settings/recording_tab.png"
+        
         # 如果所有文字辨識都失敗，嘗試僅使用圖片辨識（如果圖片存在）
         if image_exists:
             self._safe_log("info", "[DEBUG] 所有文字辨識失敗，嘗試僅使用圖片辨識...")
-            y_ratios = [0.10, 0.12, 0.15, 0.08]  # 嘗試多個垂直位置
-            for y_ratio in y_ratios:
-                self._safe_log("info", f"[DEBUG] 嘗試圖片辨識位置: x_ratio=0.25, y_ratio={y_ratio}")
+            for y_ratio in recording_tab_y_ratios:  # 嘗試多個垂直位置
+                self._safe_log("info", f"[DEBUG] 嘗試圖片辨識位置: x_ratio={recording_tab_x_ratio}, y_ratio={y_ratio}")
                 success = self.smart_click(
-                    x_ratio=0.25,
+                    x_ratio=recording_tab_x_ratio,
                     y_ratio=y_ratio,
                     target_text=None,  # 不使用文字辨識
-                    image_path=recording_tab_image,  # 僅使用圖片辨識
+                    image_path=recording_tab_image_config,  # 僅使用圖片辨識
                     timeout=3
                 )
                 if success:
@@ -575,12 +595,13 @@ class CameraPage(DesktopApp):
                 return (False, False)
         
         # 🎯 調整位置：根據截圖，radio-button 在「錄影」分頁簽正下方
-        radio_y_x_ratio = 0.10  # 左上角偏左一點
-        radio_y_y_ratio = 0.15  # 調整：分頁簽下方
+        # 🎯 從 LocatorConfig 獲取 Radio Button 配置，保留原值作為預設值（安全備案）
+        locator = getattr(EnvConfig, 'LOCATOR_CONFIG', None)
+        radio_y_x_ratio = getattr(locator, 'RADIO_Y_X_RATIO', 0.10) if locator else 0.10  # 左上角偏左一點
+        radio_y_y_ratio = getattr(locator, 'RADIO_Y_Y_RATIO', 0.15) if locator else 0.15  # 調整：分頁簽下方
         
         # 🎯 步驟 1: 先檢查當前狀態（優先使用圖片辨識）
-        from config import EnvConfig
-        # os 已在文件開頭導入，不需要重複導入
+        # 注意：EnvConfig 已在文件開頭導入，不需要重複導入
         
         # 檢查是否為 "N"（需要改為 "Y"）
         radio_n_image_path = "desktop_settings/radio_n.png"
@@ -612,11 +633,44 @@ class CameraPage(DesktopApp):
                     self.logger.info(f"[RADIO] ✅ 找到 'Y' 圖片辨識: 位置=({center.x}, {center.y}), 區域={loc}")
                     print(f"[RADIO] 找到 'Y' 圖片辨識: 位置=({center.x}, {center.y})")
                     self._safe_log("info", f"[RADIO] 找到 'Y' 圖片辨識: 位置=({center.x}, {center.y})")
-                    # 截圖記錄
-                    self._save_radio_debug_screenshot("01_found_radio_y", center.x, center.y)
-                    self.logger.info("[RADIO] ✅ 當前 radio-button 已經是 'Y'，不需要框選時段，直接點確認即可")
-                    print("[RADIO] 當前 radio-button 已經是 'Y'，返回 (True, True)")
-                    return (True, True)  # 已經是 Y，不需要框選
+                    
+                    # 🎯 關鍵修復：驗證是否同時找到 "N"，如果同時找到，說明辨識可能有誤，應該繼續處理
+                    if radio_n_image_exists:
+                        try:
+                            full_n_path = os.path.join(EnvConfig.RES_PATH, radio_n_image_path)
+                            loc_n = pyautogui.locateOnScreen(full_n_path, confidence=0.8)
+                            if loc_n:
+                                center_n = pyautogui.center(loc_n)
+                                # 檢查兩個位置是否接近（可能是同一個 radio button 的誤判）
+                                distance = ((center.x - center_n.x) ** 2 + (center.y - center_n.y) ** 2) ** 0.5
+                                if distance < 50:  # 如果距離小於 50 像素，可能是同一個位置
+                                    self.logger.warning(f"[RADIO] ⚠️ 同時找到 'Y' 和 'N'，位置接近（距離={distance:.1f}px），可能是誤判，繼續檢查 'N'...")
+                                    print(f"[RADIO] ⚠️ 同時找到 'Y' 和 'N'，位置接近，可能是誤判，繼續處理")
+                                    # 不返回，繼續檢查 "N"
+                                else:
+                                    # 兩個位置距離較遠，可能是不同的元素，優先相信 "N"（因為目標是要設置為 Y）
+                                    self.logger.warning(f"[RADIO] ⚠️ 同時找到 'Y' 和 'N'，但位置距離較遠（距離={distance:.1f}px），優先相信 'N'，繼續處理")
+                                    print(f"[RADIO] ⚠️ 同時找到 'Y' 和 'N'，但位置距離較遠，優先相信 'N'")
+                                    # 不返回，繼續檢查 "N"
+                            else:
+                                # 只找到 "Y"，沒有找到 "N"，確認是 Y
+                                self._save_radio_debug_screenshot("01_found_radio_y", center.x, center.y)
+                                self.logger.info("[RADIO] ✅ 當前 radio-button 已經是 'Y'（未找到 'N' 確認），不需要框選時段，直接點確認即可")
+                                print("[RADIO] 當前 radio-button 已經是 'Y'，返回 (True, True)")
+                                return (True, True)  # 已經是 Y，不需要框選
+                        except Exception as e:
+                            self.logger.warning(f"[RADIO] [VERIFY] 驗證 'N' 時異常: {e}，假設 'Y' 正確")
+                            # 驗證失敗，假設 Y 正確
+                            self._save_radio_debug_screenshot("01_found_radio_y", center.x, center.y)
+                            self.logger.info("[RADIO] ✅ 當前 radio-button 已經是 'Y'（驗證失敗但假設正確），不需要框選時段")
+                            print("[RADIO] 當前 radio-button 已經是 'Y'，返回 (True, True)")
+                            return (True, True)  # 已經是 Y，不需要框選
+                    else:
+                        # radio_n.png 不存在，無法驗證，假設 Y 正確
+                        self._save_radio_debug_screenshot("01_found_radio_y", center.x, center.y)
+                        self.logger.info("[RADIO] ✅ 當前 radio-button 已經是 'Y'（無法驗證但假設正確），不需要框選時段")
+                        print("[RADIO] 當前 radio-button 已經是 'Y'，返回 (True, True)")
+                        return (True, True)  # 已經是 Y，不需要框選
                 else:
                     self.logger.info(f"[RADIO] [CHECK] 未找到 'Y' 圖片辨識，繼續檢查 'N'...")
                     print(f"[RADIO] [CHECK] 未找到 'Y' 圖片辨識，loc={loc}")

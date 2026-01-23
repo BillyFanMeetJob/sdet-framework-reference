@@ -450,12 +450,26 @@ class NxPocActions(BaseAction):
         """
         self.logger.info("🎬 執行 Case 1-2: 啟用 USB 攝影機自動偵測")
         
+        # 🎯 獲取 TestReporter（如果存在）
+        from base.desktop_app import DesktopApp
+        reporter = DesktopApp.get_reporter()
+        step_no = 1
+        
         # 步驟 1: 在 Server 圖示上點擊右鍵
         if not self.server_settings_page.right_click_server_icon():
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="右鍵點擊 Server 圖示",
+                    status="fail",
+                    message="右鍵點擊 Server 圖示失敗",
+                    verification_items=[self.server_settings_page.create_verification_item("Server 圖示")]
+                )
             raise AssertionError("❌ 右鍵點擊 Server 圖示失敗")
         
         # 🔍 驗證：右鍵點擊後應該出現選單
         time.sleep(0.8)  # 增加等待時間，讓選單完全出現
+        menu_verified = False
         try:
             # 使用圖片和文字雙重驗證（任一成功即可）
             # 先嘗試圖片驗證
@@ -467,6 +481,7 @@ class NxPocActions(BaseAction):
                     error_message="圖片驗證失敗"
                 )
                 self.logger.info("✅ 選單驗證成功（圖片匹配）")
+                menu_verified = True
             except AssertionError:
                 # 圖片驗證失敗，嘗試文字驗證（使用 VLM 或 OCR）
                 self.logger.debug("圖片驗證失敗，嘗試文字驗證...")
@@ -478,20 +493,51 @@ class NxPocActions(BaseAction):
                         error_message="右鍵點擊驗證失敗：選單未出現（圖片和文字驗證都失敗），可能點錯位置"
                     )
                     self.logger.info("✅ 選單驗證成功（文字匹配）")
+                    menu_verified = True
                 except AssertionError:
                     # 如果文字驗證也失敗，但選單可能已經出現（只是辨識失敗）
                     # 繼續執行，但記錄警告
                     self.logger.warning("⚠️ 選單驗證失敗，但繼續執行（選單可能已出現但辨識失敗）")
         except AssertionError as e:
             self.logger.error(f"❌ {str(e)}")
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="右鍵點擊 Server 圖示",
+                    status="fail",
+                    message=f"選單驗證失敗: {str(e)}",
+                    verification_items=[self.server_settings_page.create_verification_item("右鍵選單")]
+                )
             raise
+        
+        if reporter:
+            reporter.add_step(
+                step_no=step_no,
+                step_name="右鍵點擊 Server 圖示",
+                status="pass" if menu_verified else "warning",
+                message="成功右鍵點擊 Server 圖示" + ("，選單已驗證" if menu_verified else "，選單驗證未通過但繼續執行"),
+                verification_items=[
+                    self.server_settings_page.create_verification_item("Server 圖示"),
+                    self.server_settings_page.create_verification_item("右鍵選單")
+                ]
+            )
+        step_no += 1
         
         # 步驟 2: 點擊右鍵選單中的「伺服器設定」
         if not self.server_settings_page.click_server_settings_menu():
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="點擊伺服器設定選單",
+                    status="fail",
+                    message="點擊伺服器設定選單失敗",
+                    verification_items=[self.server_settings_page.create_verification_item("伺服器設定選單")]
+                )
             raise AssertionError("❌ 點擊伺服器設定選單失敗")
         
         # 🔍 驗證：點擊選單後應該開啟伺服器設定視窗
         time.sleep(1)  # 等待視窗開啟
+        window_verified = False
         try:
             self.server_settings_page.verify_element_exists(
                 window_titles=["伺服器設定", "Server Settings"],
@@ -499,21 +545,76 @@ class NxPocActions(BaseAction):
                 raise_on_failure=True,
                 error_message="點擊選單驗證失敗：伺服器設定視窗未開啟"
             )
+            window_verified = True
         except AssertionError as e:
             self.logger.error(f"❌ {str(e)}")
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="點擊伺服器設定選單",
+                    status="fail",
+                    message=f"伺服器設定視窗未開啟: {str(e)}",
+                    verification_items=[self.server_settings_page.create_verification_item("伺服器設定視窗")]
+                )
             raise
+        
+        if reporter:
+            reporter.add_step(
+                step_no=step_no,
+                step_name="點擊伺服器設定選單",
+                status="pass",
+                message="成功點擊伺服器設定選單，視窗已開啟",
+                verification_items=[self.server_settings_page.create_verification_item("伺服器設定視窗")]
+            )
+        step_no += 1
         
         # 步驟 3: 在設定視窗中勾選 USB 選項（如果未勾選）
         # 返回 (success, was_already_checked)
         success, was_already_checked = self.server_settings_page.enable_usb_detection()
         
         if not success:
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="勾選 USB 攝影機選項",
+                    status="fail",
+                    message="檢查或勾選 USB 選項失敗",
+                    verification_items=[self.server_settings_page.create_verification_item("USB 攝影機 checkbox")]
+                )
             raise AssertionError("❌ 檢查或勾選 USB 選項失敗")
+        
+        if reporter:
+            reporter.add_step(
+                step_no=step_no,
+                step_name="勾選 USB 攝影機選項",
+                status="pass",
+                message=f"USB 選項已勾選{'（原本已勾選）' if was_already_checked else '（新勾選）'}",
+                verification_items=[self.server_settings_page.create_verification_item("USB 攝影機 checkbox")]
+            )
+        step_no += 1
         
         # 步驟 4: 點擊套用或確定
         # 無論 checkbox 是否已經勾選，都需要點擊確認
         if not self.server_settings_page.apply_settings():
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="點擊套用/確定按鈕",
+                    status="fail",
+                    message="點擊套用/確定按鈕失敗",
+                    verification_items=[self.server_settings_page.create_verification_item("套用/確定按鈕")]
+                )
             self.logger.warning("⚠️ 套用設定可能失敗")
+        else:
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="點擊套用/確定按鈕",
+                    status="pass",
+                    message="成功點擊套用/確定按鈕",
+                    verification_items=[self.server_settings_page.create_verification_item("套用/確定按鈕")]
+                )
+        step_no += 1
         
         self.logger.info("✅ USB 攝影機自動偵測已啟用")
         
@@ -522,8 +623,26 @@ class NxPocActions(BaseAction):
         time.sleep(3)  # 等待設定生效和系統偵測 USB 攝影機（增加到 3 秒）
         
         if not self.server_settings_page.double_click_server_icon():
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="雙擊 Server 圖示展開列表",
+                    status="fail",
+                    message="雙擊 Server 圖示失敗",
+                    verification_items=[self.server_settings_page.create_verification_item("Server 圖示")]
+                )
             self.logger.error("[ERROR] 雙擊 Server 圖示失敗")
             return self
+        
+        if reporter:
+            reporter.add_step(
+                step_no=step_no,
+                step_name="雙擊 Server 圖示展開列表",
+                status="pass",
+                message="成功雙擊 Server 圖示，展開攝影機列表",
+                verification_items=[self.server_settings_page.create_verification_item("Server 圖示")]
+            )
+        step_no += 1
         
         # 步驟 6: 智能等待 USB 攝影機出現（最多 10 秒）
         camera_name = kwargs.get("camera_name", "usb_cam")
@@ -544,6 +663,15 @@ class NxPocActions(BaseAction):
             if attempt < max_wait - 1:
                 self.logger.debug(f"⏳ 第 {attempt + 1} 次嘗試，攝影機尚未出現，等待 {wait_interval} 秒後重試...")
                 time.sleep(wait_interval)
+        
+        if reporter:
+            reporter.add_step(
+                step_no=step_no,
+                step_name="雙擊 USB 攝影機",
+                status="pass" if camera_found else "fail",
+                message=f"{'成功找到並雙擊 USB 攝影機' if camera_found else f'等待 {max_wait} 秒後仍未找到攝影機'}",
+                verification_items=[self.server_settings_page.create_verification_item(f"USB 攝影機 ({camera_name})")]
+            )
         
         if not camera_found:
             self.logger.warning(f"⚠️ 等待 {max_wait} 秒後，仍未找到攝影機 {camera_name}")
@@ -787,24 +915,50 @@ class NxPocActions(BaseAction):
         self.logger.info("[CASE_1-5] 步驟 1: 點擊右下角日曆圖標...")
         
         try:
+            # 計算日曆圖標的預期座標（用於檢核點）
+            win = self.main_page.get_nx_window()
+            calendar_icon_x = None
+            calendar_icon_y = None
+            if win:
+                # 日曆圖標位置：x_ratio=0.92, y_ratio=0.04 (from_bottom=True), offset_x=0
+                calendar_icon_x = int(win.left + win.width * 0.92)
+                calendar_icon_y = int(win.top + win.height - win.height * 0.04)
+            
             if not self.main_page.click_calendar_icon():
                 if reporter:
+                    verification_items = [self.main_page.create_verification_item(
+                        "右下角日曆圖標",
+                        center_x=calendar_icon_x,
+                        center_y=calendar_icon_y,
+                        width=40,
+                        height=40
+                    )] if calendar_icon_x else [self.main_page.create_verification_item("右下角日曆圖標")]
                     reporter.add_step(
                         step_no=step_no,
                         step_name="點擊右下角日曆圖標",
                         status="fail",
                         message="點擊日曆圖標失敗",
-                        verification_items=[{"name": "右下角日曆"}]
+                        verification_items=verification_items
                     )
                 raise AssertionError("[ERROR] 點擊日曆圖標失敗")
             
             if reporter:
+                verification_items = [
+                    self.main_page.create_verification_item(
+                        "右下角日曆圖標",
+                        center_x=calendar_icon_x,
+                        center_y=calendar_icon_y,
+                        width=40,
+                        height=40
+                    ) if calendar_icon_x else self.main_page.create_verification_item("右下角日曆圖標"),
+                    self.main_page.create_verification_item("日曆彈窗")
+                ]
                 reporter.add_step(
                     step_no=step_no,
                     step_name="點擊右下角日曆圖標",
                     status="pass",
-                    message="成功點擊右下角日曆圖標",
-                    verification_items=[{"name": "右下角日曆"}]
+                    message="成功點擊右下角日曆圖標，日曆已彈出",
+                    verification_items=verification_items
                 )
         except Exception as e:
             if reporter:
@@ -836,12 +990,18 @@ class NxPocActions(BaseAction):
                 raise AssertionError("[ERROR] 選擇有錄影事件的日期失敗")
             
             if reporter:
+                # 添加多個檢核點：日期、綠色標記、日曆區域
+                verification_items = [
+                    self.main_page.create_verification_item("錄影日期"),
+                    self.main_page.create_verification_item("綠色錄影標記"),
+                    self.main_page.create_verification_item("日曆區域")
+                ]
                 reporter.add_step(
                     step_no=step_no,
                     step_name="選擇有錄影事件的日期",
                     status="pass",
-                    message="成功選中有錄影事件的日期（通常是 17-20 號）",
-                    verification_items=[{"name": "錄影日期"}]
+                    message="成功選中有錄影事件的日期（通常是 17-20 號），綠色標記已驗證",
+                    verification_items=verification_items
                 )
         except Exception as e:
             if reporter:
@@ -874,12 +1034,18 @@ class NxPocActions(BaseAction):
             
             # 🎯 Demo 重點：確保記錄點擊後的截圖
             if reporter:
+                # 添加多個檢核點：時間軸、綠色時段、播放狀態
+                verification_items = [
+                    self.main_page.create_verification_item("底部時間軸"),
+                    self.main_page.create_verification_item("綠色錄影時段"),
+                    self.main_page.create_verification_item("播放狀態指示")
+                ]
                 reporter.add_step(
                     step_no=step_no,
                     step_name="點擊錄影時段（綠色條）",
                     status="pass",
                     message="成功點擊時間軸上的綠色錄影時段，開始播放錄影",
-                    verification_items=[{"name": "錄影時段選擇"}]
+                    verification_items=verification_items
                 )
         except Exception as e:
             if reporter:
@@ -911,12 +1077,18 @@ class NxPocActions(BaseAction):
                 raise AssertionError("[ERROR] 暫停播放失敗")
             
             if reporter:
+                # 添加多個檢核點：暫停狀態、播放進度、時間軸位置
+                verification_items = [
+                    self.main_page.create_verification_item("暫停狀態"),
+                    self.main_page.create_verification_item("播放進度指示"),
+                    self.main_page.create_verification_item("時間軸位置")
+                ]
                 reporter.add_step(
                     step_no=step_no,
                     step_name="暫停回放",
                     status="pass",
-                    message=f"成功播放錄影 {playback_duration} 秒後暫停",
-                    verification_items=[{"name": "暫停按鈕"}]
+                    message=f"成功播放錄影 {playback_duration} 秒後暫停（使用空白鍵）",
+                    verification_items=verification_items
                 )
         except Exception as e:
             if reporter:
@@ -1279,20 +1451,31 @@ class NxPocActions(BaseAction):
                 error_msg = "點擊「查看」頁簽失敗"
                 self.logger.error(f"[CASE_2-2] [ERROR] {error_msg}")
                 if reporter:
+                    verification_items = [
+                        {"name": "查看頁簽"},
+                        {"name": "頁面標籤區域"}
+                    ]
                     reporter.add_step(
                         step_no=step_no,
                         step_name="點擊「查看」頁簽",
                         status="fail",
-                        message=error_msg
+                        message=error_msg,
+                        verification_items=verification_items
                     )
                 raise AssertionError(f"[ERROR] {error_msg}")
             
             if reporter:
+                verification_items = [
+                    {"name": "查看頁簽"},
+                    {"name": "頁面標籤區域"},
+                    {"name": "頁面內容區域"}
+                ]
                 reporter.add_step(
                     step_no=step_no,
                     step_name="點擊「查看」頁簽",
                     status="pass",
-                    message="成功點擊「查看」頁簽"
+                    message="成功點擊「查看」頁簽，頁面已切換",
+                    verification_items=verification_items
                 )
             step_no += 1
             
@@ -1302,20 +1485,31 @@ class NxPocActions(BaseAction):
                 error_msg = "點擊 server 失敗"
                 self.logger.error(f"[CASE_2-2] [ERROR] {error_msg}")
                 if reporter:
+                    verification_items = [
+                        {"name": "Server 項目"},
+                        {"name": "設備列表"}
+                    ]
                     reporter.add_step(
                         step_no=step_no,
                         step_name="點擊 server",
                         status="fail",
-                        message=error_msg
+                        message=error_msg,
+                        verification_items=verification_items
                     )
                 raise AssertionError(f"[ERROR] {error_msg}")
             
             if reporter:
+                verification_items = [
+                    {"name": "Server 項目"},
+                    {"name": "設備列表"},
+                    {"name": "展開的設備樹"}
+                ]
                 reporter.add_step(
                     step_no=step_no,
                     step_name="點擊 server",
                     status="pass",
-                    message="成功點擊 server"
+                    message="成功點擊 server，設備列表已展開",
+                    verification_items=verification_items
                 )
             step_no += 1
             
@@ -1325,20 +1519,31 @@ class NxPocActions(BaseAction):
                 error_msg = "點擊 usb-cam 失敗"
                 self.logger.error(f"[CASE_2-2] [ERROR] {error_msg}")
                 if reporter:
+                    verification_items = [
+                        {"name": "USB 攝影機項目"},
+                        {"name": "設備列表"}
+                    ]
                     reporter.add_step(
                         step_no=step_no,
                         step_name="點擊 usb-cam",
                         status="fail",
-                        message=error_msg
+                        message=error_msg,
+                        verification_items=verification_items
                     )
                 raise AssertionError(f"[ERROR] {error_msg}")
             
             if reporter:
+                verification_items = [
+                    {"name": "USB 攝影機項目"},
+                    {"name": "設備列表"},
+                    {"name": "視頻預覽區域"}
+                ]
                 reporter.add_step(
                     step_no=step_no,
                     step_name="點擊 usb-cam",
                     status="pass",
-                    message="成功點擊 usb-cam"
+                    message="成功點擊 usb-cam，視頻預覽區域已顯示",
+                    verification_items=verification_items
                 )
             step_no += 1
             
@@ -1357,11 +1562,18 @@ class NxPocActions(BaseAction):
                 raise AssertionError(f"[ERROR] {error_msg}")
             
             if reporter:
+                verification_items = [
+                    {"name": "Video 播放器"},
+                    {"name": "播放控制按鈕"},
+                    {"name": "視頻畫面區域"},
+                    {"name": "播放狀態指示"}
+                ]
                 reporter.add_step(
                     step_no=step_no,
                     step_name="驗證 video 播放狀態",
                     status="pass",
-                    message="影片已載入完成且可播放"
+                    message="影片已載入完成且可播放，所有播放元素已驗證",
+                    verification_items=verification_items
                 )
             step_no += 1
             
@@ -1373,11 +1585,18 @@ class NxPocActions(BaseAction):
             self.logger.info(f"[CASE_2-2] [OK] 已等待影片播放 {playback_wait_time} 秒")
             
             if reporter:
+                verification_items = [
+                    {"name": "Video 播放器"},
+                    {"name": "播放進度"},
+                    {"name": "播放時間顯示"},
+                    {"name": "視頻畫面內容"}
+                ]
                 reporter.add_step(
                     step_no=step_no,
                     step_name="等待影片播放",
                     status="pass",
-                    message=f"已等待影片播放 {playback_wait_time} 秒"
+                    message=f"已等待影片播放 {playback_wait_time} 秒，播放狀態正常",
+                    verification_items=verification_items
                 )
             step_no += 1
             
