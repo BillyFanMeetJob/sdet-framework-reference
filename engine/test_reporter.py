@@ -6,6 +6,7 @@
 1. 生成 HTML 格式的測試報告（類似 UFT 報告格式）
 2. 記錄每個步驟的檢核結果和截圖
 3. 在截圖中標出檢核的物件（紅框）
+4. VLM 座標驗證與數據持久化
 """
 
 import os
@@ -15,6 +16,8 @@ from datetime import datetime
 from typing import List, Dict, Optional, Tuple
 from PIL import Image, ImageDraw, ImageFont
 from config import EnvConfig
+from toolkit.types import Toolkit
+from toolkit.coordinate_validator import CoordinateValidator
 
 
 class TestReporter:
@@ -47,6 +50,12 @@ class TestReporter:
         # 初始化 logger（用於調試日誌）
         import logging
         self.logger = logging.getLogger(self.__class__.__name__)
+        
+        # 初始化座標驗證器（用於 VLM 座標驗證）
+        self.coordinate_validator = CoordinateValidator(
+            threshold=15.0,  # 預設閾值 15 像素
+            logger=self.logger
+        )
     
     def _create_report_directory(self) -> str:
         """
@@ -351,9 +360,24 @@ class TestReporter:
             draw.text((box_xmin, label_y), vlm_label, fill='green', font=vlm_font)
         
         # 🎯 標記辨識到的物件（紅色實線矩形）- 應用 DPI 縮放
-        # x, y, width, height 是邏輯座標，需要轉換為物理像素座標用於繪圖
-        rect_x = int(x * scale_x)
-        rect_y = int(y * scale_y)
+        # 重要：(x, y) 是物件的中心點座標，需要轉換為左上角座標才能正確繪製矩形框
+        # 
+        # 座標轉換邏輯：
+        # 1. (x, y) 是物件中心點的邏輯座標（pyautogui 座標系）
+        # 2. (width, height) 是物件的寬高（邏輯座標）
+        # 3. 左上角座標 = 中心點 - (寬度/2, 高度/2)
+        # 4. 將邏輯座標轉換為物理像素座標（應用 DPI 縮放）用於繪圖
+        
+        # 計算左上角座標（邏輯座標）
+        top_left_x, top_left_y = Toolkit.calculate_top_left_from_center(
+            center=(x, y),
+            width=width,
+            height=height
+        )
+        
+        # 轉換為物理像素座標（應用 DPI 縮放）
+        rect_x = int(top_left_x * scale_x)
+        rect_y = int(top_left_y * scale_y)
         rect_width = int(width * scale_x)
         rect_height = int(height * scale_y)
         rect = [rect_x, rect_y, rect_x + rect_width, rect_y + rect_height]
@@ -573,19 +597,54 @@ class TestReporter:
         height: int = 50,
         method: str = "OK Script",
         region: Tuple[int, int, int, int] = None,
-        vlm_box: Tuple[int, int, int, int] = None  # VLM 邊界框 (xmin, ymin, xmax, ymax)
+        vlm_box: Tuple[int, int, int, int] = None,  # VLM 邊界框 (xmin, ymin, xmax, ymax)
+        vlm_coord: Tuple[int, int] = None  # VLM 識別的中心點座標 (x, y)
     ):
-        """
-        添加辨識成功的截圖（在 smart_click 成功時調用）
+        """添加辨識成功的截圖（在 smart_click 成功時調用）。
         
-        :param item_name: 辨識到的物件名稱
-        :param x: 物件 X 座標
-        :param y: 物件 Y 座標
-        :param width: 物件寬度
-        :param height: 物件高度
-        :param method: 辨識方法（OK Script, OCR, VLM 等）
-        :param region: 搜尋區域 (left, top, width, height)，用於在截圖上標記搜尋範圍
+        此方法會：
+        1. 截圖並標註物件
+        2. 如果提供了 VLM 座標，進行座標驗證並記錄到座標庫
+        
+        Args:
+            item_name: 辨識到的物件名稱
+            x: 物件中心點 X 座標（圖像辨識結果）
+            y: 物件中心點 Y 座標（圖像辨識結果）
+            width: 物件寬度
+            height: 物件高度
+            method: 辨識方法（OK Script, OCR, VLM 等）
+            region: 搜尋區域 (left, top, width, height)，用於在截圖上標記搜尋範圍
+            vlm_box: VLM 邊界框 (xmin, ymin, xmax, ymax)
+            vlm_coord: VLM 識別的中心點座標 (x, y)，用於與圖像辨識座標比對
         """
+        # 🎯 VLM 座標驗證與數據持久化
+        # 如果提供了 VLM 座標，進行歐幾里得距離驗證
+        if vlm_coord and method != "VLM":  # 只在非 VLM 方法時進行比對
+            cv_coord = (x, y)  # 圖像辨識的中心點座標
+            
+            try:
+                # 執行座標驗證並保存至座標庫
+                comparison = self.coordinate_validator.validate_and_save(
+                    element_name=item_name,
+                    cv_coord=cv_coord,
+                    vlm_coord=vlm_coord
+                )
+                
+                # 在日誌中記錄驗證結果
+                if comparison.is_discrepancy:
+                    self.logger.warning(
+                        f"[VLM_DISCREPANCY] 元素 '{item_name}' 座標差異: "
+                        f"CV={cv_coord}, VLM={vlm_coord}, "
+                        f"距離={comparison.distance:.2f}px (閾值={comparison.threshold}px)"
+                    )
+                else:
+                    self.logger.info(
+                        f"[VLM_VALIDATION_OK] 元素 '{item_name}' 座標驗證通過: "
+                        f"距離={comparison.distance:.2f}px"
+                    )
+            except Exception as e:
+                self.logger.error(f"[VLM_VALIDATION_ERROR] 座標驗證失敗: {e}")
+        
         # 截圖並標註物件（使用特殊的步驟編號，避免與測試步驟衝突）
         screenshot_path = self._take_recognition_screenshot_with_region(
             step_no=10000 + len(self.recognition_screenshots) + 1,  # 使用大數字避免衝突
@@ -619,7 +678,8 @@ class TestReporter:
             "method": method,
             "screenshot_path": screenshot_path,
             "timestamp": datetime.now().isoformat(),
-            "region": region  # 記錄搜尋區域
+            "region": region,  # 記錄搜尋區域
+            "vlm_coord": vlm_coord  # 記錄 VLM 座標（如果有）
         })
     
     def finish(self, overall_status: str, log_file_path: str = None):
@@ -635,12 +695,26 @@ class TestReporter:
         # 只複製 Terminal log 檔案到報告目錄（不複製 automation.log）
         if log_file_path and os.path.exists(log_file_path):
             try:
-                import shutil
                 # 統一命名為 terminal_output.log
                 report_log_path = os.path.join(self.report_dir, "terminal_output.log")
                 
-                # 複製文件
-                shutil.copy2(log_file_path, report_log_path)
+                # 複製並清理 NULL 字節（Windows subprocess 可能產生的緩衝區殘留）
+                try:
+                    with open(log_file_path, 'rb') as src:
+                        content = src.read()
+                    
+                    # 移除 NULL 字節 (\x00)
+                    clean_content = content.replace(b'\x00', b'')
+                    
+                    with open(report_log_path, 'wb') as dst:
+                        dst.write(clean_content)
+                    
+                    print(f"[REPORT] 清理了 {len(content) - len(clean_content)} 個 NULL 字節")
+                except Exception as copy_err:
+                    print(f"[WARNING] 清理 log 失敗，使用原始複製: {copy_err}")
+                    import shutil
+                    shutil.copy2(log_file_path, report_log_path)
+                
                 self.log_file_path = report_log_path
                 
                 # 驗證複製是否成功

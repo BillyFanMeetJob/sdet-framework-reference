@@ -123,67 +123,32 @@ def test_main_flow(test_name, steps, browser_context):
         # 🎯 先初始化測試報告生成器（確保即使後續步驟失敗也能記錄）
         reporter = TestReporter(test_name, mobile_driver=None)
         
-        # 如果需要移動端，初始化 Appium WebDriver
+        # 如果需要移動端，使用 ADB 方式（繞過不穩定的 Appium/UiAutomator2）
         if needs_mobile:
             import time
-            mobile_init_start = time.time()
             try:
-                print(f"\n[系統] [時間戳: {time.strftime('%H:%M:%S')}] 偵測到移動端測試需求，啟動 Appium WebDriver...")
+                print(f"\n[系統] [時間戳: {time.strftime('%H:%M:%S')}] 偵測到移動端測試需求")
+                print(f"[系統] 使用 ADB 方式執行（繞過 Appium/UiAutomator2）")
             except UnicodeEncodeError:
-                print(f"\n[系統] [時間戳: {time.strftime('%H:%M:%S')}] 偵測到移動端測試需求，啟動 Appium WebDriver...")
+                print(f"\n[系統] 偵測到移動端測試需求，使用 ADB 方式")
             
+            # 檢查 ADB 是否可用
             try:
-                from toolkit.mobile_toolkit import create_appium_driver
-                mobile_driver, wait = create_appium_driver()
-                mobile_init_elapsed = time.time() - mobile_init_start
-                try:
-                    print(f"[系統] [耗時: {mobile_init_elapsed:.2f}s] [OK] Appium WebDriver 初始化成功")
-                except UnicodeEncodeError:
-                    print(f"[系統] [耗時: {mobile_init_elapsed:.2f}s] [OK] Appium WebDriver 初始化成功")
-                # 更新 reporter 的 mobile_driver 引用（用於截圖）
-                reporter.mobile_driver = mobile_driver
+                from toolkit.adb_toolkit import AdbController
+                adb = AdbController()
+                if adb.is_connected():
+                    print(f"[系統] [OK] ADB 設備連接正常")
+                else:
+                    print(f"[系統] [WARN] 未檢測到 ADB 設備，請確認模擬器已啟動")
             except Exception as e:
-                error_msg = f"Appium WebDriver 初始化失敗: {str(e)}"
-                try:
-                    print(f"[系統] [ERROR] {error_msg}")
-                except UnicodeEncodeError:
-                    print(f"[系統] [ERROR] Appium WebDriver 初始化失敗")
-                import sys
-                try:
-                    sys.stdout.flush()  # 確保日誌立即輸出
-                except:
-                    pass
-                # 記錄錯誤到報告
-                try:
-                    reporter.add_step(
-                        step_no=0,
-                        step_name="Appium WebDriver 初始化",
-                        status="fail",
-                        message=error_msg
-                    )
-                except Exception as report_error:
-                    # 如果記錄報告也失敗，至少記錄到日誌
-                    try:
-                        print(f"[ERROR] 記錄錯誤到報告失敗: {report_error}")
-                    except:
-                        pass
-                overall_status = "fail"
-                # 設置 mobile_driver 為 None，後續步驟會因為缺少 driver 而失敗
-                mobile_driver = None
-                # 不重新拋出異常，讓測試繼續執行以便生成完整報告
-                # 但由於缺少 mobile_driver，後續步驟無法執行，所以直接跳過所有步驟
-                try:
-                    print("[系統] [WARN] 由於 Appium WebDriver 初始化失敗，跳過所有測試步驟")
-                    sys.stdout.flush()
-                except:
-                    pass
-                # 跳過後續步驟，直接執行 finally 塊生成報告
-                # 通過設置一個標記來跳過步驟執行循環
+                print(f"[系統] [WARN] ADB 檢查失敗: {e}")
+            
+            # 不初始化 Appium WebDriver，mobile_driver 保持為 None
+            # NxMobileActions.run_login_step 會使用 ADB 方式執行
         
-        # 註冊 reporter 到 DesktopApp（用於自動截圖，僅桌面端需要）
-        if browser_context is not None:
-            from base.desktop_app import DesktopApp
-            DesktopApp.set_reporter(reporter)
+        # 註冊 reporter 到 DesktopApp（用於自動截圖和 Mobile 測試報告）
+        from base.desktop_app import DesktopApp
+        DesktopApp.set_reporter(reporter)
         
         # 初始化 StepTranslator（支持桌面端和移動端）
         translator = StepTranslator(browser_context=browser_context, mobile_driver=mobile_driver)
@@ -194,19 +159,11 @@ def test_main_flow(test_name, steps, browser_context):
         initial_coordinate_hits = recognizer.stats.coordinate_hits
         initial_total_attempts = recognizer.stats.total_attempts
         
-        # 執行所有步驟（只有在 Appium 初始化成功或不需要 mobile 時才執行）
+        # 執行所有步驟
+        # 注意：現在 mobile 測試使用 ADB 方式，不需要 Appium WebDriver
         step_no = 1
-        skip_steps = (needs_mobile and mobile_driver is None)  # 如果需要 mobile 但初始化失敗，跳過步驟
-        
-        if skip_steps:
-            print("[系統] [WARN] 跳過所有測試步驟（Appium WebDriver 未初始化）")
-            import sys
-            sys.stdout.flush()
         
         for step in steps:
-            # 如果需要 mobile 但初始化失敗，跳過所有步驟
-            if skip_steps:
-                break
             flow_name = step['flow_name']
             
             # 檢查連續失敗次數（在執行前檢查）
@@ -235,7 +192,14 @@ def test_main_flow(test_name, steps, browser_context):
             
             # 執行步驟
             try:
+                # 記錄執行前的步驟數量，用於判斷 action 層是否已添加步驟
+                steps_before = len(reporter.steps) if reporter else 0
+                
                 translator.execute(flow_name, injected_params=step['params'])
+                
+                # 記錄執行後的步驟數量
+                steps_after = len(reporter.steps) if reporter else 0
+                action_added_steps = steps_after > steps_before
                 
                 # 檢查執行後的連續失敗次數
                 consecutive_failures = recognizer.get_consecutive_image_recognition_failures()
@@ -251,13 +215,14 @@ def test_main_flow(test_name, steps, browser_context):
                     overall_status = "fail"
                     break
                 else:
-                    # 步驟執行成功
-                    reporter.add_step(
-                        step_no=step_no,
-                        step_name=flow_name,
-                        status="pass",
-                        message=f"步驟執行成功（連續失敗: {consecutive_failures}）"
-                    )
+                    # 如果 action 層已經添加了詳細步驟，不再添加高級別步驟
+                    if not action_added_steps:
+                        reporter.add_step(
+                            step_no=step_no,
+                            step_name=flow_name,
+                            status="pass",
+                            message=f"步驟執行成功（連續失敗: {consecutive_failures}）"
+                        )
             except Exception as e:
                 # 步驟執行出錯
                 error_msg = f"步驟執行時發生異常: {str(e)}"
@@ -316,6 +281,31 @@ def test_main_flow(test_name, steps, browser_context):
                 print("[系統] [OK] Appium WebDriver 已關閉")
             except Exception as e:
                 print(f"[系統] [WARN] 關閉 Appium WebDriver 失敗: {e}")
+        
+        # 🎯 Playwright 瀏覽器保留策略（比照 Selenium）
+        # 使用類別屬性保持瀏覽器運行
+        try:
+            import pages.desktop.nx_cloud_page as nx_module
+            if hasattr(nx_module, 'NxCloudPage'):
+                print("\n" + "=" * 80)
+                print("[系統] ✅ Playwright 瀏覽器已保留（供 Case 2-2 使用）")
+                print("[系統] 💡 使用類別屬性保持瀏覽器運行（比照 Selenium）")
+                print("[系統] 💡 Case 2-2 可以通過 Attach 模式連接")
+                print("=" * 80)
+                
+                # 檢查類別屬性
+                if nx_module.NxCloudPage._global_pw:
+                    print("[系統] ✅ Playwright 實例存活（類別屬性）")
+                if nx_module.NxCloudPage._global_context:
+                    print("[系統] ✅ Context 實例存活（類別屬性）")
+                if nx_module.NxCloudPage._global_page:
+                    print("[系統] ✅ Page 實例存活（類別屬性）")
+                
+                print("[系統] 💡 瀏覽器將保持運行直到程序結束")
+                print("=" * 80)
+        except Exception as e:
+            # 如果導入失敗或變量不存在，忽略
+            pass
         
         # 確保總是生成報告（無論測試是否失敗）
         try:
@@ -390,10 +380,19 @@ def test_main_flow(test_name, steps, browser_context):
                         report_dir = os.path.join(test_dir, time_str)
                         os.makedirs(report_dir, exist_ok=True)
                         
-                        # 複製 log 文件
+                        # 複製並清理 log 文件（移除 Windows subprocess 產生的 NULL 字節）
                         report_log_path = os.path.join(report_dir, "terminal_output.log")
-                        shutil.copy2(log_file_path, report_log_path)
-                        print(f"[REPORT] Log 已手動保存到: {report_log_path}")
+                        try:
+                            with open(log_file_path, 'rb') as src:
+                                content = src.read()
+                            clean_content = content.replace(b'\x00', b'')
+                            with open(report_log_path, 'wb') as dst:
+                                dst.write(clean_content)
+                            print(f"[REPORT] Log 已清理並保存到: {report_log_path} (移除了 {len(content) - len(clean_content)} NULL 字節)")
+                        except Exception as clean_err:
+                            print(f"[WARNING] 清理失敗，使用原始複製: {clean_err}")
+                            shutil.copy2(log_file_path, report_log_path)
+                            print(f"[REPORT] Log 已手動保存到: {report_log_path}")
                     except Exception as e:
                         print(f"[ERROR] 手動保存 log 失敗: {e}")
                         import traceback
