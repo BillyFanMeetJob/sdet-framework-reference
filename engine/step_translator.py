@@ -24,6 +24,12 @@
 
 from actions.nx_poc_actions import NxPocActions
 from actions.nx_mobile_actions import NxMobileActions
+from actions.login_actions_refactored import LoginActions
+from actions.settings_actions import SettingsActions
+from actions.camera_actions import CameraActions
+from actions.license_actions import LicenseActions
+from actions.recording_actions import RecordingActions
+from actions.cloud_actions import CloudActions
 
 class StepTranslator:
     def __init__(self, browser_context=None, mobile_driver=None):
@@ -40,13 +46,32 @@ class StepTranslator:
         self.translate_df = pd.read_excel(EnvConfig.TEST_PLAN_PATH, sheet_name="Translate")
         
         # 🎯 註冊 Action 實例
-        # - nx_poc: 桌面/網頁端操作（需要 browser_context）
-        # - nx_mobile: 移動端操作（需要 mobile_driver）
+        # 新的模組化結構：
+        # - login: 登錄相關操作
+        # - settings: 設置相關操作
+        # - camera: 攝影機相關操作
+        # - license: 授權相關操作
+        # - recording: 錄影相關操作
+        # - cloud: Nx Cloud 相關操作
+        # - nx_mobile: 移動端操作
+        # - nx_poc: 舊版本（向後兼容）
         self.action_map = {}
         
-        # 註冊桌面/網頁端 Action
+        # 註冊桌面/網頁端 Action（新模組化結構）
         if browser_context is not None:
+            self.action_map["login"] = LoginActions(browser_context)
+            self.action_map["settings"] = SettingsActions(browser_context)
+            self.action_map["camera"] = CameraActions(browser_context)
+            self.action_map["license"] = LicenseActions(browser_context)
+            self.action_map["recording"] = RecordingActions(browser_context)
+            self.action_map["cloud"] = CloudActions(browser_context)
+            # 保留舊版本以向後兼容
             self.action_map["nx_poc"] = NxPocActions(browser_context)
+        else:
+            # 🎯 即使沒有 browser_context，也註冊可以獨立運行的 Action
+            # Case 2-2 (playback_recording) 會自己啟動 Chrome，不需要外部 browser_context
+            self.action_map["recording"] = RecordingActions(None)
+            self.action_map["cloud"] = CloudActions(None)
         
         # 註冊移動端 Action
         if mobile_driver is not None:

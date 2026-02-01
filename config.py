@@ -35,14 +35,20 @@ class BaseConfig:
     BASE_WINDOW_SIZE = (1920, 1200)
 
 class DevConfig(BaseConfig):
-    BASE_URL = "http://localhost:7001"
+    # config.py 建議配置
+    # ⚠️ Chrome 調試端口必須與 Nx Cloud Web 服務器端口不同
+    BROWSER_DEBUG_PORT = 9222  # Chrome 默認調試端口
+    # 啟動 Nx 測試前，先確保環境中所有瀏覽器都帶有調試端口
+    BROWSER_ARGUMENTS = [f"--remote-debugging-port={BROWSER_DEBUG_PORT}", "--no-first-run"]
+
+    BASE_URL = "http://localhost:7001"  # Nx Cloud Web 服務器端口
     NX_EXE_PATH = r"C:\Program Files\Network Optix\Nx Witness\Client\6.1.0.42176\Nx Witness Chinese Launcher.exe"
     DEFAULT_SERVER_NAME = "LAPTOP-QRJN5735"
     # 管理員密碼（用於伺服器設定確認彈窗）
     ADMIN_PASSWORD = "1q2w!Q@W"  # 預設空密碼，如有密碼請在此設置
     
     # Nx Cloud 登錄資訊
-    NX_CLOUD_EMAIL = "billy.19920917@gmail.com"  # Nx Cloud 登錄郵箱
+    NX_CLOUD_EMAIL = "fanzhenglun2@gmail.com"  # Nx Cloud 登錄郵箱
     NX_CLOUD_PASSWORD = "1q2w!Q@W"  # Nx Cloud 登錄密碼（預設與管理員密碼相同）
     
     # ==================== Android Mobile App 配置 ====================
@@ -78,9 +84,87 @@ class DevConfig(BaseConfig):
     
     # VLM (視覺語言模型) 設定
     VLM_ENABLED = True  # 是否啟用 VLM 辨識
-    VLM_BACKEND = "ollama"  # 後端: 'ollama' (本地), 'openai', 'anthropic'
-    VLM_MODEL = "llava"  # 模型名稱: 'llava', 'bakllava', 'gpt-4o', 'claude-3-5-sonnet-20241022'
+    VLM_MODEL = "llava"  # Ollama 模型名稱: 'llava' (預設), 'bakllava', 'llava:13b'
     VLM_PRIORITY = 2  # VLM 在辨識優先級中的位置 (1=最高, 2=OK Script後, 3=OCR後)
+    
+    # Gemini API 配置（用於 UnifiedVLM 備援策略）
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")  # Gemini API 金鑰（從環境變數讀取）
+    
+    # ==================== Web 自動化配置 (Anti-Bot Detection) ====================
+    
+    # WebDriver 反封號配置
+    ENABLE_ANTI_BOT = True  # 啟用反封號機制（User-Agent 隨機化、指紋隱藏）
+    ENABLE_HUMAN_DELAY = True  # 啟用擬人化延遲（點擊前隨機停頓）
+    
+    # 擬人化延遲範圍（秒）
+    MIN_HUMAN_DELAY = 0.5  # 最小延遲：模擬快速反應的使用者
+    MAX_HUMAN_DELAY = 2.0  # 最大延遲：模擬謹慎思考的使用者
+    MIN_TYPING_DELAY = 0.05  # 打字最小延遲（秒/字元）
+    MAX_TYPING_DELAY = 0.15  # 打字最大延遲（秒/字元）
+    
+    # User-Agent 隨機化配置
+    ENABLE_RANDOM_USER_AGENT = True  # 啟用 User-Agent 隨機化
+    USER_AGENT_POOL = [
+        # Chrome 120+ (Windows 10/11)
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        
+        # Edge (Chromium)
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
+        
+        # macOS Chrome
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        
+        # Linux Chrome
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    ]
+    
+    # Accept-Language 隨機化配置
+    ACCEPT_LANGUAGE_POOL = [
+        "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7",  # 繁體中文優先
+        "zh-TW,zh;q=0.9,en;q=0.8",
+        "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",  # 簡體中文優先
+        "en-US,en;q=0.9,zh-TW;q=0.8",  # 英文優先
+        "en-US,en;q=0.9",
+    ]
+    
+    # 其他反偵測配置
+    DISABLE_AUTOMATION_CONTROLLED = True  # 移除 navigator.webdriver 標記
+    ENABLE_RANDOM_VIEWPORT = True  # 啟用隨機視窗大小
+    VIEWPORT_SIZE_POOL = [
+        (1920, 1080),  # Full HD
+        (1366, 768),   # 常見筆電解析度
+        (1536, 864),   # 1.5x 縮放
+        (1280, 720),   # HD
+    ]
+    
+    # ==================== Playwright 配置 (Modern Web Automation) ====================
+    
+    # Playwright 引擎配置
+    USE_PLAYWRIGHT = True  # 啟用 Playwright（False 則使用 Selenium）
+    PLAYWRIGHT_BROWSER = "chromium"  # 瀏覽器類型：chromium, firefox, webkit
+    PLAYWRIGHT_HEADLESS = False  # 無頭模式
+    PLAYWRIGHT_SLOW_MO = 0  # 慢動作模式（ms）：用於 Debug，0 表示正常速度
+    PLAYWRIGHT_DEBUG_PAUSE = False  # 調試暫停模式：每個步驟後暫停等待用戶確認
+    PLAYWRIGHT_DEBUG_PAUSE_SECONDS = 30  # 調試暫停時間（秒）
+    
+    # Playwright 反封號增強配置
+    PLAYWRIGHT_VIEWPORT_JITTER = 10  # 視窗大小隨機擾動（像素）：±5-10px
+    PLAYWRIGHT_IGNORE_HTTPS_ERRORS = True  # 忽略 HTTPS 錯誤
+    PLAYWRIGHT_DEVICE_SCALE_FACTOR = 1.0  # 設備縮放比例
+    
+    # Playwright 超時配置（毫秒）
+    PLAYWRIGHT_DEFAULT_TIMEOUT = 30000  # 預設超時：30 秒
+    PLAYWRIGHT_NAVIGATION_TIMEOUT = 60000  # 導航超時：60 秒
+    
+    # Playwright 點擊延遲配置（毫秒）
+    PLAYWRIGHT_CLICK_DELAY_MIN = 50  # 點擊最小延遲
+    PLAYWRIGHT_CLICK_DELAY_MAX = 200  # 點擊最大延遲
+    
+    # Playwright 滑鼠軌跡模擬配置
+    PLAYWRIGHT_ENABLE_HOVER_BEFORE_CLICK = True  # 點擊前先 hover
+    PLAYWRIGHT_HOVER_OFFSET_MAX = 5  # hover 隨機偏移（像素）
 
 def get_current_config():
     return DevConfig()
@@ -288,6 +372,33 @@ class LocatorConfig:
     # Radio Button 'Y' 位置（錄影分頁簽中的啟用錄影選項）
     RADIO_Y_X_RATIO: float = 0.10  # 左上角偏左一點
     RADIO_Y_Y_RATIO: float = 0.15  # 分頁簽下方
+    
+    # ==================== Web Admin 定位器 (Case 2-2) ====================
+    # 用於 https://localhost:7001 Web Admin 頁面
+    
+    # 「瀏覽」分頁 Tab
+    WEB_BROWSE_TAB_XPATH: str = "/html/body/nx-app/div[1]/nx-header/header/nav/div/div[1]/div[2]/nx-header-tabs[1]/li/a"
+    WEB_BROWSE_TAB_FALLBACK_XPATH: str = "//a[contains(text(), '瀏覽') or contains(text(), 'Browse')]"
+    
+    # Server 選項卡
+    WEB_SERVER_XPATH: str = "/html/body/nx-app/div[2]/div/nx-system-view-index-page/div/nx-media-server-list/div/div/div/div/span"
+    WEB_SERVER_FALLBACK_XPATH: str = "//*[contains(text(), 'LAPTOP') or contains(text(), 'Server')]"
+    
+    # 攝影機項目
+    WEB_CAMERA_XPATH: str = "/html/body/nx-app/div[2]/div/nx-system-view-index-page/div/nx-media-server-list/div/div/div/div[2]/a"
+    WEB_CAMERA_FALLBACK_XPATH: str = "//a[contains(text(), 'cam') or contains(text(), 'USB') or contains(text(), 'Camera')]"
+    
+    # 錄影進度條 (Timeline Canvas)
+    WEB_TIMELINE_XPATH: str = "/html/body/nx-app/div[2]/div/nx-system-view-index-page/nx-system-view-camera-page/div[2]/div[2]/div[2]/nx-timeline/div/canvas"
+    WEB_TIMELINE_FALLBACK_XPATH: str = "//nx-timeline//canvas"
+    
+    # Nx Cloud 登錄相關
+    WEB_NX_CLOUD_LOGIN_BTN_XPATH: str = "//button[contains(., 'Nx Cloud')]"
+    WEB_ACCEPT_RISK_BTN_XPATH: str = "//button[contains(., '接受') or contains(., '风险')]"
+    WEB_EMAIL_INPUT_XPATH: str = "//input[@type='email' or @type='text']"
+    WEB_NEXT_BTN_XPATH: str = "//button[contains(., '下一') or contains(., 'Next')]"
+    WEB_PASSWORD_INPUT_XPATH: str = "//input[@type='password']"
+    WEB_LOGIN_SUBMIT_BTN_XPATH: str = "//button[contains(., '登录') or contains(., '登入') or @type='submit']"
 
 
 # 創建全局配置實例（追加到現有配置）
@@ -310,3 +421,93 @@ class ExtendedConfig(DevConfig):
 
 # 更新全局配置實例
 EnvConfig = ExtendedConfig()
+
+
+# ==================== 登錄相關配置 ====================
+
+@dataclass
+class LoginConfig:
+    """登錄流程相關配置"""
+    # 伺服器卡片位置
+    SERVER_TILE_X_RATIO: float = 0.25
+    SERVER_TILE_Y_RATIO: float = 0.65
+    SERVER_TILE_IMAGE: str = "desktop_login/server_tile.png"
+    
+    # 連接服務器按鈕位置
+    CONNECT_BTN_X_RATIO: float = 0.75
+    CONNECT_BTN_Y_RATIO: float = 0.65
+    
+    # 密碼輸入框位置
+    PASSWORD_INPUT_X_RATIO: float = 0.5
+    PASSWORD_INPUT_Y_RATIO: float = 0.55
+    
+    # 超時配置
+    SERVER_CLICK_TIMEOUT: int = 5
+    PASSWORD_INPUT_TIMEOUT: int = 2
+    DIALOG_WAIT_TIME: float = 2.0
+    DIALOG_CHECK_INTERVAL: float = 0.5
+    DIALOG_CHECK_ROUNDS: int = 3
+    LOGIN_PROCESS_WAIT: float = 1.0
+    LOGIN_BUFFER_TIME: float = 1.5
+    
+    # 對話框標題列表
+    CONNECT_DIALOG_TITLES: List[str] = field(default_factory=lambda: [
+        "连接到服务器",
+        "Connect to server",
+        "连接到服务器...",
+        "连接到服务器... - Nx Witness Client",
+        "連線至伺服器",
+        "連線至伺服器...",
+        "連線至伺服器... - Nx Witness Client"
+    ])
+    
+    # 登錄驗證配置
+    LOGIN_INDICATOR_IMAGES: List[str] = field(default_factory=lambda: [
+        "desktop_login/server_tile.png",
+        "desktop_login/login_indicator.png"
+    ])
+    
+    MAIN_PAGE_INDICATOR: str = "desktop_main/server_icon.png"
+    MAIN_PAGE_VERIFY_TIMEOUT: int = 3
+    
+    # 智能登錄檢查配置
+    STARTUP_MAX_WAIT: int = 10
+    STARTUP_WAIT_INTERVAL: float = 0.5
+
+
+# 將登錄配置添加到 ExtendedConfig
+class ExtendedConfig(DevConfig):
+    """擴展配置類，包含所有新增的配置"""
+    THRESHOLDS = _thresholds
+    APP_PATHS = _app_paths
+    CAMERA_SETTINGS = _camera_settings
+    TIMELINE_SETTINGS = _timeline_settings
+    CALENDAR_SETTINGS = _calendar_settings
+    LOCATOR_CONFIG = _locator_config
+    LOGIN_CONFIG = LoginConfig()
+    
+    @classmethod
+    def validate(cls) -> None:
+        """驗證配置的完整性。
+        
+        檢查必要的配置項目是否正確設置，若有問題則打印警告或錯誤。
+        """
+        # 檢查 Gemini API Key（警告但不中斷）
+        if not cls.GEMINI_API_KEY:
+            print("⚠️ 警告: GEMINI_API_KEY 未設置")
+            print("   UnifiedVLM 將僅使用 Ollama，無法使用 Gemini 備援功能")
+            print("   若需啟用 Gemini 備援，請設置環境變數: GEMINI_API_KEY")
+        else:
+            print(f"✅ Gemini API Key 已設置: {cls.GEMINI_API_KEY[:10]}...")
+        
+        # 檢查 NX 執行檔路徑
+        if not os.path.exists(cls.NX_EXE_PATH):
+            print(f"⚠️ 警告: NX 執行檔不存在: {cls.NX_EXE_PATH}")
+        
+        # 檢查資源路徑
+        if not os.path.exists(cls.RES_PATH):
+            print(f"⚠️ 警告: 資源路徑不存在: {cls.RES_PATH}")
+
+# 更新全局配置實例
+EnvConfig = ExtendedConfig()
+

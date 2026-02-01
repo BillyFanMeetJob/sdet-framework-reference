@@ -53,6 +53,23 @@ class NxCloudWebPage(BasePage):
                 import logging
                 self.logger = logging.getLogger(self.__class__.__name__)
     
+    def _add_connection_options(self, chrome_options):
+        """
+        添加解決 "Could not reach host" 問題的 Chrome 選項
+        
+        Args:
+            chrome_options: ChromeOptions 實例
+        """
+        # 🎯 關鍵：解決 "Could not reach host"
+        chrome_options.add_argument('--dns-prefetch-disable')          # 禁用預解析，防止卡死
+        chrome_options.add_argument('--no-proxy-server')               # 絕對必要：跳過熱點可能提供的 Proxy
+        chrome_options.add_argument('--proxy-server=direct://')        # 強制直連
+        chrome_options.add_argument('--proxy-bypass-list=*')          # 繞過所有代理
+        
+        # 🎯 穩定連線
+        chrome_options.add_argument('--ignore-certificate-errors')    # 忽略憑證錯誤
+        chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+    
     def initialize_webdriver(self) -> bool:
         """
         初始化 WebDriver（連接到已打開的 Chrome 視窗）
@@ -94,14 +111,17 @@ class NxCloudWebPage(BasePage):
             
             chrome_options = Options()
             
+            # 添加連接相關選項
+            self._add_connection_options(chrome_options)
+            
             # 🎯 關鍵：不設置 --user-data-dir 和 --guest，避免創建新的 Chrome 實例
             # 而是嘗試連接到已存在的 Chrome
             
             # 嘗試使用常見的 remote debugging port
             # 注意：如果 Nx Witness 沒有以 remote debugging 模式啟動 Chrome，這會失敗
             try:
-                chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
-                self.logger.info("[NX_CLOUD_WEB] [INFO] 嘗試使用 Remote Debugging Port 9222 連接...")
+                chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9223")
+                self.logger.info("[NX_CLOUD_WEB] [INFO] 嘗試使用 Remote Debugging Port 9223 連接...")
                 service = Service(ChromeDriverManager().install())
                 self.driver = webdriver.Chrome(service=service, options=chrome_options)
                 self.wait = WebDriverWait(self.driver, 10)
@@ -111,6 +131,8 @@ class NxCloudWebPage(BasePage):
                 self.logger.debug(f"[NX_CLOUD_WEB] Remote Debugging 連接失敗: {e}，嘗試其他方法...")
                 # 清除 debuggerAddress，使用其他方法
                 chrome_options = Options()
+                # 重新添加連接相關選項
+                self._add_connection_options(chrome_options)
             
             # 🎯 策略 2: 使用 pyautogui 查找已打開的 Chrome 視窗，然後嘗試通過 CDP 連接
             # 注意：這需要 Chrome 支持 CDP，但即使不支持，我們也可以使用其他方法
@@ -134,11 +156,13 @@ class NxCloudWebPage(BasePage):
                     
                     # 🎯 嘗試多個常見的 remote debugging port
                     # 注意：如果 Chrome 沒有以 remote debugging 模式啟動，這些都會失敗
-                    common_ports = [9222, 9223, 9224, 9225]
+                    common_ports = [9223, 9222, 9224, 9225]
                     
                     for port in common_ports:
                         try:
                             chrome_options = Options()
+                            # 添加連接相關選項
+                            self._add_connection_options(chrome_options)
                             chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{port}")
                             self.logger.info(f"[NX_CLOUD_WEB] [INFO] 嘗試使用 Remote Debugging Port {port} 連接...")
                             service = Service(ChromeDriverManager().install())
@@ -648,16 +672,18 @@ class NxCloudWebPage(BasePage):
             traceback.print_exc()
             return False
     
-    def attach_to_debug_chrome(self, port: int = 9222) -> bool:
+    def attach_to_debug_chrome(self, port: int = 9223) -> bool:
         """
         連接到已存在的 Chrome 實例（通過 Remote Debugging Port）
+        如果無法連接，則自動啟動一個新的 Chrome 實例（使用 remote debugging port）
         
         策略：
-        1. 使用指定的 remote debugging port 連接到已存在的 Chrome 實例
-        2. 如果連接成功，更新 self.driver 和 self.wait
+        1. 嘗試使用指定的 remote debugging port 連接到已存在的 Chrome 實例
+        2. 如果連接失敗，自動啟動一個新的 Chrome 實例（使用 remote debugging port）
+        3. 如果連接成功，更新 self.driver 和 self.wait
         
         Args:
-            port: Remote debugging port，默認為 9222
+            port: Remote debugging port，默認為 9223
         
         Returns:
             bool: 連接是否成功
@@ -679,9 +705,13 @@ class NxCloudWebPage(BasePage):
             from selenium.webdriver.support.ui import WebDriverWait
             from webdriver_manager.chrome import ChromeDriverManager
             import config as C
+            import tempfile
             
             # 創建 Chrome 選項
             chrome_options = Options()
+            
+            # 添加連接相關選項
+            self._add_connection_options(chrome_options)
             
             # 使用 remote debugging port 連接到已存在的 Chrome
             chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{port}")
@@ -710,10 +740,127 @@ class NxCloudWebPage(BasePage):
             return True
             
         except Exception as e:
-            self.logger.error(f"[NX_CLOUD_WEB] [ATTACH] ❌ 連接失敗: {e}")
-            import traceback
-            self.logger.debug(f"[NX_CLOUD_WEB] [ATTACH] 錯誤詳情: {traceback.format_exc()}")
-            return False
+            self.logger.warning(f"[NX_CLOUD_WEB] [ATTACH] ⚠️ 無法連接到 Port {port} 的 Chrome: {e}")
+            self.logger.info(f"[NX_CLOUD_WEB] [ATTACH] 自動啟動一個新的 Chrome 實例（使用 Remote Debugging Port {port}）...")
+            
+            # 如果連接失敗，自動啟動一個新的 Chrome 實例
+            try:
+                from selenium import webdriver
+                from selenium.webdriver.chrome.service import Service
+                from selenium.webdriver.chrome.options import Options
+                from selenium.webdriver.support.ui import WebDriverWait
+                from webdriver_manager.chrome import ChromeDriverManager
+                import config as C
+                import tempfile
+                
+                # 創建 Chrome 選項（啟動新的 Chrome 實例）
+                chrome_options = Options()
+                
+                # 添加連接相關選項（包含 --no-proxy-server 和 --disable-blink-features=AutomationControlled）
+                self._add_connection_options(chrome_options)
+                
+                # 2. 繞過沙盒模式（避免權限問題）
+                chrome_options.add_argument('--no-sandbox')
+                chrome_options.add_argument('--disable-dev-shm-usage')
+                
+                # 4. 禁用網絡檢查（避免 "Could not reach host" 錯誤）
+                chrome_options.add_argument('--disable-background-networking')
+                chrome_options.add_argument('--disable-background-timer-throttling')
+                chrome_options.add_argument('--disable-renderer-backgrounding')
+                chrome_options.add_argument('--disable-features=TranslateUI')
+                chrome_options.add_argument('--disable-ipc-flooding-protection')
+                
+                # 乾淨 profile（避免讀到本機 Chrome 的登入/同步/密碼庫）
+                profile_dir = tempfile.mkdtemp(prefix="chrome-profile-")
+                chrome_options.add_argument(f"--user-data-dir={profile_dir}")
+                
+                # 訪客模式
+                chrome_options.add_argument("--guest")
+                
+                # 🎯 使用 remote-debugging-port 讓瀏覽器在 driver 關閉後仍然保持打開
+                chrome_options.add_argument(f"--remote-debugging-port={port}")
+                chrome_options.add_experimental_option("detach", True)
+                
+                # 關閉密碼管理相關提示
+                prefs = {
+                    "credentials_enable_service": False,
+                    "profile.password_manager_enabled": False,
+                }
+                chrome_options.add_experimental_option("prefs", prefs)
+                
+                # 檢查 HEADLESS 配置
+                headless = getattr(C, 'HEADLESS', False)
+                if headless:
+                    chrome_options.add_argument("--headless=new")
+                
+                # 獲取 timeout
+                timeout = getattr(C, 'DEFAULT_TIMEOUT', 10)
+                
+                # 創建 Service（添加額外的服務參數）
+                try:
+                    service = Service(ChromeDriverManager().install())
+                except Exception as service_e:
+                    self.logger.warning(f"[NX_CLOUD_WEB] [ATTACH] ChromeDriverManager 安裝失敗: {service_e}，嘗試使用系統 ChromeDriver")
+                    # 備選：嘗試使用系統 PATH 中的 chromedriver
+                    service = Service()
+                
+                # 創建 WebDriver（啟動新的 Chrome 實例）
+                try:
+                    driver = webdriver.Chrome(service=service, options=chrome_options)
+                    wait = WebDriverWait(driver, timeout)
+                    
+                    # 更新實例變量
+                    self.driver = driver
+                    self.wait = wait
+                    
+                    self.logger.info(f"[NX_CLOUD_WEB] [ATTACH] ✅ 成功啟動新的 Chrome 實例（Remote Debugging Port {port}）")
+                    
+                    return True
+                except Exception as driver_e:
+                    # 如果使用 remote debugging port 失敗，嘗試不使用 remote debugging port（備選方案）
+                    self.logger.warning(f"[NX_CLOUD_WEB] [ATTACH] 使用 Remote Debugging Port 啟動失敗: {driver_e}")
+                    self.logger.info(f"[NX_CLOUD_WEB] [ATTACH] 嘗試不使用 Remote Debugging Port 啟動 Chrome（備選方案）...")
+                    
+                    # 移除 remote debugging port 相關選項
+                    chrome_options = Options()
+                    # 添加連接相關選項（包含 --no-proxy-server 和 --disable-blink-features=AutomationControlled）
+                    self._add_connection_options(chrome_options)
+                    chrome_options.add_argument('--no-sandbox')
+                    chrome_options.add_argument('--disable-dev-shm-usage')
+                    chrome_options.add_argument('--disable-background-networking')
+                    chrome_options.add_argument('--disable-background-timer-throttling')
+                    chrome_options.add_argument('--disable-renderer-backgrounding')
+                    chrome_options.add_argument('--disable-features=TranslateUI')
+                    chrome_options.add_argument('--disable-ipc-flooding-protection')
+                    
+                    profile_dir = tempfile.mkdtemp(prefix="chrome-profile-")
+                    chrome_options.add_argument(f"--user-data-dir={profile_dir}")
+                    chrome_options.add_argument("--guest")
+                    
+                    prefs = {
+                        "credentials_enable_service": False,
+                        "profile.password_manager_enabled": False,
+                    }
+                    chrome_options.add_experimental_option("prefs", prefs)
+                    
+                    if headless:
+                        chrome_options.add_argument("--headless=new")
+                    
+                    driver = webdriver.Chrome(service=service, options=chrome_options)
+                    wait = WebDriverWait(driver, timeout)
+                    
+                    self.driver = driver
+                    self.wait = wait
+                    
+                    self.logger.info(f"[NX_CLOUD_WEB] [ATTACH] ✅ 成功啟動新的 Chrome 實例（不使用 Remote Debugging Port，備選方案）")
+                    
+                    return True
+                
+            except Exception as e2:
+                self.logger.error(f"[NX_CLOUD_WEB] [ATTACH] ❌ 啟動新的 Chrome 實例失敗: {e2}")
+                import traceback
+                self.logger.debug(f"[NX_CLOUD_WEB] [ATTACH] 錯誤詳情: {traceback.format_exc()}")
+                return False
     
     def click_view_tab(self) -> bool:
         """
@@ -1259,3 +1406,304 @@ class NxCloudWebPage(BasePage):
                 self.logger.error(f"[NX_CLOUD_WEB] [CLOSE] ❌ 強制清理失敗: {kill_e}")
                 import traceback
                 self.logger.error(f"[NX_CLOUD_WEB] [CLOSE] 錯誤詳情: {traceback.format_exc()}")
+
+    # ==================== Case 2-2: Web Admin 操作方法 ====================
+    # 以下方法用於 https://localhost:7001 Web Admin 頁面的操作
+    
+    def login_via_nx_cloud(self, email: str = None, password: str = None) -> bool:
+        """
+        通過 Nx Cloud OAuth 登錄 Web Admin
+        
+        完整流程：
+        1. 導航到 localhost:7001
+        2. 點擊「登入 Nx Cloud」按鈕
+        3. 接受風險並繼續
+        4. 輸入郵箱 → 下一步 → 輸入密碼 → 登錄
+        
+        Args:
+            email: 郵箱（如果為 None，使用 config 中的值）
+            password: 密碼（如果為 None，使用 config 中的值）
+            
+        Returns:
+            bool: 登錄是否成功
+        """
+        from config import LocatorConfig
+        
+        email = email or EnvConfig.NX_CLOUD_EMAIL
+        password = password or EnvConfig.NX_CLOUD_PASSWORD
+        
+        self.logger.info(f"[NX_CLOUD_WEB] [LOGIN] 開始 Nx Cloud OAuth 登錄流程...")
+        self.logger.info(f"[NX_CLOUD_WEB] [LOGIN] 使用帳號: {email}")
+        
+        if not self.driver:
+            self.logger.error("[NX_CLOUD_WEB] [LOGIN] WebDriver 未初始化")
+            return False
+        
+        try:
+            # Step 1: 導航到 localhost:7001
+            self.logger.info("[NX_CLOUD_WEB] [LOGIN] Step 1: 導航到 https://localhost:7001...")
+            self.driver.get('https://localhost:7001')
+            time.sleep(3)
+            
+            # Step 2: 點擊「登入 Nx Cloud」按鈕
+            self.logger.info("[NX_CLOUD_WEB] [LOGIN] Step 2: 點擊「登入 Nx Cloud」...")
+            try:
+                nx_cloud_btn = self.wait.until(EC.element_to_be_clickable(
+                    (By.XPATH, LocatorConfig.WEB_NX_CLOUD_LOGIN_BTN_XPATH)))
+                nx_cloud_btn.click()
+                self.logger.info("[NX_CLOUD_WEB] [LOGIN] ✅ 已點擊「登入 Nx Cloud」")
+                time.sleep(3)
+            except TimeoutException:
+                self.logger.info("[NX_CLOUD_WEB] [LOGIN] 未找到「登入 Nx Cloud」按鈕，可能已登錄")
+            
+            # Step 3: 點擊「接受風險並繼續」
+            self.logger.info("[NX_CLOUD_WEB] [LOGIN] Step 3: 點擊「接受風險並繼續」...")
+            try:
+                accept_btn = self.driver.find_element(By.XPATH, LocatorConfig.WEB_ACCEPT_RISK_BTN_XPATH)
+                if accept_btn.is_displayed():
+                    accept_btn.click()
+                    self.logger.info("[NX_CLOUD_WEB] [LOGIN] ✅ 已點擊「接受風險並繼續」")
+                    time.sleep(3)
+            except NoSuchElementException:
+                self.logger.info("[NX_CLOUD_WEB] [LOGIN] 未找到「接受風險」按鈕，跳過")
+            
+            # Step 4: 輸入郵箱
+            self.logger.info("[NX_CLOUD_WEB] [LOGIN] Step 4: 輸入郵箱...")
+            try:
+                email_input = self.wait.until(EC.presence_of_element_located(
+                    (By.XPATH, LocatorConfig.WEB_EMAIL_INPUT_XPATH)))
+                email_input.clear()
+                email_input.send_keys(email)
+                self.logger.info(f"[NX_CLOUD_WEB] [LOGIN] ✅ 已輸入郵箱: {email}")
+                time.sleep(1)
+            except TimeoutException:
+                self.logger.info("[NX_CLOUD_WEB] [LOGIN] 未找到郵箱輸入框，可能已登錄")
+                return self._check_login_success()
+            
+            # Step 5: 點擊下一步
+            self.logger.info("[NX_CLOUD_WEB] [LOGIN] Step 5: 點擊下一步...")
+            try:
+                next_btn = self.driver.find_element(By.XPATH, LocatorConfig.WEB_NEXT_BTN_XPATH)
+                next_btn.click()
+                self.logger.info("[NX_CLOUD_WEB] [LOGIN] ✅ 已點擊下一步")
+                time.sleep(3)
+            except NoSuchElementException:
+                self.logger.warning("[NX_CLOUD_WEB] [LOGIN] 未找到下一步按鈕")
+            
+            # Step 6: 輸入密碼
+            self.logger.info("[NX_CLOUD_WEB] [LOGIN] Step 6: 輸入密碼...")
+            try:
+                pwd_input = self.wait.until(EC.presence_of_element_located(
+                    (By.XPATH, LocatorConfig.WEB_PASSWORD_INPUT_XPATH)))
+                pwd_input.send_keys(password)
+                self.logger.info("[NX_CLOUD_WEB] [LOGIN] ✅ 已輸入密碼")
+                time.sleep(1)
+            except TimeoutException:
+                self.logger.warning("[NX_CLOUD_WEB] [LOGIN] 未找到密碼輸入框")
+            
+            # Step 7: 點擊登錄
+            self.logger.info("[NX_CLOUD_WEB] [LOGIN] Step 7: 點擊登錄...")
+            try:
+                login_btn = self.driver.find_element(By.XPATH, LocatorConfig.WEB_LOGIN_SUBMIT_BTN_XPATH)
+                login_btn.click()
+                self.logger.info("[NX_CLOUD_WEB] [LOGIN] ✅ 已點擊登錄")
+                time.sleep(8)
+            except NoSuchElementException:
+                self.logger.warning("[NX_CLOUD_WEB] [LOGIN] 未找到登錄按鈕")
+            
+            # 驗證登錄結果
+            return self._check_login_success()
+            
+        except Exception as e:
+            self.logger.error(f"[NX_CLOUD_WEB] [LOGIN] ❌ 登錄失敗: {e}")
+            import traceback
+            self.logger.error(traceback.format_exc())
+            return False
+    
+    def _check_login_success(self) -> bool:
+        """
+        檢查是否登錄成功
+        
+        Returns:
+            bool: 是否登錄成功
+        """
+        try:
+            body_text = self.driver.find_element(By.TAG_NAME, 'body').text
+            if '登录' in body_text or 'login' in body_text.lower() or '邮箱' in body_text:
+                self.logger.warning("[NX_CLOUD_WEB] [LOGIN] ⚠️ 仍在登錄頁面")
+                return False
+            self.logger.info("[NX_CLOUD_WEB] [LOGIN] ✅ 登錄成功")
+            return True
+        except:
+            return False
+    
+    def click_browse_tab(self) -> bool:
+        """
+        點擊「瀏覽」分頁 Tab
+        
+        Returns:
+            bool: 點擊是否成功
+        """
+        from config import LocatorConfig
+        
+        self.logger.info("[NX_CLOUD_WEB] [BROWSE] 點擊「瀏覽」分頁...")
+        
+        if not self.driver:
+            self.logger.error("[NX_CLOUD_WEB] [BROWSE] WebDriver 未初始化")
+            return False
+        
+        try:
+            # 嘗試精確 XPath
+            browse_tab = self.wait.until(EC.element_to_be_clickable(
+                (By.XPATH, LocatorConfig.WEB_BROWSE_TAB_XPATH)))
+            self.logger.info(f"[NX_CLOUD_WEB] [BROWSE] 找到元素: {browse_tab.text}")
+            browse_tab.click()
+            self.logger.info("[NX_CLOUD_WEB] [BROWSE] ✅ 已點擊「瀏覽」")
+            time.sleep(2)
+            return True
+        except TimeoutException:
+            # 嘗試 fallback XPath
+            self.logger.info("[NX_CLOUD_WEB] [BROWSE] 精確 XPath 失敗，嘗試 fallback...")
+            try:
+                browse_tab = self.driver.find_element(By.XPATH, LocatorConfig.WEB_BROWSE_TAB_FALLBACK_XPATH)
+                browse_tab.click()
+                self.logger.info("[NX_CLOUD_WEB] [BROWSE] ✅ 已點擊「瀏覽」(fallback)")
+                time.sleep(2)
+                return True
+            except NoSuchElementException:
+                self.logger.error("[NX_CLOUD_WEB] [BROWSE] ❌ 找不到「瀏覽」分頁")
+                return False
+        except Exception as e:
+            self.logger.error(f"[NX_CLOUD_WEB] [BROWSE] ❌ 點擊失敗: {e}")
+            return False
+    
+    def click_server_item(self) -> bool:
+        """
+        點擊 Server 選項卡
+        
+        Returns:
+            bool: 點擊是否成功
+        """
+        from config import LocatorConfig
+        
+        self.logger.info("[NX_CLOUD_WEB] [SERVER] 點擊 Server 選項卡...")
+        
+        if not self.driver:
+            self.logger.error("[NX_CLOUD_WEB] [SERVER] WebDriver 未初始化")
+            return False
+        
+        try:
+            server_item = self.wait.until(EC.element_to_be_clickable(
+                (By.XPATH, LocatorConfig.WEB_SERVER_XPATH)))
+            self.logger.info(f"[NX_CLOUD_WEB] [SERVER] 找到元素: {server_item.text}")
+            server_item.click()
+            self.logger.info("[NX_CLOUD_WEB] [SERVER] ✅ 已點擊 Server")
+            time.sleep(2)
+            return True
+        except TimeoutException:
+            self.logger.info("[NX_CLOUD_WEB] [SERVER] 精確 XPath 失敗，嘗試 fallback...")
+            try:
+                servers = self.driver.find_elements(By.XPATH, LocatorConfig.WEB_SERVER_FALLBACK_XPATH)
+                for s in servers:
+                    if s.is_displayed():
+                        s.click()
+                        self.logger.info("[NX_CLOUD_WEB] [SERVER] ✅ 已點擊 Server (fallback)")
+                        time.sleep(2)
+                        return True
+                self.logger.error("[NX_CLOUD_WEB] [SERVER] ❌ 找不到 Server")
+                return False
+            except Exception:
+                self.logger.error("[NX_CLOUD_WEB] [SERVER] ❌ 找不到 Server")
+                return False
+        except Exception as e:
+            self.logger.error(f"[NX_CLOUD_WEB] [SERVER] ❌ 點擊失敗: {e}")
+            return False
+    
+    def click_camera_item(self) -> bool:
+        """
+        點擊攝影機項目
+        
+        Returns:
+            bool: 點擊是否成功
+        """
+        from config import LocatorConfig
+        
+        self.logger.info("[NX_CLOUD_WEB] [CAMERA] 點擊攝影機...")
+        
+        if not self.driver:
+            self.logger.error("[NX_CLOUD_WEB] [CAMERA] WebDriver 未初始化")
+            return False
+        
+        try:
+            camera_item = self.wait.until(EC.element_to_be_clickable(
+                (By.XPATH, LocatorConfig.WEB_CAMERA_XPATH)))
+            self.logger.info(f"[NX_CLOUD_WEB] [CAMERA] 找到元素: {camera_item.text}")
+            camera_item.click()
+            self.logger.info("[NX_CLOUD_WEB] [CAMERA] ✅ 已點擊攝影機")
+            time.sleep(3)
+            return True
+        except TimeoutException:
+            self.logger.info("[NX_CLOUD_WEB] [CAMERA] 精確 XPath 失敗，嘗試 fallback...")
+            try:
+                cameras = self.driver.find_elements(By.XPATH, LocatorConfig.WEB_CAMERA_FALLBACK_XPATH)
+                for c in cameras:
+                    if c.is_displayed():
+                        c.click()
+                        self.logger.info("[NX_CLOUD_WEB] [CAMERA] ✅ 已點擊攝影機 (fallback)")
+                        time.sleep(3)
+                        return True
+                self.logger.error("[NX_CLOUD_WEB] [CAMERA] ❌ 找不到攝影機")
+                return False
+            except Exception:
+                self.logger.error("[NX_CLOUD_WEB] [CAMERA] ❌ 找不到攝影機")
+                return False
+        except Exception as e:
+            self.logger.error(f"[NX_CLOUD_WEB] [CAMERA] ❌ 點擊失敗: {e}")
+            return False
+    
+    def click_timeline(self) -> bool:
+        """
+        點擊錄影進度條 (Timeline Canvas)
+        
+        Returns:
+            bool: 點擊是否成功
+        """
+        from config import LocatorConfig
+        from selenium.webdriver.common.action_chains import ActionChains
+        
+        self.logger.info("[NX_CLOUD_WEB] [TIMELINE] 點擊錄影進度條...")
+        
+        if not self.driver:
+            self.logger.error("[NX_CLOUD_WEB] [TIMELINE] WebDriver 未初始化")
+            return False
+        
+        try:
+            timeline = self.wait.until(EC.presence_of_element_located(
+                (By.XPATH, LocatorConfig.WEB_TIMELINE_XPATH)))
+            
+            size = timeline.size
+            self.logger.info(f"[NX_CLOUD_WEB] [TIMELINE] 找到進度條，大小: {size['width']} x {size['height']}")
+            
+            # 使用 ActionChains 點擊 canvas 中心
+            actions = ActionChains(self.driver)
+            actions.move_to_element(timeline).click().perform()
+            
+            self.logger.info("[NX_CLOUD_WEB] [TIMELINE] ✅ 已點擊錄影進度條")
+            time.sleep(3)
+            return True
+            
+        except TimeoutException:
+            self.logger.info("[NX_CLOUD_WEB] [TIMELINE] 精確 XPath 失敗，嘗試 fallback...")
+            try:
+                timeline = self.driver.find_element(By.XPATH, LocatorConfig.WEB_TIMELINE_FALLBACK_XPATH)
+                actions = ActionChains(self.driver)
+                actions.move_to_element(timeline).click().perform()
+                self.logger.info("[NX_CLOUD_WEB] [TIMELINE] ✅ 已點擊錄影進度條 (fallback)")
+                time.sleep(3)
+                return True
+            except Exception:
+                self.logger.error("[NX_CLOUD_WEB] [TIMELINE] ❌ 找不到錄影進度條")
+                return False
+        except Exception as e:
+            self.logger.error(f"[NX_CLOUD_WEB] [TIMELINE] ❌ 點擊失敗: {e}")
+            return False
