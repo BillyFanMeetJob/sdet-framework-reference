@@ -1,0 +1,92 @@
+====================================  OCR:              0/2470 (0.0%)
+=========
+測試案例: 開啟錄影功能
+執行時間: 2026-02-03 02:59:14
+執行命令: C:\Python314\python.exe -u -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name 開啟錄影功能 -v -s --tb=short
+工作目錄: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+>>> [DEBUG] 檢查登錄狀態（目標伺服器: LAPTOP-QRJN5735）
+>>> [OK] 驗證成功：找到預期元素 desktop_main/server_icon.png
+>>> [OK] 已在主畫面，無需重新登錄
+  Coordinate:       345/2470 (14.0%)
+
+[Average Recognition Time]
+  OK Script/OpenCV: 231.40 ms
+  VLM (LLM Vision): 3420.60 ms
+  pyautogui:        85.90 ms
+
+[Per-Image Statistics]
+  appearance_tab.png:
+    Attempts: 30, OK Script: 16 (53%), pyautogui: 0 (0%)
+  apply_btn.png:
+    Attempts: 53, OK Script: 38 (72%), pyautogui: 0 (0%)
+  calendar_header.png:
+    Attempts: 7, OK Script: 7 (100%), pyautogui: 0 (0%)
+  camera_settings_menu.png:
+    Attempts: 151, OK Script: 51 (34%), pyautogui: 1 (1%)
+  language_dropdown.png:
+    Attempts: 38, OK Script: 16 (42%), pyautogui: 0 (0%)
+  license_tab.png:
+    Attempts: 9, OK Script: 0 (0%), pyautogui: 0 (0%)
+  local_settings.png:
+    Attempts: 94, OK Script: 26 (28%), pyautogui: 0 (0%)
+  login_indicator.png:
+    Attempts: 313, OK Script: 0 (0%), pyautogui: 0 (0%)
+  menu_icon.png:
+    Attempts: 26, OK Script: 26 (100%), pyautogui: 0 (0%)
+  ok_btn.png:
+    Attempts: 49, OK Script: 49 (100%), pyautogui: 0 (0%)
+  radio_n.png:
+    Attempts: 35, OK Script: 35 (100%), pyautogui: 0 (0%)
+  recording_tab.png:
+    Attempts: 62, OK Script: 46 (74%), pyautogui: 0 (0%)
+  restart_now.png:
+    Attempts: 31, OK Script: 19 (61%), pyautogui: 0 (0%)
+  schedule_grid_All.png:
+    Attempts: 12, OK Script: 12 (100%), pyautogui: 0 (0%)
+  schedule_grid_corner.png:
+    Attempts: 30, OK Script: 30 (100%), pyautogui: 0 (0%)
+  server_icon.png:
+    Attempts: 436, OK Script: 193 (44%), pyautogui: 9 (2%)
+  server_settings_menu.png:
+    Attempts: 46, OK Script: 40 (87%), pyautogui: 0 (0%)
+  server_tile.png:
+    Attempts: 507, OK Script: 80 (16%), pyautogui: 1 (0%)
+  system_admin_menu.png:
+    Attempts: 373, OK Script: 0 (0%), pyautogui: 0 (0%)
+  traditional_chinese.png:
+    Attempts: 33, OK Script: 15 (45%), pyautogui: 0 (0%)
+  usb_cam_item.png:
+    Attempts: 135, OK Script: 73 (54%), pyautogui: 0 (0%)
+============================================================
+
+================================================================================
+[系統] ✅ Playwright 瀏覽器已保留（供 Case 2-2 使用）
+[系統] 💡 使用類別屬性保持瀏覽器運行（比照 Selenium）
+[系統] 💡 Case 2-2 可以通過 Attach 模式連接
+================================================================================
+[系統] 💡 瀏覽器將保持運行直到程序結束
+================================================================================
+[REPORT] 從環境變數獲取 Terminal log: D:\nxwitness-demo\report\開啟錄影功能\2026-02-03_02-59-14\terminal_output.log
+[REPORT] Terminal log 文件存在，大小: 877 bytes
+[REPORT] 開始生成報告，log_file_path: D:\nxwitness-demo\report\開啟錄影功能\2026-02-03_02-59-14\terminal_output.log
+[REPORT] 清理了 0 個 NULL 字節
+[REPORT] Terminal log 已複製到報告目錄: D:\nxwitness-demo\report\開啟錄影功能\2026-02-03_02-59-14\terminal_output.log (945 bytes)
+
+================================================================================
+[REPORT] 測試報告已生成！
+[REPORT] 報告路徑: D:/nxwitness-demo/report/開啟錄影功能/2026-02-03_02-59-14/report.html
+[REPORT] 您可以直接在瀏覽器中打開此文件查看詳細報告
+================================================================================
+
+PASSED
+
+============================== 1 passed in 0.78s ==============================

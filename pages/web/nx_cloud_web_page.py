@@ -1408,16 +1408,19 @@ class NxCloudWebPage(BasePage):
                 self.logger.error(f"[NX_CLOUD_WEB] [CLOSE] 錯誤詳情: {traceback.format_exc()}")
 
     # ==================== Case 2-2: Web Admin 操作方法 ====================
-    # 以下方法用於 https://localhost:7001 Web Admin 頁面的操作
+    # 以下方法用於 Nx Cloud 或 Web Admin 頁面的操作
     
     def login_via_nx_cloud(self, email: str = None, password: str = None) -> bool:
         """
-        通過 Nx Cloud OAuth 登錄 Web Admin
+        通過 Nx Cloud OAuth 登錄
+        
+        方案 A（優先）：使用 Case 2-1 保存的 Nx Cloud URL
+        方案 B（備用）：使用 localhost:7001 Web Admin
         
         完整流程：
-        1. 導航到 localhost:7001
-        2. 點擊「登入 Nx Cloud」按鈕
-        3. 接受風險並繼續
+        1. 嘗試讀取 Case 2-1 保存的 URL，如果失敗則使用 localhost:7001
+        2. 點擊「登入 Nx Cloud」按鈕（如果存在）
+        3. 接受風險並繼續（如果存在）
         4. 輸入郵箱 → 下一步 → 輸入密碼 → 登錄
         
         Args:
@@ -1440,21 +1443,82 @@ class NxCloudWebPage(BasePage):
             return False
         
         try:
-            # Step 1: 導航到 localhost:7001
-            self.logger.info("[NX_CLOUD_WEB] [LOGIN] Step 1: 導航到 https://localhost:7001...")
-            self.driver.get('https://localhost:7001')
+            # Step 1: 嘗試讀取 Case 2-1 保存的 URL（方案 A）
+            target_url = None
+            url_file = os.path.join(os.path.dirname(__file__), '..', '..', '.nx_cloud_url')
+            
+            try:
+                if os.path.exists(url_file):
+                    with open(url_file, 'r') as f:
+                        saved_url = f.read().strip()
+                    if saved_url and saved_url.startswith('http'):
+                        target_url = saved_url
+                        self.logger.info(f"[NX_CLOUD_WEB] [LOGIN] ✅ 使用 Case 2-1 保存的 URL: {target_url}")
+                    else:
+                        self.logger.warning(f"[NX_CLOUD_WEB] [LOGIN] URL 文件內容無效: {saved_url}")
+                else:
+                    self.logger.info(f"[NX_CLOUD_WEB] [LOGIN] URL 文件不存在: {url_file}")
+            except Exception as e:
+                self.logger.warning(f"[NX_CLOUD_WEB] [LOGIN] 讀取 URL 文件失敗: {e}")
+            
+            # 如果沒有有效的 URL，使用備用方案（localhost:7001）
+            if not target_url:
+                target_url = 'https://localhost:7001'
+                self.logger.info(f"[NX_CLOUD_WEB] [LOGIN] 使用備用方案: {target_url}")
+            
+            self.logger.info(f"[NX_CLOUD_WEB] [LOGIN] Step 1: 導航到 {target_url}...")
+            self.driver.get(target_url)
             time.sleep(3)
             
-            # Step 2: 點擊「登入 Nx Cloud」按鈕
-            self.logger.info("[NX_CLOUD_WEB] [LOGIN] Step 2: 點擊「登入 Nx Cloud」...")
+            # Step 1.5: 自動置頂瀏覽器視窗
+            self.logger.info("[NX_CLOUD_WEB] [LOGIN] Step 1.5: 自動置頂瀏覽器視窗...")
             try:
-                nx_cloud_btn = self.wait.until(EC.element_to_be_clickable(
-                    (By.XPATH, LocatorConfig.WEB_NX_CLOUD_LOGIN_BTN_XPATH)))
-                nx_cloud_btn.click()
-                self.logger.info("[NX_CLOUD_WEB] [LOGIN] ✅ 已點擊「登入 Nx Cloud」")
-                time.sleep(3)
-            except TimeoutException:
-                self.logger.info("[NX_CLOUD_WEB] [LOGIN] 未找到「登入 Nx Cloud」按鈕，可能已登錄")
+                import pygetwindow as gw
+                import win32gui
+                import win32con
+                chrome_windows = gw.getWindowsWithTitle('Chrome')
+                if chrome_windows:
+                    hwnd = chrome_windows[0]._hWnd
+                    win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+                    win32gui.SetForegroundWindow(hwnd)
+                    win32gui.BringWindowToTop(hwnd)
+                    self.logger.info("[NX_CLOUD_WEB] [LOGIN] ✅ 瀏覽器視窗已置頂")
+            except Exception as e:
+                self.logger.warning(f"[NX_CLOUD_WEB] [LOGIN] 置頂視窗失敗: {e}")
+            
+            # Step 1.6: 修改語言為繁體中文（在登錄前）
+            self.logger.info("[NX_CLOUD_WEB] [LOGIN] Step 1.6: 嘗試修改語言為繁體中文...")
+            self._try_change_language_to_chinese()
+            
+            # Step 2: 點擊右上角「登入」按鈕
+            self.logger.info("[NX_CLOUD_WEB] [LOGIN] Step 2: 點擊右上角「登入」按鈕...")
+            login_btn_clicked = False
+            
+            # 嘗試多個 XPath 找到登入按鈕
+            login_btn_xpaths = [
+                LocatorConfig.WEB_NX_CLOUD_LOGIN_BTN_XPATH,  # //a[@href='/authorize']
+                "//a[contains(@class, 'login') and contains(@class, 'nx-button')]",
+                "//a[normalize-space()='登入']",
+                "//a[normalize-space()='登录']",
+                "//a[contains(text(), '登入')]",
+            ]
+            
+            for xpath in login_btn_xpaths:
+                try:
+                    self.logger.info(f"[NX_CLOUD_WEB] [LOGIN] 嘗試 XPath: {xpath}")
+                    login_btn = WebDriverWait(self.driver, 5).until(
+                        EC.element_to_be_clickable((By.XPATH, xpath)))
+                    if login_btn.is_displayed():
+                        login_btn.click()
+                        self.logger.info(f"[NX_CLOUD_WEB] [LOGIN] ✅ 已點擊「登入」按鈕 (XPath: {xpath})")
+                        login_btn_clicked = True
+                        time.sleep(3)
+                        break
+                except (TimeoutException, NoSuchElementException):
+                    continue
+            
+            if not login_btn_clicked:
+                self.logger.info("[NX_CLOUD_WEB] [LOGIN] 未找到「登入」按鈕，可能已登錄")
             
             # Step 3: 點擊「接受風險並繼續」
             self.logger.info("[NX_CLOUD_WEB] [LOGIN] Step 3: 點擊「接受風險並繼續」...")
@@ -1520,6 +1584,83 @@ class NxCloudWebPage(BasePage):
             self.logger.error(traceback.format_exc())
             return False
     
+    def _try_change_language_to_chinese(self) -> bool:
+        """
+        嘗試將網頁語言修改為繁體中文
+        
+        嘗試多種語言選擇器定位方式：
+        1. 右上角語言下拉選單
+        2. 設定頁面中的語言選項
+        
+        Returns:
+            bool: 修改是否成功
+        """
+        self.logger.info("[NX_CLOUD_WEB] [LANG] 嘗試修改語言為繁體中文...")
+        
+        if not self.driver:
+            return False
+        
+        try:
+            # 優先使用 Nx Cloud 的語言選擇器（根據實際 DOM 結構）
+            # 按鈕 ID 是 dropdownMenuButton，帶有小三角下拉箭頭
+            language_selectors = [
+                "//button[@id='dropdownMenuButton']",  # Nx Cloud 主要語言按鈕
+                "//button[contains(@class, 'btn-dropdown-toggle')]",  # 備選：按 class 找
+                "//button[contains(@class, 'legacy-btn') and contains(@class, 'dropdown')]",
+                "//div[contains(@class, 'language')]//button",
+                "//*[contains(@class, 'locale-selector')]",
+            ]
+            
+            for selector in language_selectors:
+                try:
+                    lang_btn = self.driver.find_element(By.XPATH, selector)
+                    if lang_btn.is_displayed():
+                        lang_btn.click()
+                        self.logger.info(f"[NX_CLOUD_WEB] [LANG] 點擊語言選擇器: {selector}")
+                        time.sleep(1)
+                        
+                        # 嘗試選擇繁體中文（根據實際 DOM 結構）
+                        # 下拉選單是 <ul aria-labelledby="dropdownMenuButton">
+                        # 選項在 <a class="anchor dropdown-item"> 裡的 <span> 中
+                        chinese_options = [
+                            "//ul[@aria-labelledby='dropdownMenuButton']//span[contains(text(), '繁体中文')]",  # 簡體字"繁体"
+                            "//ul[@aria-labelledby='dropdownMenuButton']//span[contains(text(), '繁體中文')]",  # 繁體字
+                            "//ul[@aria-labelledby='dropdownMenuButton']//a[contains(@class, 'dropdown-item')]//span[contains(text(), '繁')]",
+                            "//a[contains(@class, 'dropdown-item')]//span[contains(text(), '繁体中文')]",
+                            "//a[contains(@class, 'dropdown-item')]//span[contains(text(), '繁體中文')]",
+                            "//*[contains(text(), '繁體中文')]",
+                            "//*[contains(text(), '繁体中文')]",
+                            "//*[contains(text(), 'Traditional Chinese')]",
+                        ]
+                        
+                        for chinese_selector in chinese_options:
+                            try:
+                                chinese_btn = self.driver.find_element(By.XPATH, chinese_selector)
+                                if chinese_btn.is_displayed():
+                                    chinese_btn.click()
+                                    self.logger.info(f"[NX_CLOUD_WEB] [LANG] ✅ 已選擇繁體中文: {chinese_selector}")
+                                    time.sleep(2)
+                                    return True
+                            except NoSuchElementException:
+                                continue
+                        
+                        # 如果下拉選單打開但沒找到繁體中文，點擊其他地方關閉
+                        self.logger.warning("[NX_CLOUD_WEB] [LANG] 下拉選單已打開但未找到繁體中文選項")
+                        try:
+                            self.driver.find_element(By.TAG_NAME, 'body').click()
+                        except:
+                            pass
+                        
+                except NoSuchElementException:
+                    continue
+            
+            self.logger.info("[NX_CLOUD_WEB] [LANG] 未找到語言選擇器，跳過語言修改")
+            return False
+            
+        except Exception as e:
+            self.logger.warning(f"[NX_CLOUD_WEB] [LANG] 修改語言失敗: {e}")
+            return False
+    
     def _check_login_success(self) -> bool:
         """
         檢查是否登錄成功
@@ -1537,129 +1678,267 @@ class NxCloudWebPage(BasePage):
         except:
             return False
     
-    def click_browse_tab(self) -> bool:
+    def click_browse_tab(self, max_wait: int = 30) -> bool:
         """
-        點擊「瀏覽」分頁 Tab
+        點擊「瀏覽 / View / 查看」分頁 Tab
+        
+        支持多語言：View (英文) / 瀏覽 (繁體) / 查看 (簡體)
+        登錄後需要等待頁面完全載入，View 頁籤才會出現
+        
+        Args:
+            max_wait: 最大等待時間（秒）
         
         Returns:
             bool: 點擊是否成功
         """
         from config import LocatorConfig
         
-        self.logger.info("[NX_CLOUD_WEB] [BROWSE] 點擊「瀏覽」分頁...")
+        self.logger.info(f"[NX_CLOUD_WEB] [BROWSE] 等待並點擊「View / 瀏覽 / 查看」分頁（最多等待 {max_wait} 秒）...")
         
         if not self.driver:
             self.logger.error("[NX_CLOUD_WEB] [BROWSE] WebDriver 未初始化")
             return False
         
+        # 嘗試多種 XPath 定位策略（優先使用 href，最可靠）
+        xpaths_to_try = [
+            # 策略 1: 使用 href 包含 /view（最可靠，不依賴語言）
+            "//a[contains(@href, '/view')]",
+            "//div[@class='menu-items']//a[contains(@href, '/view')]",
+            # 策略 2: 使用 class 和 href
+            "//a[contains(@class, 'inner-menu-item') and contains(@href, '/view')]",
+            # 策略 3: 使用文字匹配（多語言）
+            "//div[@class='menu-items']//a[normalize-space()='View']",
+            "//div[@class='menu-items']//a[normalize-space()='瀏覽']",
+            "//div[@class='menu-items']//a[normalize-space()='查看']",
+            # 策略 4: 使用 class 和文字
+            "//a[contains(@class, 'inner-menu-item') and (contains(text(), 'View') or contains(text(), '瀏覽') or contains(text(), '查看'))]",
+            # 策略 5: 原有的配置 XPath
+            LocatorConfig.WEB_BROWSE_TAB_XPATH,
+            LocatorConfig.WEB_BROWSE_TAB_FALLBACK_XPATH,
+        ]
+        
+        # 智能等待：每秒檢查一次，直到找到 View 頁籤或超時
+        start_time = time.time()
+        while time.time() - start_time < max_wait:
+            for xpath in xpaths_to_try:
+                try:
+                    browse_tab = self.driver.find_element(By.XPATH, xpath)
+                    if browse_tab.is_displayed():
+                        self.logger.info(f"[NX_CLOUD_WEB] [BROWSE] ✅ 找到 View 頁籤: '{browse_tab.text.strip()}' (等待 {int(time.time() - start_time)} 秒)")
+                        browse_tab.click()
+                        self.logger.info("[NX_CLOUD_WEB] [BROWSE] ✅ 已點擊「View / 瀏覽」")
+                        time.sleep(2)
+                        return True
+                except NoSuchElementException:
+                    continue
+                except Exception as e:
+                    continue
+            
+            # 未找到，等待 1 秒後重試
+            elapsed = int(time.time() - start_time)
+            if elapsed % 5 == 0 and elapsed > 0:
+                self.logger.info(f"[NX_CLOUD_WEB] [BROWSE] ⏳ 等待 View 頁籤出現... ({elapsed}/{max_wait} 秒)")
+            time.sleep(1)
+        
+        # 超時，所有策略都失敗，列出頁面上所有可能的選項
+        self.logger.error(f"[NX_CLOUD_WEB] [BROWSE] ❌ 等待 {max_wait} 秒後仍未找到 View 頁籤")
         try:
-            # 嘗試精確 XPath
-            browse_tab = self.wait.until(EC.element_to_be_clickable(
-                (By.XPATH, LocatorConfig.WEB_BROWSE_TAB_XPATH)))
-            self.logger.info(f"[NX_CLOUD_WEB] [BROWSE] 找到元素: {browse_tab.text}")
-            browse_tab.click()
-            self.logger.info("[NX_CLOUD_WEB] [BROWSE] ✅ 已點擊「瀏覽」")
-            time.sleep(2)
-            return True
-        except TimeoutException:
-            # 嘗試 fallback XPath
-            self.logger.info("[NX_CLOUD_WEB] [BROWSE] 精確 XPath 失敗，嘗試 fallback...")
-            try:
-                browse_tab = self.driver.find_element(By.XPATH, LocatorConfig.WEB_BROWSE_TAB_FALLBACK_XPATH)
-                browse_tab.click()
-                self.logger.info("[NX_CLOUD_WEB] [BROWSE] ✅ 已點擊「瀏覽」(fallback)")
-                time.sleep(2)
-                return True
-            except NoSuchElementException:
-                self.logger.error("[NX_CLOUD_WEB] [BROWSE] ❌ 找不到「瀏覽」分頁")
-                return False
-        except Exception as e:
-            self.logger.error(f"[NX_CLOUD_WEB] [BROWSE] ❌ 點擊失敗: {e}")
-            return False
+            menu_items = self.driver.find_elements(By.XPATH, "//div[@class='menu-items']//a")
+            if menu_items:
+                self.logger.info(f"[NX_CLOUD_WEB] [BROWSE] 頁面上的選項卡: {[item.text.strip() for item in menu_items]}")
+            else:
+                self.logger.info("[NX_CLOUD_WEB] [BROWSE] 頁面上沒有找到任何選項卡")
+        except:
+            pass
+        
+        return False
     
-    def click_server_item(self) -> bool:
+    def click_server_item(self, max_wait: int = 15) -> bool:
         """
-        點擊 Server 選項卡
+        點擊 Server 選項卡（展開 Server 以顯示攝影機列表）
+        
+        Args:
+            max_wait: 最大等待時間（秒）
         
         Returns:
             bool: 點擊是否成功
         """
         from config import LocatorConfig
         
-        self.logger.info("[NX_CLOUD_WEB] [SERVER] 點擊 Server 選項卡...")
+        self.logger.info(f"[NX_CLOUD_WEB] [SERVER] 點擊 Server 選項卡（最多等待 {max_wait} 秒）...")
         
         if not self.driver:
             self.logger.error("[NX_CLOUD_WEB] [SERVER] WebDriver 未初始化")
             return False
         
-        try:
-            server_item = self.wait.until(EC.element_to_be_clickable(
-                (By.XPATH, LocatorConfig.WEB_SERVER_XPATH)))
-            self.logger.info(f"[NX_CLOUD_WEB] [SERVER] 找到元素: {server_item.text}")
-            server_item.click()
-            self.logger.info("[NX_CLOUD_WEB] [SERVER] ✅ 已點擊 Server")
-            time.sleep(2)
-            return True
-        except TimeoutException:
-            self.logger.info("[NX_CLOUD_WEB] [SERVER] 精確 XPath 失敗，嘗試 fallback...")
-            try:
-                servers = self.driver.find_elements(By.XPATH, LocatorConfig.WEB_SERVER_FALLBACK_XPATH)
-                for s in servers:
-                    if s.is_displayed():
-                        s.click()
-                        self.logger.info("[NX_CLOUD_WEB] [SERVER] ✅ 已點擊 Server (fallback)")
-                        time.sleep(2)
-                        return True
-                self.logger.error("[NX_CLOUD_WEB] [SERVER] ❌ 找不到 Server")
-                return False
-            except Exception:
-                self.logger.error("[NX_CLOUD_WEB] [SERVER] ❌ 找不到 Server")
-                return False
-        except Exception as e:
-            self.logger.error(f"[NX_CLOUD_WEB] [SERVER] ❌ 點擊失敗: {e}")
-            return False
+        # 多策略 XPath（根據實際 DOM 結構）
+        xpaths_to_try = [
+            # 策略 1: 精確匹配 server-name/span（優先）
+            "//div[@class='server-name']/span[contains(@class, 'name')]",
+            # 策略 2: 配置中的 XPath
+            LocatorConfig.WEB_SERVER_XPATH,
+            LocatorConfig.WEB_SERVER_FALLBACK_XPATH,
+            # 策略 3: 根據文字找
+            LocatorConfig.WEB_SERVER_TEXT_XPATH,
+            # 策略 4: 更泛用的匹配
+            "//div[contains(@class, 'server-name')]//span",
+            "//span[contains(@class, 'name') and contains(@class, 'Online')]",
+        ]
+        
+        # 智能等待
+        start_time = time.time()
+        while time.time() - start_time < max_wait:
+            for xpath in xpaths_to_try:
+                try:
+                    elements = self.driver.find_elements(By.XPATH, xpath)
+                    for elem in elements:
+                        if elem.is_displayed():
+                            self.logger.info(f"[NX_CLOUD_WEB] [SERVER] ✅ 找到 Server: '{elem.text.strip()[:30]}' (等待 {int(time.time() - start_time)} 秒)")
+                            elem.click()
+                            self.logger.info("[NX_CLOUD_WEB] [SERVER] ✅ 已點擊 Server")
+                            time.sleep(2)  # 等待展開動畫
+                            return True
+                except Exception:
+                    continue
+            
+            elapsed = int(time.time() - start_time)
+            if elapsed % 5 == 0 and elapsed > 0:
+                self.logger.info(f"[NX_CLOUD_WEB] [SERVER] ⏳ 等待 Server 出現... ({elapsed}/{max_wait} 秒)")
+            time.sleep(1)
+        
+        self.logger.error(f"[NX_CLOUD_WEB] [SERVER] ❌ 等待 {max_wait} 秒後仍未找到 Server")
+        return False
     
-    def click_camera_item(self) -> bool:
+    def click_camera_item(self, max_wait: int = 20) -> bool:
         """
         點擊攝影機項目
+        
+        Args:
+            max_wait: 最大等待時間（秒）
         
         Returns:
             bool: 點擊是否成功
         """
         from config import LocatorConfig
         
-        self.logger.info("[NX_CLOUD_WEB] [CAMERA] 點擊攝影機...")
+        self.logger.info(f"[NX_CLOUD_WEB] [CAMERA] 點擊攝影機（最多等待 {max_wait} 秒）...")
         
         if not self.driver:
             self.logger.error("[NX_CLOUD_WEB] [CAMERA] WebDriver 未初始化")
             return False
         
-        try:
-            camera_item = self.wait.until(EC.element_to_be_clickable(
-                (By.XPATH, LocatorConfig.WEB_CAMERA_XPATH)))
-            self.logger.info(f"[NX_CLOUD_WEB] [CAMERA] 找到元素: {camera_item.text}")
-            camera_item.click()
-            self.logger.info("[NX_CLOUD_WEB] [CAMERA] ✅ 已點擊攝影機")
-            time.sleep(3)
-            return True
-        except TimeoutException:
-            self.logger.info("[NX_CLOUD_WEB] [CAMERA] 精確 XPath 失敗，嘗試 fallback...")
-            try:
-                cameras = self.driver.find_elements(By.XPATH, LocatorConfig.WEB_CAMERA_FALLBACK_XPATH)
-                for c in cameras:
-                    if c.is_displayed():
-                        c.click()
-                        self.logger.info("[NX_CLOUD_WEB] [CAMERA] ✅ 已點擊攝影機 (fallback)")
-                        time.sleep(3)
-                        return True
-                self.logger.error("[NX_CLOUD_WEB] [CAMERA] ❌ 找不到攝影機")
-                return False
-            except Exception:
-                self.logger.error("[NX_CLOUD_WEB] [CAMERA] ❌ 找不到攝影機")
-                return False
-        except Exception as e:
-            self.logger.error(f"[NX_CLOUD_WEB] [CAMERA] ❌ 點擊失敗: {e}")
+        # 多策略 XPath（根據實際 DOM 結構）
+        # 注意：點擊 Server 後，cameras 區域需要時間展開
+        xpaths_to_try = [
+            # 策略 1: 使用 contains 匹配（更靈活，處理多個 class）
+            "//div[contains(@class, 'cameras')]//div[contains(@class, 'preview')]",
+            # 策略 2: 精確匹配
+            "//div[@class='cameras ng-star-inserted']/div[@class='preview']",
+            # 策略 3: 配置中的 XPath
+            LocatorConfig.WEB_CAMERA_XPATH,
+            LocatorConfig.WEB_CAMERA_FALLBACK_XPATH,
+            # 策略 4: 更泛用的匹配
+            "//div[@class='preview']",
+            "//div[contains(@class, 'preview') and ancestor::div[contains(@class, 'cameras')]]",
+            # 策略 5: 根據文字找（備選）
+            LocatorConfig.WEB_CAMERA_TEXT_XPATH,
+        ]
+        
+        # 智能等待
+        start_time = time.time()
+        debug_logged = False
+        while time.time() - start_time < max_wait:
+            for xpath in xpaths_to_try:
+                try:
+                    elements = self.driver.find_elements(By.XPATH, xpath)
+                    for elem in elements:
+                        if elem.is_displayed():
+                            camera_name = elem.text.strip()[:40] if elem.text else "camera"
+                            self.logger.info(f"[NX_CLOUD_WEB] [CAMERA] ✅ 找到攝影機: '{camera_name}' (等待 {int(time.time() - start_time)} 秒, XPath: {xpath[:50]})")
+                            elem.click()
+                            self.logger.info("[NX_CLOUD_WEB] [CAMERA] ✅ 已點擊攝影機")
+                            time.sleep(3)  # 等待影片加載
+                            return True
+                except Exception:
+                    continue
+            
+            elapsed = int(time.time() - start_time)
+            
+            # 每 5 秒輸出調試信息
+            if elapsed % 5 == 0 and elapsed > 0:
+                self.logger.info(f"[NX_CLOUD_WEB] [CAMERA] ⏳ 等待攝影機出現... ({elapsed}/{max_wait} 秒)")
+                # 輸出頁面上的所有 div class 包含 cameras 或 preview 的元素（僅一次）
+                if not debug_logged:
+                    try:
+                        cameras_divs = self.driver.find_elements(By.XPATH, "//div[contains(@class, 'cameras')]")
+                        preview_divs = self.driver.find_elements(By.XPATH, "//div[contains(@class, 'preview')]")
+                        self.logger.info(f"[NX_CLOUD_WEB] [CAMERA] [DEBUG] 找到 {len(cameras_divs)} 個 cameras div, {len(preview_divs)} 個 preview div")
+                        debug_logged = True
+                    except:
+                        pass
+            time.sleep(1)
+        
+        self.logger.error(f"[NX_CLOUD_WEB] [CAMERA] ❌ 等待 {max_wait} 秒後仍未找到攝影機")
+        return False
+    
+    def click_timeline_green_block(self, max_wait: int = 15) -> bool:
+        """
+        點擊進度條中的綠色區塊（錄影區段）開始播放
+        
+        Args:
+            max_wait: 最大等待時間（秒）
+        
+        Returns:
+            bool: 點擊是否成功
+        """
+        from selenium.webdriver.common.action_chains import ActionChains
+        
+        self.logger.info(f"[NX_CLOUD_WEB] [TIMELINE] 點擊進度條綠色區塊（最多等待 {max_wait} 秒）...")
+        
+        if not self.driver:
+            self.logger.error("[NX_CLOUD_WEB] [TIMELINE] WebDriver 未初始化")
             return False
+        
+        # 多策略 XPath（根據截圖中的 DOM 結構）
+        xpaths_to_try = [
+            # 策略 1: nx-timeline-selection（綠色選區）
+            "//nx-timeline-selection",
+            # 策略 2: 選區內的可拖動元素
+            "//nx-timeline-selection//div[contains(@class, 'selected-range')]",
+            # 策略 3: 時間線區域
+            "//nx-timeline//div[contains(@class, 'timeline')]",
+            "//div[contains(@class, 'timeline-selection')]",
+            # 策略 4: canvas 元素
+            "//nx-timeline//canvas",
+        ]
+        
+        # 智能等待
+        start_time = time.time()
+        while time.time() - start_time < max_wait:
+            for xpath in xpaths_to_try:
+                try:
+                    elements = self.driver.find_elements(By.XPATH, xpath)
+                    for elem in elements:
+                        if elem.is_displayed():
+                            self.logger.info(f"[NX_CLOUD_WEB] [TIMELINE] ✅ 找到進度條元素 (XPath: {xpath[:40]})")
+                            
+                            # 使用 ActionChains 點擊元素中心
+                            actions = ActionChains(self.driver)
+                            actions.move_to_element(elem).click().perform()
+                            
+                            self.logger.info("[NX_CLOUD_WEB] [TIMELINE] ✅ 已點擊進度條綠色區塊")
+                            time.sleep(2)  # 等待播放開始
+                            return True
+                except Exception as e:
+                    continue
+            
+            elapsed = int(time.time() - start_time)
+            if elapsed % 5 == 0 and elapsed > 0:
+                self.logger.info(f"[NX_CLOUD_WEB] [TIMELINE] ⏳ 等待進度條出現... ({elapsed}/{max_wait} 秒)")
+            time.sleep(1)
+        
+        self.logger.warning(f"[NX_CLOUD_WEB] [TIMELINE] ⚠️ 等待 {max_wait} 秒後仍未找到進度條")
+        return False
     
     def click_timeline(self) -> bool:
         """
@@ -1707,3 +1986,55 @@ class NxCloudWebPage(BasePage):
         except Exception as e:
             self.logger.error(f"[NX_CLOUD_WEB] [TIMELINE] ❌ 點擊失敗: {e}")
             return False
+    
+    def click_pause_button(self, max_wait: int = 10) -> bool:
+        """
+        點擊暫停按鈕
+        
+        Args:
+            max_wait: 最大等待時間（秒）
+        
+        Returns:
+            bool: 點擊是否成功
+        """
+        self.logger.info(f"[NX_CLOUD_WEB] [PAUSE] 點擊暫停按鈕（最多等待 {max_wait} 秒）...")
+        
+        if not self.driver:
+            self.logger.error("[NX_CLOUD_WEB] [PAUSE] WebDriver 未初始化")
+            return False
+        
+        # 多策略 XPath
+        xpaths_to_try = [
+            # 策略 1: 播放控制區域
+            "//nx-playback-controls",
+            "//nx-playback-controls//button[contains(@class, 'pause')]",
+            "//nx-playback-controls//button",
+            # 策略 2: 暫停按鈕
+            "//button[contains(@class, 'pause')]",
+            "//button[@aria-label='Pause']",
+            "//*[contains(@class, 'playback')]//button",
+        ]
+        
+        # 智能等待
+        start_time = time.time()
+        while time.time() - start_time < max_wait:
+            for xpath in xpaths_to_try:
+                try:
+                    elements = self.driver.find_elements(By.XPATH, xpath)
+                    for elem in elements:
+                        if elem.is_displayed():
+                            self.logger.info(f"[NX_CLOUD_WEB] [PAUSE] ✅ 找到暫停控制 (XPath: {xpath[:40]})")
+                            elem.click()
+                            self.logger.info("[NX_CLOUD_WEB] [PAUSE] ✅ 已點擊暫停")
+                            time.sleep(1)
+                            return True
+                except Exception:
+                    continue
+            
+            elapsed = int(time.time() - start_time)
+            if elapsed % 3 == 0 and elapsed > 0:
+                self.logger.info(f"[NX_CLOUD_WEB] [PAUSE] ⏳ 等待暫停按鈕... ({elapsed}/{max_wait} 秒)")
+            time.sleep(1)
+        
+        self.logger.warning(f"[NX_CLOUD_WEB] [PAUSE] ⚠️ 等待 {max_wait} 秒後仍未找到暫停按鈕")
+        return False

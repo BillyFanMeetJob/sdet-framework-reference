@@ -1,0 +1,132 @@
+================================================================================
+測試案例: Mobile-Nx Witness mobile 登入 Nx Cloud
+執行時間: 2026-02-03 22:34:29
+執行命令: C:\Python314\python.exe -u -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name Mobile-Nx Witness mobile 登入 Nx Cloud -v -s --tb=short
+工作目錄: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+tests/test_runner.py::test_main_flow[Mobile-Nx Witness mobile \u767b\u5165 Nx Cloud-steps0] 
+>>> [ADB_TOOLKIT] 初始化 ADB 控制器，設備: 自動選擇
+[系統] [時間戳: 22:34:30] 偵測到移動端測試需求
+[系統] 使用 ADB 方式執行（繞過 Appium/UiAutomator2）
+[系統] [OK] ADB 設備連接正常
+>>> [CASE_4-1] ==================================================
+>>> [CASE_4-1] 開始執行登錄流程
+>>> [CASE_4-1] ==================================================
+>>> [ADB_TOOLKIT] 初始化 ADB 控制器，設備: 自動選擇
+>>> [ADB_TOOLKIT] 螢幕尺寸: 1080 x 2400
+>>> [CASE_4-1] 螢幕尺寸: 1080 x 2400
+>>> [CASE_4-1] 使用帳號: fanzhenglun2@gmail.com
+>>> [CASE_4-1] 步驟 1: 檢測頁面狀態...
+>>> [CASE_4-1]   當前頁面狀態: login_page
+>>> [CASE_4-1] 步驟 2: 進入登錄流程...
+>>> [CASE_4-1]   找到 Log In 按鈕: (540, 1499)
+>>> [ADB_TOOLKIT] 點擊座標: (540, 1499)
+>>> [CASE_4-1]   已點擊 Log In 按鈕 (540, 1499)
+>>> [CASE_4-1]   等待頁面內容加載...
+>>> [CASE_4-1]   找到按鈕 (540, 1499)，頁面已加載
+>>> [CASE_4-1]   智能等待 Email 頁面加載...
+>>> [CASE_4-1]   檢測頁面狀態: login_page, 按鈕: (540, 1499)
+>>> [CASE_4-1]   仍在初始登錄頁，嘗試點擊 Log In (第 1 次)...
+>>> [ADB_TOOLKIT] 點擊座標: (540, 1499)
+>>> [CASE_4-1]   檢測頁面狀態: email_input, 按鈕: (541, 1082)
+>>> [CASE_4-1]   Email 頁面已就緒
+>>> [CASE_4-1] 步驟 3: 輸入 Email...
+>>> [ADB_TOOLKIT] 點擊座標: (540, 1104)
+>>> [ADB_TOOLKIT] 清空輸入框: (540, 1104)
+>>> [ADB_TOOLKIT] 輸入文字: fanzhenglun2@gmail.com
+>>> [CASE_4-1]   已輸入: fanzhenglun2@gmail.com
+>>> [CASE_4-1] 步驟 4: 點擊 Next 按鈕...
+>>> [ADB_TOOLKIT] 點擊座標: (540, 360)
+>>> [ADB_TOOLKIT] 點擊座標: (882, 1454)
+>>> [CASE_4-1]   已點擊 (882, 1454)
+>>> [CASE_4-1]   智能等待密碼頁面...
+>>> [ADB_TOOLKIT] 智能等待頁面穩定（超時: 10.0s, 閾值: 0.98）...
+>>> [ADB_TOOLKIT] 頁面已穩定（相似度: 1.000，耗時: 3.80s）
+>>> [CASE_4-1] 步驟 5: 輸入密碼...
+>>> [ADB_TOOLKIT] 點擊座標: (540, 1128)
+>>> [ADB_TOOLKIT] 點擊座標: (540, 1128)
+>>> [ADB_TOOLKIT] 清空輸入框: (540, 1128)
+>>> [ADB_TOOLKIT] 輸入文字: 1q2w!Q@W
+>>> [CASE_4-1]   已輸入密碼
+>>> [CASE_4-1] 步驟 6: 點擊 Log In 登錄...
+>>> [ADB_TOOLKIT] 點擊座標: (540, 300)
+>>> [ADB_TOOLKIT] 點擊座標: (882, 1455)
+>>> [CASE_4-1]   已點擊 (882, 1455)
+>>> [CASE_4-1]   智能等待登錄完成...
+>>> [ADB_TOOLKIT] 智能等待頁面穩定（超時: 15.0s, 閾值: 0.98）...
+>>> [ADB_TOOLKIT] 頁面已穩定（相似度: 0.998，耗時: 2.59s）
+>>> [CASE_4-1] 步驟 7: 驗證登錄結果...
+>>> [CASE_4-1]   登錄狀態: logged_in, 成功: True
+>>> [CASE_4-1] ==================================================
+>>> [CASE_4-1] [OK] 登錄成功 [總耗時: 33.85s]
+>>> [CASE_4-1] ==================================================
+
+============================================================
+[STATS] Image Recognition Statistics Report
+============================================================
+Total Attempts: 2637
+
+[Hit Rate]
+  OK Script/OpenCV: 849/2637 (32.2%)
+  VLM (LLM Vision): 114/2637 (4.3%)
+  pyautogui:        13/2637 (0.5%)
+  OCR:              0/2637 (0.0%)
+  Coordinate:       350/2637 (13.3%)
+
+[Average Recognition Time]
+  OK Script/OpenCV: 228.11 ms
+  VLM (LLM Vision): 3420.60 ms
+  pyautogui:        84.84 ms
+
+[Per-Image Statistics]
+  appearance_tab.png:
+    Attempts: 31, OK Script: 17 (55%), pyautogui: 0 (0%)
+  apply_btn.png:
+    Attempts: 54, OK Script: 39 (72%), pyautogui: 0 (0%)
+  calendar_header.png:
+    Attempts: 9, OK Script: 9 (100%), pyautogui: 0 (0%)
+  camera_settings_menu.png:
+    Attempts: 154, OK Script: 54 (35%), pyautogui: 1 (1%)
+    Attempts: 471, OK Script: 220 (47%), pyautogui: 11 (2%)
+  server_settings_menu.png:
+    Attempts: 53, OK Script: 47 (89%), pyautogui: 0 (0%)
+  server_tile.png:
+    Attempts: 515, OK Script: 82 (16%), pyautogui: 1 (0%)
+  system_admin_menu.png:
+    Attempts: 408, OK Script: 0 (0%), pyautogui: 0 (0%)
+  traditional_chinese.png:
+    Attempts: 34, OK Script: 16 (47%), pyautogui: 0 (0%)
+  usb_cam_item.png:
+    Attempts: 178, OK Script: 80 (45%), pyautogui: 0 (0%)
+============================================================
+
+================================================================================
+[系統] ✅ Playwright 瀏覽器已保留（供 Case 2-2 使用）
+[系統] 💡 使用類別屬性保持瀏覽器運行（比照 Selenium）
+[系統] 💡 Case 2-2 可以通過 Attach 模式連接
+================================================================================
+[系統] 💡 瀏覽器將保持運行直到程序結束
+================================================================================
+[REPORT] 從環境變數獲取 Terminal log: D:\nxwitness-demo\report\Mobile-Nx Witness mobile 登入 Nx Cloud\2026-02-03_22-34-29\terminal_output.log
+[REPORT] Terminal log 文件存在，大小: 3938 bytes
+[REPORT] 開始生成報告，log_file_path: D:\nxwitness-demo\report\Mobile-Nx Witness mobile 登入 Nx Cloud\2026-02-03_22-34-29\terminal_output.log
+[REPORT] 清理了 0 個 NULL 字節
+[REPORT] Terminal log 已複製到報告目錄: D:\nxwitness-demo\report\Mobile-Nx Witness mobile 登入 Nx Cloud\2026-02-03_22-34-29\terminal_output.log (4836 bytes)
+
+================================================================================
+[REPORT] 測試報告已生成！
+[REPORT] 報告路徑: D:/nxwitness-demo/report/Mobile-Nx Witness mobile 登入 Nx Cloud/2026-02-03_22-34-29/report.html
+[REPORT] 您可以直接在瀏覽器中打開此文件查看詳細報告
+================================================================================
+
+PASSED
+
+============================= 1 passed in 34.47s ==============================

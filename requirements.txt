@@ -15,6 +15,10 @@ pywinauto>=0.6.8  # Windows UI Automation (for UI tree dumping)
 pyperclip>=1.8.2  # Clipboard operations (for getting browser URL)
 
 # ==================== Web Automation ====================
+# Playwright - Modern Web Automation (替代 Selenium)
+playwright>=1.40.0  # 主要 Web 自動化引擎
+
+# Selenium (保留以便漸進式遷移)
 selenium>=4.15.0
 webdriver-manager>=4.0.0
 
@@ -25,13 +29,12 @@ Appium-Python-Client>=2.11.0
 # ==================== OCR ====================
 paddleocr>=2.7.0
 
-# ==================== VLM (視覺語言模型) - 可選 ====================
-# 本地 VLM (推薦，無 API 費用)
-# ollama>=0.3.0  # Ollama Python client (需先安裝 Ollama: https://ollama.com)
+# ==================== VLM (視覺語言模型) ====================
+# 本地 VLM (主策略)
+requests>=2.31.0  # Ollama HTTP API client (需先安裝 Ollama: https://ollama.com)
 
-# Cloud VLM APIs (需要 API Key)
-# openai>=1.0.0  # GPT-4V / GPT-4o Vision
-# anthropic>=0.30.0  # Claude 3.5 Vision
+# Cloud VLM APIs (備援策略)
+google-generativeai>=0.3.0  # Gemini 1.5 Flash (需要 API Key)
 
 # ==================== Image Recognition Enhancement ====================
 opencv-python>=4.8.0  # OpenCV for template matching (OK Script fallback)

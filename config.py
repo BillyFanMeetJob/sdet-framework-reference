@@ -71,12 +71,28 @@ class DevConfig(BaseConfig):
     LOGIN_SURFACEVIEW_TAP_COORDINATES = (550, 1500)  # 破解黑盒子 (SurfaceView) 的座標點擊位置
     LOGIN_ANIMATION_WAIT_TIME = 3  # 等待動畫轉場時間（秒）
     
-    # Case 4-2 主頁面點擊服務器座標（第一步點擊 server）
-    CASE4_2_SERVER_CLICK_COORDINATES = (550, 500)
+    # ==================== Case 4-1/4-2 Mobile ADB 模式座標配置 ====================
+    # 螢幕基準尺寸（用於座標比例計算）
+    MOBILE_SCREEN_SIZE = (1080, 2400)
     
-    # Case 4-2 主頁面點擊攝像頭座標（選擇攝像頭，當 SurfaceView 無法定位時使用）
-    # 如果為 None，則嘗試元素定位；如果提供了座標，則優先使用座標點擊
-    CASE4_2_CAMERA_CLICK_COORDINATES = (540, 800)  # 攝像頭列表中的第一個攝像頭位置（可根據實際情況調整）
+    # Case 4-1: 登錄流程座標（ADB 模式）
+    CASE4_1_LOGIN_BUTTON_Y_PERCENT = 0.625  # Log In 按鈕 Y 位置（相對於螢幕高度）
+    CASE4_1_EMAIL_INPUT_Y_PERCENT = 0.46  # Email 輸入框 Y 位置
+    CASE4_1_NEXT_BUTTON_Y_PERCENT = 0.606  # Next 按鈕 Y 位置
+    CASE4_1_PASSWORD_INPUT_Y_PERCENT = 0.47  # 密碼輸入框 Y 位置
+    CASE4_1_FINAL_LOGIN_BUTTON_Y_PERCENT = 0.606  # 最終 Log In 按鈕 Y 位置
+    
+    # Case 4-2: 播放流程座標（ADB 模式，基於 1080x2400 螢幕）
+    CASE4_2_SERVER_CLICK_COORDINATES = (540, 570)  # Server 卡片位置（精確測量）
+    CASE4_2_THUMBNAIL_CLICK_COORDINATES = (273, 400)  # 影片縮圖位置（精確測量）
+    CASE4_2_FULLSCREEN_GOTIT_COORDINATES = (392, 270)  # 全屏提示 "Got it" 按鈕
+    CASE4_2_CALENDAR_ICON_COORDINATES = (35, 2256)  # 日曆圖標位置（精確測量）
+    CASE4_2_TODAY_DATE_COORDINATES = (99, 1527)  # 今天日期位置（精確測量）
+    CASE4_2_PAUSE_BUTTON_COORDINATES = (542, 1889)  # 暫停按鈕位置（精確測量）
+    CASE4_2_SHOW_CONTROLS_TAP = (540, 1200)  # 點擊顯示控制的位置
+    
+    # Case 4-2 舊配置（Appium 模式，保留兼容）
+    CASE4_2_CAMERA_CLICK_COORDINATES = (540, 800)  # 攝像頭列表中的第一個攝像頭位置
     
     # Android 等待超時配置
     ANDROID_DEFAULT_TIMEOUT = 10  # 默認等待超時時間（秒）
@@ -376,24 +392,35 @@ class LocatorConfig:
     # ==================== Web Admin 定位器 (Case 2-2) ====================
     # 用於 https://localhost:7001 Web Admin 頁面
     
-    # 「瀏覽」分頁 Tab
-    WEB_BROWSE_TAB_XPATH: str = "/html/body/nx-app/div[1]/nx-header/header/nav/div/div[1]/div[2]/nx-header-tabs[1]/li/a"
-    WEB_BROWSE_TAB_FALLBACK_XPATH: str = "//a[contains(text(), '瀏覽') or contains(text(), 'Browse')]"
+    # 「View / 瀏覽 / 查看」分頁 Tab（Nx Cloud 網頁）
+    # 使用 href 包含 /view 來定位，不依賴語言
+    WEB_BROWSE_TAB_XPATH: str = "//div[@class='menu-items']//a[contains(@href, '/view')]"
+    WEB_BROWSE_TAB_FALLBACK_XPATH: str = "//a[contains(text(), '瀏覽') or contains(text(), 'Browse') or contains(text(), 'View') or contains(text(), '查看')]"
     
-    # Server 選項卡
-    WEB_SERVER_XPATH: str = "/html/body/nx-app/div[2]/div/nx-system-view-index-page/div/nx-media-server-list/div/div/div/div/span"
-    WEB_SERVER_FALLBACK_XPATH: str = "//*[contains(text(), 'LAPTOP') or contains(text(), 'Server')]"
+    # Server 選項卡（左側 Server 列表項目）
+    # DOM: <div class="server-name"><span class="name Online">
+    WEB_SERVER_XPATH: str = "//div[@class='server-name']/span[contains(@class, 'name')]"
+    WEB_SERVER_FALLBACK_XPATH: str = "//div[contains(@class, 'server-name')]//span[contains(@class, 'name')]"
+    WEB_SERVER_TEXT_XPATH: str = "//*[contains(text(), 'LAPTOP') or contains(text(), 'Server')]"
+    
+    # 語言選擇器（Nx Cloud 網頁）
+    WEB_LANGUAGE_DROPDOWN_XPATH: str = "//button[contains(@class, 'language') or contains(@class, 'locale')]"
+    WEB_LANGUAGE_CHINESE_XPATH: str = "//*[contains(text(), '繁體中文') or contains(text(), 'Traditional Chinese')]"
     
     # 攝影機項目
-    WEB_CAMERA_XPATH: str = "/html/body/nx-app/div[2]/div/nx-system-view-index-page/div/nx-media-server-list/div/div/div/div[2]/a"
-    WEB_CAMERA_FALLBACK_XPATH: str = "//a[contains(text(), 'cam') or contains(text(), 'USB') or contains(text(), 'Camera')]"
+    # DOM: <div class="cameras ng-star-inserted"><div class="preview">
+    WEB_CAMERA_XPATH: str = "//div[@class='cameras ng-star-inserted']/div[@class='preview']"
+    WEB_CAMERA_FALLBACK_XPATH: str = "//div[contains(@class, 'cameras')]//div[contains(@class, 'preview')]"
+    WEB_CAMERA_TEXT_XPATH: str = "//a[contains(text(), 'cam') or contains(text(), 'USB') or contains(text(), 'Camera')]"
     
     # 錄影進度條 (Timeline Canvas)
     WEB_TIMELINE_XPATH: str = "/html/body/nx-app/div[2]/div/nx-system-view-index-page/nx-system-view-camera-page/div[2]/div[2]/div[2]/nx-timeline/div/canvas"
     WEB_TIMELINE_FALLBACK_XPATH: str = "//nx-timeline//canvas"
     
     # Nx Cloud 登錄相關
-    WEB_NX_CLOUD_LOGIN_BTN_XPATH: str = "//button[contains(., 'Nx Cloud')]"
+    # 右上角「登入」按鈕：<a class="login nx-button--primary" href="/authorize">登入</a>
+    WEB_NX_CLOUD_LOGIN_BTN_XPATH: str = "//a[@href='/authorize']"
+    WEB_NX_CLOUD_LOGIN_BTN_FALLBACK_XPATH: str = "//a[contains(@class, 'login') and contains(@class, 'nx-button')]"
     WEB_ACCEPT_RISK_BTN_XPATH: str = "//button[contains(., '接受') or contains(., '风险')]"
     WEB_EMAIL_INPUT_XPATH: str = "//input[@type='email' or @type='text']"
     WEB_NEXT_BTN_XPATH: str = "//button[contains(., '下一') or contains(., 'Next')]"

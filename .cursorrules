@@ -34,3 +34,51 @@ Since I am refining my Python skills:
 1. **Be Critical:** Do not just output code. If my request violates the principles above (e.g., if I ask to hardcode a password), STOP and correct me.
 2. **Review First:** Before writing new code, briefly analyze existing context to ensure consistency.
 3. **No Fluff:** Keep conversational filler to a minimum. Focus on technical content.
+
+# 專案各層級分工明確規範 (Layered Architecture Rules)
+
+## 一、 基礎工具層 (Toolkit Layer) - `toolkit/`
+- [cite_start]**定位**：純粹的工具函數與類型定義，禁止包含業務邏輯或頁面狀態 [cite: 71920]。
+- **職責**：
+    - [cite_start]定義全局數據結構（如 `Area`, `Toolkit`） [cite: 71922]。
+    - [cite_start]處理低階計算（座標轉換、歐幾里得距離計算、日誌格式化） [cite: 71918, 71922]。
+- **禁忌**：嚴禁導入 `pages` 或 `actions` 層的任何模組，保持無副作用 (Pure Functions)。
+
+## 二、 基礎動作層 (Base Layer) - `base/`
+- [cite_start]**定位**：對自動化工具（Selenium, PyAutoGUI, Appium）的抽象封裝 [cite: 71920]。
+- **職責**：
+    - [cite_start]`BasePage` / `DesktopApp`：實作統一的操作方法（如 `smart_click`），處理「等待 + 隨機微延遲」的擬人化邏輯 [cite: 71908, 71914]。
+    - [cite_start]`OKScriptRecognizer` / `VLMRecognizer`：實作核心辨識演算法（OCR, 圖片辨識, AI 視覺） [cite: 71920]。
+- **設計原則**：遵循 DIP（依賴反轉），讓高層調用者不需關心底層是用 Selenium 還是 PyAutoGUI。
+
+## 三、 頁面物件層 (Page Objects Layer) - `pages/`
+- [cite_start]**定位**：單一頁面（Web URL 或 App Activity）的元素與操作映射 。
+- **職責**：
+    - [cite_start]封裝 Locator（定位器）至 `config.py` 或類屬性中 [cite: 71910]。
+    - [cite_start]提供頁面原子操作（例如：`enter_username`, `click_login_button`） [cite: 71920]。
+- [cite_start]**禁忌**：**Page Object 嚴禁包含斷言 (Assertions)**，只負責操作並回傳 UI 狀態 [cite: 71920]。
+
+## 四、 測試動作層 (Action Layer) - `actions/`
+- [cite_start]**定位**：連貫的業務流程 (Workflow) 與檢核點 。
+- **職責**：
+    - [cite_start]組合多個 Page Object 的動作完成一個功能（例如：`run_server_login_step`） [cite: 71917]。
+    - **執行測試斷言**：確認步驟執行後是否達到預期結果。
+- [cite_start]**拆分要求**：單一文件必須保持功能聚焦（如 `login_actions.py`, `camera_actions.py`），嚴禁合併成巨大的單一文件 [cite: 71917, 71921]。
+
+## 五、 執行引擎層 (Engine Layer) - `engine/`
+- [cite_start]**定位**：框架的運轉核心，負責外部數據的加載與分發 。
+- **職責**：
+    - [cite_start]`StepTranslator`：將 Excel 的 `FlowName` 翻譯為 Action 層的方法 [cite: 71924]。
+    - [cite_start]`TestplanLoader`：解析 `TestPlan.xlsx` 並調度執行順序 [cite: 71924]。
+    - [cite_start]`TestReporter`：生成 HTML 報告並紀錄辨識截圖 [cite: 71922]。
+
+## 六、 測試層 (Test Layer) - `tests/`
+- [cite_start]**定位**：測試執行的進入點與環境配置 [cite: 71920]。
+- **職責**：
+    - [cite_start]使用 `pytest` 啟動測試運轉器 (`test_runner.py`) [cite: 71941]。
+    - 在 `conftest.py` 中處理全局 Setup 與 Teardown（如 Driver 初始化與資源釋放）。
+
+## 七、 數據與配置 (Config/Data)
+- **硬性規定**：
+    - [cite_start]所有硬編碼參數（座標比例、超時時間、圖片路徑）必須抽離至 `config.py` [cite: 71909, 71921]。
+    - [cite_start]所有的測試流程定義必須在 `DemoData/TestPlan.xlsx` 中維護 [cite: 71923]。

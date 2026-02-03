@@ -1,0 +1,209 @@
+================================================================================
+測試案例: 新增Webcam攝影機
+執行時間: 2026-02-03 03:22:49
+執行命令: C:\Python314\python.exe -u -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name 新增Webcam攝影機 -v -s --tb=short
+工作目錄: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+>>> [DEBUG] 檢查登錄狀態（目標伺服器: LAPTOP-QRJN5735）
+>>> [OK] 驗證成功：找到預期元素 desktop_main/server_icon.png
+>>> [OK] 已在主畫面，無需重新登錄
+>>> [CASE] 執行 Case 1-2: 啟用 USB 攝影機自動偵測
+>>> [CLICK] 在 Server 圖示上點擊右鍵...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_main\server_icon.png
+>>> [DEBUG] OK Script 辨識結果: True, 方法: ok_script
+>>> [DEBUG] OK Script 辨識成功，開始驗證座標...
+>>> [DEBUG] 座標驗證通過: 左上角=(18, 185), 中心點=(63, 202)，執行點擊...
+tests/test_runner.py::test_main_flow[\u65b0\u589eWebcam\u651d\u5f71\u6a5f-steps0] >>> [CLICK_COORD] 實際點擊座標: (63, 202), 動作=右鍵
+>>> [DEBUG] 點擊執行完成
+>>> [OK] OK_SCRIPT 辨識成功並點擊: server_icon.png (信心: 1.00, 耗時: 194.4ms)
+>>> [STAT] [座標庫] 比例座標: x_ratio=0.0328, y_ratio=0.1683 | 視窗尺寸: 1920x1200 | 絕對座標: (63, 202)
+>>> [OK] 選單驗證成功（圖片匹配）
+>>> [CLICK] 點擊「伺服器設定」選單項目...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_main\server_settings_menu.png
+>>> [DEBUG] OK Script 辨識結果: True, 方法: ok_script
+>>> [DEBUG] OK Script 辨識成功，開始驗證座標...
+>>> [DEBUG] 座標驗證通過: 左上角=(87, 579), 中心點=(149, 593)，執行點擊...
+>>> [CLICK_COORD] 實際點擊座標: (149, 593), 動作=單擊
+>>> [DEBUG] 點擊執行完成
+>>> [OK] OK_SCRIPT 辨識成功並點擊: server_settings_menu.png (信心: 1.00, 耗時: 233.9ms)
+>>> [STAT] [座標庫] 比例座標: x_ratio=0.0776, y_ratio=0.4942 | 視窗尺寸: 1920x1200 | 絕對座標: (149, 593)
+>>> [DEBUG] smart_click_priority_image 返回: True
+>>> [OK] 視窗已出現並完全初始化: 伺服器設定 (1311x911)
+>>> [OK] 伺服器設定視窗已開啟
+>>> [OK] 找到目標視窗: 伺服器設定 - Server LAPTOP-QRJN5735 - Nx Witness Client (1311x911)
+>>> [OK] 驗證成功：找到預期視窗 ['伺服器設定', 'Server Settings']
+>>> [CLICK] 檢查「自動偵測內建 USB 攝影機」選項...
+>>> [IMG] Checkbox 圖片辨識成功: 圖片區域=Box(left=np.int64(396), top=np.int64(382), width=80, height=30), 點擊座標=(408, 397)
+>>> [IMG] 圖片辨識：找到已勾選狀態 → 判定: 已勾選 ✓
+>>> [OK] Checkbox 已經是勾選狀態，跳過點擊
+>>> [DEBUG] 檢查 checkbox 狀態...
+>>> [CLICK] 檢查「自動偵測內建 USB 攝影機」選項...
+>>> [IMG] Checkbox 圖片辨識成功: 圖片區域=Box(left=np.int64(396), top=np.int64(382), width=80, height=30), 點擊座標=(408, 397)
+>>> [IMG] 圖片辨識：找到已勾選狀態 → 判定: 已勾選 ✓
+>>> [OK] Checkbox 已經是勾選狀態，跳過點擊
+>>> [OK] Checkbox 已勾選，直接點擊「確認」按鈕...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\ok_btn.png
+>>> [DEBUG] OK Script 辨識結果: True, 方法: ok_script
+>>> [DEBUG] OK Script 辨識成功，開始驗證座標...
+>>> [DEBUG] 座標驗證通過: 左上角=(1254, 970), 中心點=(1304, 983)，執行點擊...
+>>> [CLICK_COORD] 實際點擊座標: (1304, 983), 動作=單擊
+>>> [DEBUG] 點擊執行完成
+>>> [OK] OK_SCRIPT 辨識成功並點擊: ok_btn.png (信心: 1.00, 耗時: 199.5ms)
+>>> [STAT] [座標庫] 比例座標: x_ratio=0.6792, y_ratio=0.8192 | 視窗尺寸: 1920x1200 | 絕對座標: (1304, 983)
+>>> [OK] 成功點擊「確認」按鈕
+>>> [DEBUG_SCREENSHOT] 點擊「確認」後截圖已保存: D:\nxwitness-demo\pages\logs\password_debug\00_after_confirm_click_20260203_032259_116.png
+>>> [DEBUG] 檢查是否出現密碼確認彈窗（最多等待 2.0 秒）...
+>>> ℹ️ 未檢測到密碼確認彈窗（可能不需要密碼）
+>>> [OK] 設定視窗已關閉
+>>> [OK] USB 攝影機自動偵測已啟用
+>>> [WAIT] 等待設定生效並偵測 USB 攝影機...
+>>> [CLICK] 雙擊 Server 項目...
+>>> [SMART_CLICK] [START] Finding target: text='Server', image='desktop_main/server_icon.png', timeout=3s
+>>> [SMART_CLICK] [TEXT] Trying Text Strategy: 'Server' (Priority: VLM)...
+>>> [DEBUG] _try_vlm_recognition 被調用: target_text='Server', region=(0, 0, 1920, 1200)
+>>> [DEBUG] VLM 啟用狀態: True
+>>> [DEBUG] 初始化 UnifiedVLM 引擎（Ollama + Gemini 備援）
+>>> [VLM_ENGINE] 初始化完成 - Ollama: llama3.2-vision, 閾值: 15.0px, 特徵進化: True
+>>> [OK] UnifiedVLM 引擎初始化成功
+>>> [DEBUG] 功能: Ollama (主) + Gemini (備援) + 描述校正 + 特徵進化
+>>> [DEBUG] Ollama 可用，已安裝模型: ["model='llava:latest' modified_at=datetime.datetime(2026, 1, 17, 17, 11, 23, 171732, tzinfo=TzInfo(28800)) digest='8dd30f6b0cb19f555f2c7a7ebda861449ea2cc76bf1f44e262931f45fc81d081' size=4733363377 details=ModelDetails(parent_model='', format='gguf', family='llama', families=['llama', 'clip'], parameter_size='7B', quantization_level='Q4_0')"]
+>>> [DEBUG] _get_vlm_engine() 返回: <toolkit.vlm_engine.UnifiedVLM object at 0x000001EF6852B620> (類型: <class 'toolkit.vlm_engine.UnifiedVLM'>)
+>>> [VLM] 正在使用 UnifiedVLM 搜尋元素: 'Server'
+>>> [VLM] 截圖已保存: C:\Users\usert\AppData\Local\Temp\vlm_search_20260203_032304.png
+>>> [VLM_ENGINE] 開始識別元素: Server
+>>> [VLM_ENGINE] Ollama 請求失敗: 404 Client Error: Not Found for url: http://localhost:11434/api/generate
+>>> [VLM_ENGINE] 所有 VLM 策略失敗: Server
+>>> [VLM] UnifiedVLM 未找到元素: 'Server'
+>>> [SMART_CLICK] [TEXT] Failed.
+[33mChecking connectivity to the model hosters, this may take a while. To bypass this check, set `DISABLE_MODEL_SOURCE_CHECK` to `True`.[0m
+>>> [WARN] OCR 引擎初始化失敗: No module named 'paddle'
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/server_icon.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_main\server_icon.png
+>>> [OPENCV] [COORD] Image: server_icon.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (90, 34)
+>>> [OPENCV] [COORD] Image: server_icon.png
+>>> [OPENCV] [COORD] Template size: (90, 34)
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Match found: confidence=0.9727
+>>> [OPENCV] [COORD] Absolute screen position (top_left): (18, 185)
+>>> [OPENCV] [COORD] Bounding box: left=18, top=185, right=108, bottom=219
+>>> [OPENCV] [COORD] Time: 226.7ms
+>>> [DEBUG] OK Script 辨識結果: True, 方法: ok_script
+>>> [DEBUG] OK Script 辨識成功，開始驗證座標...
+>>> [DEBUG] 座標驗證通過: 左上角=(18, 185), 中心點=(63, 202)，執行點擊...
+>>> [CLICK_COORD] 實際點擊座標: (63, 202), 動作=雙擊
+>>> [DEBUG] 點擊執行完成
+>>> [OK] OK_SCRIPT 辨識成功並雙擊: server_icon.png (信心: 0.97, 耗時: 226.7ms)
+>>> [STAT] [座標庫] 比例座標: x_ratio=0.0328, y_ratio=0.1683 | 視窗尺寸: 1920x1200 | 絕對座標: (63, 202)
+>>> [SMART_CLICK] [IMG] Success.
+>>> [OK] 雙擊 Server 項目完成
+>>> [WAIT] 等待 USB 攝影機「usb_cam」出現在列表中...
+>>> [CLICK] 雙擊攝影機: usb_cam...
+>>> [SMART_CLICK] [START] Finding target: text='usb', image='desktop_main/usb_cam_item.png', timeout=2s
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/usb_cam_item.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_main\usb_cam_item.png
+>>> [OPENCV] [COORD] Image: usb_cam_item.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (116, 35)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/usb_cam_item.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_main\usb_cam_item.png
+>>> [OPENCV] [COORD] Image: usb_cam_item.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (116, 35)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/usb_cam_item.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_main\usb_cam_item.png
+>>> [OPENCV] [COORD] Image: usb_cam_item.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (116, 35)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/usb_cam_item.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_main\usb_cam_item.png
+>>> [OPENCV] [COORD] Image: usb_cam_item.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (116, 35)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/usb_cam_item.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_main\usb_cam_item.png
+>>> [OPENCV] [COORD] Image: usb_cam_item.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (116, 35)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (2s), attempted strategies: 5
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Image Recognition (OK Script: desktop_main/usb_cam_item.png), Image Recognition (OK Script: desktop_main/usb_cam_item.png), Image Recognition (OK Script: desktop_main/usb_cam_item.png), Image Recognition (OK Script: desktop_main/usb_cam_item.png), Image Recognition (OK Script: desktop_main/usb_cam_item.png)
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.100, 0.220)...
+>>> [CLICK_COORD] 實際點擊座標: (192, 264), 動作=雙擊
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (192, 264)
+>>> [OK] 雙擊攝影機: usb_cam (smart_click 返回成功)
+>>> [OK] Case 1-2 完成：已開啟攝影機 usb_cam
+
+============================================================
+[STATS] Image Recognition Statistics Report
+============================================================
+Total Attempts: 2528
+
+[Hit Rate]
+  OK Script/OpenCV: 796/2528 (31.5%)
+  VLM (LLM Vision): 114/2528 (4.5%)
+  pyautogui:        12/2528 (0.5%)
+  OCR:              0/2528 (0.0%)
+  Coordinate:       348/2528 (13.8%)
+
+[Average Recognition Time]
+  OK Script/OpenCV: 230.26 ms
+  VLM (LLM Vision): 3420.60 ms
+  pyautogui:        85.44 ms
+
+[Per-Image Statistics]
+  appearance_tab.png:
+    Attempts: 30, OK Script: 16 (53%), pyautogui: 0 (0%)
+  apply_btn.png:
+    Attempts: 53, OK Script: 38 (72%), pyautogui: 0 (0%)
+  calendar_header.png:
+    Attempts: 7, OK Script: 7 (100%), pyautogui: 0 (0%)
+  camera_settings_menu.png:
+    Attempts: 152, OK Script: 52 (34%), pyautogui: 1 (1%)
+  language_dropdown.png:
+    Attempts: 38, OK Script: 16 (42%), pyautogui: 0 (0%)
+  license_tab.png:
+    Attempts: 9, OK Script: 0 (0%), pyautogui: 0 (0%)
+[REPORT] 清理了 0 個 NULL 字節
+[REPORT] Terminal log 已複製到報告目錄: D:\nxwitness-demo\report\新增Webcam攝影機\2026-02-03_03-22-49\terminal_output.log (12499 bytes)
+
+================================================================================
+[REPORT] 測試報告已生成！
+[REPORT] 報告路徑: D:/nxwitness-demo/report/新增Webcam攝影機/2026-02-03_03-22-49/report.html
+[REPORT] 您可以直接在瀏覽器中打開此文件查看詳細報告
+================================================================================
+
+PASSED
+
+============================== warnings summary ===============================
+tests/test_runner.py::test_main_flow[\u65b0\u589eWebcam\u651d\u5f71\u6a5f-steps0]
+  D:\nxwitness-demo\base\desktop_app.py:173: DeprecationWarning: The parameter `use_angle_cls` has been deprecated and will be removed in the future. Please use `use_textline_orientation` instead.
+    self._ocr_engine = PaddleOCR(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 1 passed, 1 warning in 25.50s ========================

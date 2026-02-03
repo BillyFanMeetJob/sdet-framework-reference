@@ -1,14 +1,26 @@
-# toolkit/web_toolkit.py
+# -*- coding: utf-8 -*-
+"""
+Web Toolkit - WebDriver 工具函數集
+
+提供 WebDriver 的創建、配置和基礎操作工具函數。
+實作反封號機制：
+- User-Agent 隨機化
+- 瀏覽器指紋隱藏
+- 視窗大小隨機化
+
+Author: SDET Team
+Date: 2026-01-27
+"""
 
 import os
 import time
-from typing import Optional, List
+import random
+from typing import Optional, List, Tuple
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
-
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
@@ -18,12 +30,113 @@ import tempfile
 
 import config as C  
 
-def create_driver(timeout: Optional[int] = None) -> tuple[webdriver.Chrome, WebDriverWait]:
+
+def create_driver(
+    timeout: Optional[int] = None,
+    enable_anti_bot: Optional[bool] = None
+) -> Tuple[webdriver.Chrome, WebDriverWait]:
+    """
+    創建 Chrome WebDriver 實例（內建反封號機制）
+    
+    實作完整的反偵測策略：
+    1. User-Agent 隨機化（從 config 的 USER_AGENT_POOL 隨機選擇）
+    2. 移除 Selenium 自動化標記（--disable-blink-features=AutomationControlled）
+    3. 隨機化視窗大小（從 VIEWPORT_SIZE_POOL 隨機選擇）
+    4. 隨機化 Accept-Language Header
+    5. 清理自動化痕跡（excludeSwitches、useAutomationExtension）
+    
+    Args:
+        timeout (int, optional): WebDriverWait 超時時間（秒），預設從 config 讀取或使用 10 秒
+        enable_anti_bot (bool, optional): 是否啟用反封號機制，None 時從 config 讀取
+    
+    Returns:
+        Tuple[webdriver.Chrome, WebDriverWait]: (driver, wait) 元組
+    
+    Raises:
+        不會拋出異常，失敗時會使用預設配置
+    
+    Note:
+        - 反封號機制的有效性取決於目標網站的檢測強度
+        - User-Agent 池應定期更新以匹配最新瀏覽器版本
+        - 臨時 Profile 會在 Browser.quit() 時自動清理
+    
+    Example:
+        >>> # 使用預設配置（啟用反封號）
+        >>> driver, wait = create_driver()
+        >>> 
+        >>> # 禁用反封號機制（測試環境）
+        >>> driver, wait = create_driver(enable_anti_bot=False)
+    """
     if timeout is None:
         # 如果 config 中有 DEFAULT_TIMEOUT，使用它；否則使用默認值 10 秒
         timeout = getattr(C, 'DEFAULT_TIMEOUT', 10)
+    
+    # 從 config 讀取反封號配置
+    if enable_anti_bot is None:
+        enable_anti_bot = getattr(C, 'ENABLE_ANTI_BOT', True)
 
     chrome_options = Options()
+
+    # ==================== 反封號機制配置 ====================
+    
+    if enable_anti_bot:
+        # 1. User-Agent 隨機化
+        # 降低被偵測風險的關鍵：每次啟動使用不同的瀏覽器特徵
+        # - 網站會記錄 User-Agent 來追蹤自動化行為
+        # - 隨機化可避免被識別為固定的機器人
+        # - 使用真實瀏覽器的 User-Agent 提高偽裝效果
+        if getattr(C, 'ENABLE_RANDOM_USER_AGENT', True):
+            user_agent_pool = getattr(C, 'USER_AGENT_POOL', [
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            ])
+            user_agent = random.choice(user_agent_pool)
+            chrome_options.add_argument(f'user-agent={user_agent}')
+        
+        # 2. 移除 Selenium 自動化標記
+        # 降低被偵測風險的核心：
+        # - Selenium 會在 navigator.webdriver 屬性中暴露自動化標記
+        # - 網站可通過 JavaScript 檢測此屬性來識別自動化
+        # - 此選項會移除該標記，使網站無法輕易識別
+        if getattr(C, 'DISABLE_AUTOMATION_CONTROLLED', True):
+            chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+        
+        # 3. 排除自動化擴展和開關
+        # 進一步清理自動化痕跡：
+        # - 'enable-automation' 開關會在 DevTools 協議中暴露自動化標記
+        # - 'useAutomationExtension' 會載入額外的自動化擴展
+        # - 移除這些可降低被高級反爬蟲檢測的機率
+        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        chrome_options.add_experimental_option("useAutomationExtension", False)
+        
+        # 4. Accept-Language 隨機化
+        # 模擬不同地區的使用者：
+        # - 網站可能根據 Accept-Language 調整內容
+        # - 隨機化可避免固定的語言偏好被追蹤
+        if getattr(C, 'ACCEPT_LANGUAGE_POOL', None):
+            accept_language = random.choice(C.ACCEPT_LANGUAGE_POOL)
+            chrome_options.add_argument(f'--lang={accept_language.split(",")[0]}')
+            prefs = chrome_options.experimental_options.get("prefs", {})
+            prefs["intl.accept_languages"] = accept_language
+            chrome_options.add_experimental_option("prefs", prefs)
+    
+    # ==================== 標準配置 ====================
+    
+    # 🎯 關鍵：解決 "Could not reach host"
+    chrome_options.add_argument('--dns-prefetch-disable')          # 禁用預解析，防止卡死
+    chrome_options.add_argument('--no-proxy-server')               # 絕對必要：跳過熱點可能提供的 Proxy
+    chrome_options.add_argument('--proxy-server=direct://')        # 強制直連
+    chrome_options.add_argument('--proxy-bypass-list=*')          # 繞過所有代理
+    
+    # 🎯 穩定連線
+    chrome_options.add_argument('--ignore-certificate-errors')    # 忽略憑證錯誤
+    
+    # 效能優化
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--blink-settings=imagesEnabled=false') # 如果不需要看圖，這能加快網頁載入
+
+    # 繞過沙盒模式（避免權限問題）
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
 
     # 乾淨 profile（避免讀到本機 Chrome 的登入/同步/密碼庫）
     profile_dir = tempfile.mkdtemp(prefix="chrome-profile-")
@@ -34,28 +147,58 @@ def create_driver(timeout: Optional[int] = None) -> tuple[webdriver.Chrome, WebD
     
     # 🎯 保持瀏覽器打開：使用 remote-debugging-port 讓瀏覽器在 driver 關閉後仍然保持打開
     # 這樣即使 Python 進程退出，瀏覽器也會保持打開狀態
-    # 使用固定的 port 9222，方便後續重新連接
-    debug_port = 9222
+    # 使用固定的 port 9223，方便後續重新連接
+    debug_port = 9223
     chrome_options.add_argument(f"--remote-debugging-port={debug_port}")
     chrome_options.add_experimental_option("detach", True)  # 嘗試使用 detach 選項
 
     # 關閉密碼管理相關提示
-    prefs = {
+    prefs = chrome_options.experimental_options.get("prefs", {})
+    prefs.update({
         "credentials_enable_service": False,
         "profile.password_manager_enabled": False,
-    }
+    })
     chrome_options.add_experimental_option("prefs", prefs)
 
     # 🎯 檢查 HEADLESS 配置，如果不存在則默認為 False
     headless = getattr(C, 'HEADLESS', False)
     if headless:
         chrome_options.add_argument("--headless=new")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
+    
+    # ==================== 反封號：隨機視窗大小 ====================
+    
+    if enable_anti_bot and getattr(C, 'ENABLE_RANDOM_VIEWPORT', True):
+        # 隨機化視窗大小
+        # 降低被偵測風險：
+        # - 固定的視窗大小容易被識別為自動化腳本
+        # - 真實使用者的視窗大小會因螢幕解析度和個人偏好而不同
+        # - 隨機化可模擬不同使用者的設備環境
+        viewport_pool = getattr(C, 'VIEWPORT_SIZE_POOL', [(1920, 1080)])
+        viewport_width, viewport_height = random.choice(viewport_pool)
+        chrome_options.add_argument(f"--window-size={viewport_width},{viewport_height}")
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
     wait = WebDriverWait(driver, timeout)
+    
+    # ==================== 反封號：JavaScript 注入 ====================
+    
+    if enable_anti_bot:
+        # 覆寫 navigator.webdriver 屬性
+        # 即使使用了 --disable-blink-features=AutomationControlled，
+        # 部分網站仍可能檢測到此屬性，透過 JavaScript 注入進一步隱藏
+        try:
+            driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+                "source": """
+                    Object.defineProperty(navigator, 'webdriver', {
+                        get: () => undefined
+                    });
+                """
+            })
+        except Exception:
+            # CDP 命令失敗不影響主流程（舊版 ChromeDriver 可能不支援）
+            pass
+    
     return driver, wait
 
 

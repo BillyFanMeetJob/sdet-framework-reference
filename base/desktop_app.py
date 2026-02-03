@@ -3,6 +3,7 @@
 import pyautogui
 import time
 import os
+import ctypes
 import pygetwindow as gw
 from toolkit.logger import get_logger
 from config import EnvConfig
@@ -180,7 +181,7 @@ class DesktopApp:
         return self._ocr_engine if self._ocr_engine else None
     
     def _get_vlm_engine(self):
-        """延遲載入 VLM (視覺語言模型) 引擎，只在需要時初始化"""
+        """延遲載入 VLM (視覺語言模型) 引擎，使用 UnifiedVLM（Ollama + Gemini 備援）"""
         if self._vlm_engine is None:
             try:
                 # 檢查是否啟用 VLM
@@ -191,39 +192,39 @@ class DesktopApp:
                     self._safe_log("info", "[DEBUG] VLM 未啟用，跳過初始化")
                     return None
                 
-                from base.vlm_recognizer import get_vlm_recognizer
+                # 使用新的 UnifiedVLM 引擎（整合 Ollama + Gemini 備援）
+                from toolkit.vlm_engine import create_vlm_engine
                 
-                backend = getattr(EnvConfig, 'VLM_BACKEND', 'ollama')
-                model = getattr(EnvConfig, 'VLM_MODEL', None)
+                self._safe_log("info", "[DEBUG] 初始化 UnifiedVLM 引擎（Ollama + Gemini 備援）")
                 
-                self._safe_log("info", f"[DEBUG] 初始化 VLM: backend={backend}, model={model}")
-                self._vlm_engine = get_vlm_recognizer(backend=backend, model=model)
-                self._vlm_engine.set_logger(self.logger)
+                # 創建 UnifiedVLM 實例（自動從 config 讀取 Gemini API Key）
+                self._vlm_engine = create_vlm_engine(
+                    threshold=15.0,
+                    logger=self.logger
+                )
                 
-                # 測試 VLM 是否可以正常工作
+                self._safe_log("info", "[OK] UnifiedVLM 引擎初始化成功")
+                self._safe_log("info", f"[DEBUG] 功能: Ollama (主) + Gemini (備援) + 描述校正 + 特徵進化")
+                
+                # 測試 Ollama 是否可用
                 try:
-                    # 檢查 Ollama 是否運行（如果是 ollama 後端）
-                    if backend == "ollama":
-                        import ollama
-                        try:
-                            # 嘗試列出模型，驗證 Ollama 是否可用
-                            models = ollama.list()
-                            model_names = []
-                            if hasattr(models, 'models'):
-                                model_names = [m.name if hasattr(m, 'name') else str(m) for m in models.models]
-                            elif isinstance(models, dict) and 'models' in models:
-                                model_names = [m.get('name', str(m)) for m in models['models']]
-                            self._safe_log("info", f"[OK] VLM 引擎初始化成功 ({backend}/{model or 'default'})")
-                            self._safe_log("info", f"[DEBUG] Ollama 可用，已安裝模型: {model_names}")
-                        except Exception as e:
-                            self._safe_log("warning", f"[WARN] Ollama 可能未運行或模型未安裝: {e}")
-                            self._safe_log("warning", "[TIP] 請確認 Ollama 已啟動並已拉取 llava 模型: ollama pull llava")
-                    else:
-                        self._safe_log("info", f"[OK] VLM 引擎初始化成功 ({backend}/{model or 'default'})")
+                    import ollama
+                    try:
+                        models = ollama.list()
+                        model_names = []
+                        if hasattr(models, 'models'):
+                            model_names = [m.name if hasattr(m, 'name') else str(m) for m in models.models]
+                        elif isinstance(models, dict) and 'models' in models:
+                            model_names = [m.get('name', str(m)) for m in models['models']]
+                        self._safe_log("info", f"[DEBUG] Ollama 可用，已安裝模型: {model_names}")
+                    except Exception as e:
+                        self._safe_log("warning", f"[WARN] Ollama 可能未運行: {e}")
+                        self._safe_log("warning", "[TIP] Ollama 未運行時將自動使用 Gemini 備援")
                 except Exception as e:
-                    self._safe_log("warning", f"[WARN] VLM 測試失敗: {e}")
+                    self._safe_log("warning", f"[WARN] Ollama 測試失敗，將使用 Gemini 備援: {e}")
+                    
             except Exception as e:
-                self._safe_log("warning", f"[WARN] VLM 引擎初始化失敗: {e}")
+                self._safe_log("warning", f"[WARN] UnifiedVLM 引擎初始化失敗: {e}")
                 import traceback
                 self.logger.debug(f"詳細錯誤: {traceback.format_exc()}")
                 self._vlm_engine = False  # 標記為失敗，避免重複嘗試
@@ -264,18 +265,22 @@ class DesktopApp:
                                 "警告" in win.title or
                                 "本地設置" in win.title
                             )
-                            # 排除編輯器、測試啟動器（含 "Nx Witness" 但非 Nx Witness 客戶端）
+                            # 排除編輯器、測試啟動器、檔案總管等（含 "Nx Witness" 但非 Nx Witness 客戶端）
                             is_excluded = any(kw in win.title for kw in [
                                 "cursor", "editor", "code", "vscode", "visual studio",
                                 "pycharm", "sublime", "notepad", "notepad++", "mark.txt",
-                                "自動化測試主控台", "自動化測試"  # 排除測試案例啟動器 GUI
+                                "自動化測試主控台", "自動化測試",  # 排除測試案例啟動器 GUI
+                                "檔案總管", "explorer", "資料夾", "folder"  # 排除檔案總管
                             ]) or any(kw in title_lower for kw in [
                                 "cursor", "editor", "code", "vscode", "visual studio",
-                                "pycharm", "sublime", "notepad", "notepad++", "mark.txt"
+                                "pycharm", "sublime", "notepad", "notepad++", "mark.txt",
+                                "explorer", "file explorer", "folder"  # 排除檔案總管
                             ])
                             
                             if has_nx_keyword and not is_excluded:
                                 self.logger.debug(f"[WINDOW] 找到 Nx Witness 視窗: '{t}' ({win.width}x{win.height})")
+                                # 🎯 不再自動置頂，避免干擾右鍵選單等操作
+                                # 如需置頂，請在外部明確調用 bring_window_to_front()
                                 return win
                             else:
                                 self.logger.debug(f"[WINDOW] 跳過非 Nx Witness 窗口: '{win.title}' (has_nx={has_nx_keyword}, is_excluded={is_excluded})")
@@ -297,17 +302,35 @@ class DesktopApp:
             nx_wins = []
             for w in all_wins:
                 title_lower = w.title.lower()
-                # 必須包含 "nx witness" 或 "nxwitness"
+                # 🎯 更嚴格的匹配：必須包含 "nx witness" 或 "nxwitness"，並且必須包含 "client" 或特定關鍵字
+                # 這樣可以排除像 "nxwitness-demo - 檔案總管" 這樣的視窗
                 has_nx_witness = "nx witness" in title_lower or "nxwitness" in title_lower
-                # 排除編輯器、測試啟動器（自動化測試主控台）
+                # 必須包含更明確的 Nx Witness 關鍵字（Client、警告、本地設置等）
+                has_nx_keyword = (
+                    "client" in title_lower or
+                    "警告" in w.title or
+                    "本地設置" in w.title or
+                    "local settings" in title_lower
+                )
+                # 排除編輯器、測試啟動器、檔案總管等（自動化測試主控台）
+                # 🎯 優先檢查排除條件，避免誤匹配檔案總管等系統窗口
                 is_excluded = (
                     any(kw in title_lower for kw in [
                         "cursor", "editor", "code", "vscode", "visual studio",
-                        "pycharm", "sublime", "notepad", "notepad++", "mark.txt"
+                        "pycharm", "sublime", "notepad", "notepad++", "mark.txt",
+                        "explorer", "file explorer", "folder", "檔案總管", "資料夾",  # 排除檔案總管
+                        "- 檔案總管", "- file explorer", "- folder"  # 排除檔案總管後綴
                     ]) or "自動化測試主控台" in w.title or "自動化測試" in w.title
+                    or "檔案總管" in w.title or "資料夾" in w.title  # 排除檔案總管
+                    or w.title.endswith(" - 檔案總管") or w.title.endswith(" - File Explorer")  # 排除檔案總管後綴
                 )
                 
-                if has_nx_witness and not is_excluded:
+                # 🎯 如果已被排除，直接跳過（避免後續檢查）
+                if is_excluded:
+                    continue
+                
+                # 必須同時滿足：包含 nx witness 且包含明確關鍵字，且不被排除
+                if has_nx_witness and has_nx_keyword and not is_excluded:
                     # 額外驗證：窗口必須足夠大（避免選到小彈窗）
                     try:
                         if w.width > 800 and w.height > 600:
@@ -322,6 +345,7 @@ class DesktopApp:
                     _ = win.left, win.top, win.width, win.height
                     if win.width > 800 and win.height > 600:
                         self.logger.info(f"[WINDOW] 通過模糊匹配找到視窗: '{win.title}' ({win.width}x{win.height})")
+                        # 🎯 不再自動置頂，避免干擾右鍵選單等操作
                         return win
                 except Exception:
                     pass
@@ -343,6 +367,108 @@ class DesktopApp:
         
         return None
 
+    def bring_window_to_front(self, win) -> bool:
+        """
+        將指定視窗置頂並激活（強制方式）
+        
+        Args:
+            win: pygetwindow 視窗物件
+            
+        Returns:
+            bool: 是否成功置頂
+        """
+        if not win:
+            return False
+            
+        try:
+            self.logger.info(f"[WINDOW] 🔝 將視窗置頂: {win.title}")
+            print(f"[WINDOW] 🔝 將視窗置頂: {win.title}")
+            
+            # 如果視窗最小化，先還原
+            if win.isMinimized:
+                win.restore()
+                time.sleep(0.3)
+            
+            # 🎯 使用 win32gui 強制置頂（繞過 Windows 限制）
+            try:
+                import win32gui
+                import win32con
+                import win32api
+                
+                hwnd = win32gui.FindWindow(None, win.title)
+                if hwnd:
+                    # 🎯 技巧 1：先模擬按鍵，讓當前進程獲得輸入焦點
+                    try:
+                        import ctypes
+                        # 模擬按下並釋放 Alt 鍵，這會讓系統認為我們有權設置前景窗口
+                        ctypes.windll.user32.keybd_event(0x12, 0, 0, 0)  # Alt down
+                        ctypes.windll.user32.keybd_event(0x12, 0, 2, 0)  # Alt up
+                    except:
+                        pass
+                    
+                    # 🎯 技巧 2：使用 AttachThreadInput 附加到目標窗口的線程
+                    try:
+                        foreground_hwnd = win32gui.GetForegroundWindow()
+                        foreground_thread = win32api.GetWindowThreadProcessId(foreground_hwnd)[0]
+                        target_thread = win32api.GetWindowThreadProcessId(hwnd)[0]
+                        
+                        if foreground_thread != target_thread:
+                            ctypes.windll.user32.AttachThreadInput(foreground_thread, target_thread, True)
+                    except:
+                        pass
+                    
+                    # 還原視窗
+                    win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+                    time.sleep(0.1)
+                    
+                    # 設置為前景視窗
+                    win32gui.SetForegroundWindow(hwnd)
+                    
+                    # 置頂
+                    win32gui.BringWindowToTop(hwnd)
+                    
+                    # 🎯 技巧 3：使用 SetWindowPos 強制置頂
+                    win32gui.SetWindowPos(
+                        hwnd, 
+                        win32con.HWND_TOPMOST,  # 設為最頂層
+                        0, 0, 0, 0, 
+                        win32con.SWP_NOMOVE | win32con.SWP_NOSIZE
+                    )
+                    # 然後取消最頂層（避免永久置頂）
+                    win32gui.SetWindowPos(
+                        hwnd, 
+                        win32con.HWND_NOTOPMOST, 
+                        0, 0, 0, 0, 
+                        win32con.SWP_NOMOVE | win32con.SWP_NOSIZE
+                    )
+                    
+                    self.logger.info("[WINDOW] ✅ 視窗已強制置頂（win32gui）")
+                    print("[WINDOW] ✅ 視窗已強制置頂")
+                    return True
+                    
+            except ImportError:
+                self.logger.debug("[WINDOW] win32gui 不可用，使用 pygetwindow")
+                print("[WINDOW] win32gui 不可用，嘗試 pygetwindow")
+            except Exception as e:
+                self.logger.debug(f"[WINDOW] win32gui 置頂失敗: {e}")
+                print(f"[WINDOW] win32gui 置頂失敗: {e}")
+            
+            # 備用方法：使用 pygetwindow
+            try:
+                win.activate()
+                self.logger.info("[WINDOW] ✅ 視窗已激活（pygetwindow）")
+                print("[WINDOW] ✅ 視窗已激活（pygetwindow）")
+                return True
+            except Exception as e:
+                self.logger.warning(f"[WINDOW] pygetwindow 激活失敗: {e}")
+                print(f"[WINDOW] pygetwindow 激活失敗: {e}")
+                
+        except Exception as e:
+            self.logger.warning(f"[WINDOW] 置頂視窗失敗: {e}")
+            print(f"[WINDOW] 置頂視窗失敗: {e}")
+        
+        return False
+
     def launch_app(self, exe_path):
         """
         啟動程式，如果已經運行則將視窗置頂
@@ -362,23 +488,43 @@ class DesktopApp:
                         "警告" in win.title or
                         "本地設置" in win.title
                     )
+                    # 必須包含更明確的 Nx Witness 關鍵字（Client、警告、本地設置等）
+                    has_nx_keyword = (
+                        "client" in title_lower or
+                        "警告" in win.title or
+                        "本地設置" in win.title or
+                        "local settings" in title_lower
+                    )
+                    # 🎯 優先檢查排除條件，避免誤匹配檔案總管等系統窗口
                     is_excluded = (
-                        any(kw in title_lower for kw in ["cursor", "editor", "code", "vscode", "visual studio", "pycharm", "sublime"])
+                        any(kw in title_lower for kw in [
+                            "cursor", "editor", "code", "vscode", "visual studio", "pycharm", "sublime",
+                            "explorer", "file explorer", "folder", "檔案總管", "資料夾",  # 排除檔案總管
+                            "- 檔案總管", "- file explorer", "- folder"  # 排除檔案總管後綴
+                        ])
                         or "自動化測試主控台" in win.title or "自動化測試" in win.title
+                        or "檔案總管" in win.title or "資料夾" in win.title  # 排除檔案總管
+                        or win.title.endswith(" - 檔案總管") or win.title.endswith(" - File Explorer")  # 排除檔案總管後綴
                     )
                     
-                    if is_nx_witness and not is_excluded:
-                        self.logger.info(f"✅ 軟件已在運行，將視窗置頂（視窗: '{win.title}', 尺寸: {win.width}x{win.height}）")
-                        # 將視窗置頂
-                        try:
-                            win.activate()
-                            time.sleep(0.3)  # 等待視窗置頂
-                            self.logger.info("✅ 視窗已置頂")
-                        except Exception as e:
-                            self.logger.warning(f"⚠️ 置頂視窗失敗: {e}")
-                        return self
+                    # 🎯 如果已被排除，直接跳過（避免誤判為 Nx Witness）
+                    if is_excluded:
+                        self.logger.warning(f"[WINDOW] 找到的窗口是系統窗口（非 Nx Witness）: '{win.title}'，將啟動新實例")
+                        # 繼續執行啟動流程，不返回
                     else:
-                        self.logger.warning(f"[WINDOW] 找到的窗口不是 Nx Witness: '{win.title}'，將啟動新實例")
+                        # 必須同時滿足：包含 nx witness 且包含明確關鍵字，且不被排除
+                        if is_nx_witness and has_nx_keyword:
+                            self.logger.info(f"✅ 軟件已在運行，將視窗置頂（視窗: '{win.title}', 尺寸: {win.width}x{win.height}）")
+                            # 將視窗置頂
+                            try:
+                                win.activate()
+                                time.sleep(0.3)  # 等待視窗置頂
+                                self.logger.info("✅ 視窗已置頂")
+                            except Exception as e:
+                                self.logger.warning(f"⚠️ 置頂視窗失敗: {e}")
+                            return self
+                        else:
+                            self.logger.warning(f"[WINDOW] 找到的窗口不是 Nx Witness: '{win.title}'，將啟動新實例")
             except Exception as e:
                 # 視窗無效，繼續啟動流程
                 self.logger.debug(f"[WINDOW] 驗證窗口時發生異常: {e}")
@@ -609,16 +755,15 @@ class DesktopApp:
         final_x = x + offset_x
         final_y = y + offset_y
         
-        # 🎯 記錄原始座標和最終座標（用於調試）
+        # 🎯 記錄原始座標和最終座標（用於調試）- 只使用一種輸出方式避免重複
         click_action = "右鍵" if click_type == 'right' else ("雙擊" if clicks == 2 else "單擊")
         if offset_x != 0 or offset_y != 0:
-            self.logger.info(f"[CLICK_COORD] 原始座標: ({x}, {y}), 偏移: (offset_x={offset_x}, offset_y={offset_y}), 最終座標: ({final_x}, {final_y}), 動作={click_action}")
-            self._safe_log("info", f"[CLICK_COORD] 原始座標: ({x}, {y}), 偏移: (offset_x={offset_x}, offset_y={offset_y}), 最終座標: ({final_x}, {final_y}), 動作={click_action}")
-            print(f"[CLICK_COORD] 原始座標: ({x}, {y}), 偏移: (offset_x={offset_x}, offset_y={offset_y}), 最終座標: ({final_x}, {final_y}), 動作={click_action}")
+            log_msg = f">>> [CLICK_COORD] 原始座標: ({x}, {y}), 偏移: (offset_x={offset_x}, offset_y={offset_y}), 最終座標: ({final_x}, {final_y}), 動作={click_action}"
         else:
-            self.logger.info(f"[CLICK_COORD] 實際點擊座標: ({final_x}, {final_y}), 動作={click_action}")
-            self._safe_log("info", f"[CLICK_COORD] 實際點擊座標: ({final_x}, {final_y}), 動作={click_action}")
-            print(f"[CLICK_COORD] 實際點擊座標: ({final_x}, {final_y}), 動作={click_action}")
+            log_msg = f">>> [CLICK_COORD] 實際點擊座標: ({final_x}, {final_y}), 動作={click_action}"
+        print(log_msg)
+        import sys
+        sys.stdout.flush()
         
         # 🎯 報告優化：點擊前截圖並標記點擊位置
         reporter = DesktopApp.get_reporter()
@@ -1390,6 +1535,8 @@ class DesktopApp:
         """
         🤖 嘗試使用 VLM (視覺語言模型) 進行 UI 元素辨識
         
+        使用 UnifiedVLM 引擎（Ollama + Gemini 備援 + 描述校正 + 特徵進化）
+        
         :param target_text: 要尋找的元素描述（支援自然語言）
         :param region: 搜尋區域 (left, top, width, height)
         :param win: 視窗物件
@@ -1408,159 +1555,197 @@ class DesktopApp:
         
         try:
             from base.ok_script_recognizer import get_recognizer
+            from toolkit.types import Area
+            import pyautogui
+            
             recognizer = get_recognizer()
             
-            self._safe_log("info", f"[VLM] 正在使用 LLM 搜尋元素: '{target_text}'")
-            result = vlm.find_element(target_text, region=region)
-            self._safe_log("info", f"[DEBUG] VLM 辨識結果: success={result.success if result else None}, confidence={result.confidence if result else None}, x={result.x if result else None}, y={result.y if result else None}")
+            self._safe_log("info", f"[VLM] 正在使用 UnifiedVLM 搜尋元素: '{target_text}'")
             
-            if result and result.success and result.confidence > 0.5:
-                # 🎯 VLM 返回的座標已經加上了 region 偏移（在 find_element 中處理）
-                # 此時 result.x, result.y 應該是屏幕絕對座標
-                click_x = result.x
-                click_y = result.y
+            # 步驟 1: 截取搜尋區域的截圖
+            screenshot_path = None
+            try:
+                import tempfile
+                from datetime import datetime
                 
-                # 🎯 調試：記錄座標信息
-                self._safe_log("info", f"[VLM] 辨識成功: 屏幕絕對座標=({click_x}, {click_y}), confidence={result.confidence:.2f}")
-                if region:
-                    self._safe_log("info", f"[VLM] region=({region[0]}, {region[1]}, {region[2]}, {region[3]})")
-                if win:
-                    self._safe_log("info", f"[VLM] 窗口位置: left={win.left}, top={win.top}, width={win.width}, height={win.height}")
+                # 截取搜尋區域
+                screenshot = pyautogui.screenshot(region=region)
                 
-                # 🎯 座標合理性檢查和自動修正
+                # 保存到臨時文件
+                temp_dir = tempfile.gettempdir()
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                screenshot_path = os.path.join(temp_dir, f"vlm_search_{timestamp}.png")
+                screenshot.save(screenshot_path)
+                
+                self._safe_log("info", f"[VLM] 截圖已保存: {screenshot_path}")
+                
+            except Exception as e:
+                self._safe_log("error", f"[VLM] 截圖失敗: {e}")
+                return False
+            
+            # 步驟 2: 使用 UnifiedVLM 進行識別
+            try:
+                # 獲取當前解析度
                 screen_width, screen_height = pyautogui.size()
+                current_resolution = (screen_width, screen_height)
                 
-                # 自動修正稍微超出螢幕範圍的座標（允許 20px 的誤差）
-                if click_y >= screen_height:
-                    if click_y <= screen_height + 20:  # 只超出 20px 以內，自動修正
-                        click_y = screen_height - 1
-                        self._safe_log("info", f"[VLM] y 座標超出螢幕範圍，自動修正: {click_y + 1} -> {click_y}")
-                    else:
-                        self._safe_log("warning", f"[VLM] y 座標超出螢幕範圍過大 ({click_y}/{screen_height})，拒絕點擊")
-                        return False
+                # 調用 UnifiedVLM 的 find_element 方法
+                area: Optional[Area] = vlm.find_element(
+                    element_name=target_text,
+                    screenshot_path=screenshot_path,
+                    current_resolution=current_resolution,
+                    enable_description_calibration=True
+                )
                 
-                if click_x >= screen_width:
-                    if click_x <= screen_width + 20:  # 只超出 20px 以內，自動修正
-                        click_x = screen_width - 1
-                        self._safe_log("info", f"[VLM] x 座標超出螢幕範圍，自動修正: {click_x + 1} -> {click_x}")
-                    else:
-                        self._safe_log("warning", f"[VLM] x 座標超出螢幕範圍過大 ({click_x}/{screen_width})，拒絕點擊")
-                        return False
+                # 清理臨時截圖
+                try:
+                    if screenshot_path and os.path.exists(screenshot_path):
+                        os.remove(screenshot_path)
+                except:
+                    pass
                 
-                # 確保座標在視窗範圍內（允許稍微超出視窗範圍，自動修正）
-                win_left = win.left
-                win_top = win.top
-                win_right = win.left + win.width
-                win_bottom = win.top + win.height
+                if not area:
+                    self._safe_log("warning", f"[VLM] UnifiedVLM 未找到元素: '{target_text}'")
+                    return False
                 
-                # 自動修正稍微超出視窗範圍的座標（允許 20px 的誤差）
-                if click_x < win_left:
-                    if click_x >= win_left - 20:
-                        click_x = win_left
-                        self._safe_log("info", f"[VLM] x 座標稍微超出視窗左側，自動修正到視窗邊界")
-                    else:
-                        self._safe_log("warning", f"[VLM] x 座標超出視窗範圍過大: {click_x} < {win_left}")
-                        return False
-                elif click_x > win_right:
-                    if click_x <= win_right + 20:
-                        click_x = win_right - 1
-                        self._safe_log("info", f"[VLM] x 座標稍微超出視窗右側，自動修正到視窗邊界")
-                    else:
-                        self._safe_log("warning", f"[VLM] x 座標超出視窗範圍過大: {click_x} > {win_right}")
-                        return False
+                # 步驟 3: 將 Area 轉換為絕對座標
+                # Area 返回的是相對於截圖的座標，需要加上 region 的偏移
+                center_x, center_y = area.center
+                click_x = region[0] + center_x
+                click_y = region[1] + center_y
                 
-                if click_y < win_top:
-                    if click_y >= win_top - 20:
-                        click_y = win_top
-                        self._safe_log("info", f"[VLM] y 座標稍微超出視窗頂部，自動修正到視窗邊界")
-                    else:
-                        self._safe_log("warning", f"[VLM] y 座標超出視窗範圍過大: {click_y} < {win_top}")
-                        return False
-                elif click_y > win_bottom:
-                    if click_y <= win_bottom + 20:
-                        click_y = win_bottom - 1
-                        self._safe_log("info", f"[VLM] y 座標稍微超出視窗底部，自動修正到視窗邊界")
-                    else:
-                        self._safe_log("warning", f"[VLM] y 座標超出視窗範圍過大: {click_y} > {win_bottom}")
-                        return False
+                self._safe_log("info", f"[VLM] UnifiedVLM 辨識成功: 相對座標=({center_x}, {center_y}), 絕對座標=({click_x}, {click_y})")
                 
-                # 座標已修正，繼續執行點擊
-                if (win_left <= click_x <= win_right and 
-                    win_top <= click_y <= win_bottom):
-                    
-                    # 額外驗證：如果提供了 region，確保座標在 region 範圍內（相對於視窗）
-                    if region:
-                        region_left = region[0]
-                        region_top = region[1]
-                        region_right = region[0] + region[2]
-                        region_bottom = region[1] + region[3]
-                        
-                        if not (region_left <= click_x <= region_right and 
-                                region_top <= click_y <= region_bottom):
-                            self._safe_log("warning", f"[VLM] 座標超出 region 範圍: ({click_x}, {click_y}), region=({region_left}, {region_top}, {region[2]}, {region[3]})")
-                            # 如果座標明顯超出 region，拒絕點擊
-                            if abs(click_y - region_bottom) > 50:  # 允許 50px 的誤差
-                                self._safe_log("warning", f"[VLM] 座標超出 region 範圍過大，拒絕點擊")
-                                return False
-                    
-                    # 🎯 執行點擊並獲取最終座標（已應用偏移）
-                    final_x, final_y = self._perform_click(click_x, click_y, clicks, click_type, offset_x, offset_y)
-                    
-                    # 記錄統計
-                    recognizer.record_vlm_hit(result.time_ms)
-                    
-                    # 🎯 自動記錄相對於視窗的比例座標（使用最終座標）
-                    relative_x = final_x - win.left
-                    relative_y = final_y - win.top
-                    ratio_x = relative_x / win.width
-                    ratio_y = relative_y / win.height
-                    
-                    action_type = "雙擊" if clicks == 2 else "點擊"
-                    self._safe_log("info", f"[VLM] VLM 辨識成功並{action_type}: {target_text} (信心: {result.confidence:.2f}, 耗時: {result.time_ms:.0f}ms)")
-                    self._safe_log("info", f"[STAT] [座標庫] 比例座標: x_ratio={ratio_x:.4f}, y_ratio={ratio_y:.4f} | 絕對座標: ({final_x}, {final_y})")
-                    
-                    # 🎯 使用最終座標記錄（已應用偏移）
-                    DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
-                    # 記錄圖像辨識成功（重置連續失敗計數）
-                    recognizer.record_image_recognition_success()
-                    
-                    # 自動截圖並標註（如果有 reporter）
-                    if DesktopApp._reporter and hasattr(DesktopApp._reporter, 'add_recognition_screenshot'):
-                        try:
-                            item_name = target_text or "VLM_Element"
-                            # 🎯 如果有 VLM 返回的邊界框，使用它；否則使用默認框
-                            if result.box:
-                                box_xmin, box_ymin, box_xmax, box_ymax = result.box
-                                box_width = box_xmax - box_xmin
-                                box_height = box_ymax - box_ymin
-                                # 使用邊界框的左上角和尺寸
-                                DesktopApp._reporter.add_recognition_screenshot(
-                                    item_name=item_name,
-                                    x=final_x,  # 點擊座標（紅色圓點）
-                                    y=final_y,  # 點擊座標（紅色圓點）
-                                    width=50,  # 默認寬度（用於紅色框）
-                                    height=50,  # 默認高度（用於紅色框）
-                                    method="VLM",
-                                    region=region,  # 傳入搜尋區域，用於在截圖上標記
-                                    vlm_box=result.box  # 🎯 傳入 VLM 邊界框（綠色矩形）
-                                )
-                            else:
-                                # 沒有邊界框，使用默認框
-                                DesktopApp._reporter.add_recognition_screenshot(
-                                    item_name=item_name,
-                                    x=final_x,
-                                    y=final_y,
-                                    width=50,
-                                    height=50,
-                                    method="VLM",
-                                    region=region
-                                )
-                        except Exception as e:
-                            self.logger.debug(f"自動截圖失敗: {e}")
-                    
-                    return True
+            except Exception as e:
+                self._safe_log("error", f"[VLM] UnifiedVLM 識別失敗: {e}")
+                import traceback
+                self.logger.debug(f"詳細錯誤: {traceback.format_exc()}")
+                return False
+            
+            # 步驟 4: 座標合理性檢查和執行點擊
+            self._safe_log("info", f"[VLM] UnifiedVLM 辨識成功: 絕對座標=({click_x}, {click_y})")
+            if region:
+                self._safe_log("info", f"[VLM] region=({region[0]}, {region[1]}, {region[2]}, {region[3]})")
+            if win:
+                self._safe_log("info", f"[VLM] 窗口位置: left={win.left}, top={win.top}, width={win.width}, height={win.height}")
+            
+            # 座標合理性檢查和自動修正
+            screen_width, screen_height = pyautogui.size()
+            
+            # 自動修正稍微超出螢幕範圍的座標（允許 20px 的誤差）
+            if click_y >= screen_height:
+                if click_y <= screen_height + 20:
+                    click_y = screen_height - 1
+                    self._safe_log("info", f"[VLM] y 座標超出螢幕範圍，自動修正: {click_y + 1} -> {click_y}")
                 else:
-                    self.logger.debug(f"🤖 VLM 返回座標超出視窗範圍: ({click_x}, {click_y})")
+                    self._safe_log("warning", f"[VLM] y 座標超出螢幕範圍過大 ({click_y}/{screen_height})，拒絕點擊")
+                    return False
+            
+            if click_x >= screen_width:
+                if click_x <= screen_width + 20:
+                    click_x = screen_width - 1
+                    self._safe_log("info", f"[VLM] x 座標超出螢幕範圍，自動修正: {click_x + 1} -> {click_x}")
+                else:
+                    self._safe_log("warning", f"[VLM] x 座標超出螢幕範圍過大 ({click_x}/{screen_width})，拒絕點擊")
+                    return False
+            
+            # 確保座標在視窗範圍內（允許稍微超出視窗範圍，自動修正）
+            win_left = win.left
+            win_top = win.top
+            win_right = win.left + win.width
+            win_bottom = win.top + win.height
+            
+            # 自動修正稍微超出視窗範圍的座標（允許 20px 的誤差）
+            if click_x < win_left:
+                if click_x >= win_left - 20:
+                    click_x = win_left
+                    self._safe_log("info", f"[VLM] x 座標稍微超出視窗左側，自動修正到視窗邊界")
+                else:
+                    self._safe_log("warning", f"[VLM] x 座標超出視窗範圍過大: {click_x} < {win_left}")
+                    return False
+            elif click_x > win_right:
+                if click_x <= win_right + 20:
+                    click_x = win_right - 1
+                    self._safe_log("info", f"[VLM] x 座標稍微超出視窗右側，自動修正到視窗邊界")
+                else:
+                    self._safe_log("warning", f"[VLM] x 座標超出視窗範圍過大: {click_x} > {win_right}")
+                    return False
+            
+            if click_y < win_top:
+                if click_y >= win_top - 20:
+                    click_y = win_top
+                    self._safe_log("info", f"[VLM] y 座標稍微超出視窗頂部，自動修正到視窗邊界")
+                else:
+                    self._safe_log("warning", f"[VLM] y 座標超出視窗範圍過大: {click_y} < {win_top}")
+                    return False
+            elif click_y > win_bottom:
+                if click_y <= win_bottom + 20:
+                    click_y = win_bottom - 1
+                    self._safe_log("info", f"[VLM] y 座標稍微超出視窗底部，自動修正到視窗邊界")
+                else:
+                    self._safe_log("warning", f"[VLM] y 座標超出視窗範圍過大: {click_y} > {win_bottom}")
+                    return False
+            
+            # 座標已修正，繼續執行點擊
+            if (win_left <= click_x <= win_right and 
+                win_top <= click_y <= win_bottom):
+                
+                # 額外驗證：如果提供了 region，確保座標在 region 範圍內（相對於視窗）
+                if region:
+                    region_left = region[0]
+                    region_top = region[1]
+                    region_right = region[0] + region[2]
+                    region_bottom = region[1] + region[3]
+                    
+                    if not (region_left <= click_x <= region_right and 
+                            region_top <= click_y <= region_bottom):
+                        self._safe_log("warning", f"[VLM] 座標超出 region 範圍: ({click_x}, {click_y}), region=({region_left}, {region_top}, {region[2]}, {region[3]})")
+                        # 如果座標明顯超出 region，拒絕點擊
+                        if abs(click_y - region_bottom) > 50:  # 允許 50px 的誤差
+                            self._safe_log("warning", f"[VLM] 座標超出 region 範圍過大，拒絕點擊")
+                            return False
+                
+                # 🎯 執行點擊並獲取最終座標（已應用偏移）
+                final_x, final_y = self._perform_click(click_x, click_y, clicks, click_type, offset_x, offset_y)
+                
+                # 記錄統計（UnifiedVLM 沒有 time_ms，使用預設值）
+                recognizer.record_vlm_hit(0)
+                
+                # 🎯 自動記錄相對於視窗的比例座標（使用最終座標）
+                relative_x = final_x - win.left
+                relative_y = final_y - win.top
+                ratio_x = relative_x / win.width
+                ratio_y = relative_y / win.height
+                
+                action_type = "雙擊" if clicks == 2 else "點擊"
+                self._safe_log("info", f"[VLM] UnifiedVLM 辨識成功並{action_type}: {target_text}")
+                self._safe_log("info", f"[STAT] [座標庫] 比例座標: x_ratio={ratio_x:.4f}, y_ratio={ratio_y:.4f} | 絕對座標: ({final_x}, {final_y})")
+                
+                # 🎯 使用最終座標記錄（已應用偏移）
+                DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
+                # 記錄圖像辨識成功（重置連續失敗計數）
+                recognizer.record_image_recognition_success()
+                
+                # 自動截圖並標註（如果有 reporter）
+                if DesktopApp._reporter and hasattr(DesktopApp._reporter, 'add_recognition_screenshot'):
+                    try:
+                        item_name = target_text or "VLM_Element"
+                        # 🎯 使用 Area 的尺寸
+                        DesktopApp._reporter.add_recognition_screenshot(
+                            item_name=item_name,
+                            x=final_x,
+                            y=final_y,
+                            width=area.width,
+                            height=area.height,
+                            method="UnifiedVLM",
+                            region=region
+                        )
+                    except Exception as e:
+                        self.logger.debug(f"自動截圖失敗: {e}")
+                
+                return True
+            else:
+                self.logger.debug(f"[VLM] 返回座標超出視窗範圍: ({click_x}, {click_y})")
             
         except Exception as e:
             self.logger.debug(f"🤖 VLM 辨識異常: {e}")

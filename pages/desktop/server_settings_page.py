@@ -624,9 +624,101 @@ class ServerSettingsPage(DesktopApp):
             self.logger.error("❌ 雙擊 Server 項目失敗")
             return False
     
+    def find_usb_camera(self, camera_name="usb_cam") -> bool:
+        """
+        🔍 只尋找 USB 攝影機，不執行點擊
+        用於確認攝影機是否已出現在列表中
+        
+        :param camera_name: 攝影機名稱（預設 "usb_cam"）
+        :return: True 如果找到，False 如果未找到
+        """
+        self.logger.info(f"[FIND] 尋找攝影機: {camera_name}（只找不點）...")
+        
+        from base.ok_script_recognizer import get_recognizer
+        import os
+        from config import EnvConfig
+        
+        recognizer = get_recognizer()
+        image_path = os.path.join(EnvConfig.RES_PATH, "desktop_main/usb_cam_item.png")
+        
+        if not os.path.exists(image_path):
+            self.logger.warning(f"⚠️ 圖片不存在: {image_path}")
+            return False
+        
+        # 取得視窗區域
+        win = self.get_nx_window()
+        if not win:
+            self.logger.warning("⚠️ 找不到 Nx Witness 視窗")
+            return False
+        
+        region = (win.left, win.top, win.width, win.height)
+        
+        # 使用 OK Script 進行圖片辨識（只找不點）
+        result = recognizer.locate_on_screen(image_path, region=region, confidence=0.7)
+        
+        if result and result.success:
+            self.logger.info(f"✅ 找到攝影機 {camera_name}（信心度: {result.confidence:.2f}）")
+            return True
+        else:
+            self.logger.debug(f"⚠️ 未找到攝影機 {camera_name}")
+            return False
+    
+    def double_click_usb_camera_strict(self, camera_name="usb_cam") -> bool:
+        """
+        🎯 嚴格模式：只使用圖片辨識雙擊 USB 攝影機，不使用保底座標
+        如果圖片辨識失敗，直接返回 False，不會亂點
+        
+        :param camera_name: 攝影機名稱（預設 "usb_cam"）
+        :return: True 如果成功點擊，False 如果未找到
+        """
+        self.logger.info(f"[CLICK_STRICT] 雙擊攝影機（嚴格模式，不用保底座標）: {camera_name}...")
+        
+        from base.ok_script_recognizer import get_recognizer
+        import os
+        from config import EnvConfig
+        
+        recognizer = get_recognizer()
+        image_path = os.path.join(EnvConfig.RES_PATH, "desktop_main/usb_cam_item.png")
+        
+        if not os.path.exists(image_path):
+            self.logger.warning(f"⚠️ 圖片不存在: {image_path}")
+            return False
+        
+        # 取得視窗區域
+        win = self.get_nx_window()
+        if not win:
+            self.logger.warning("⚠️ 找不到 Nx Witness 視窗")
+            return False
+        
+        region = (win.left, win.top, win.width, win.height)
+        
+        # 使用 OK Script 進行圖片辨識
+        result = recognizer.locate_on_screen(image_path, region=region, confidence=0.7)
+        
+        if result and result.success:
+            # 計算中心點
+            center_x = result.x + (result.width // 2) if result.width > 0 else result.x
+            center_y = result.y + (result.height // 2) if result.height > 0 else result.y
+            
+            self.logger.info(f"✅ 找到攝影機，位置: ({center_x}, {center_y})，執行雙擊...")
+            
+            # 執行雙擊
+            import pyautogui
+            pyautogui.doubleClick(center_x, center_y, interval=0.1)
+            
+            # 等待畫面載入
+            import time
+            time.sleep(1)
+            
+            self.logger.info(f"✅ 雙擊攝影機成功: {camera_name}")
+            return True
+        else:
+            self.logger.warning(f"⚠️ 嚴格模式：未找到攝影機 {camera_name}，不執行點擊")
+            return False
+    
     def double_click_usb_camera(self, camera_name="usb_cam"):
         """
-        🎯 雙擊 USB 攝影機項目
+        🎯 雙擊 USB 攝影機項目（兼容舊版，包含保底座標）
         優先級：圖片辨識 > OCR 文字 > 座標保底
         
         :param camera_name: 攝影機名稱（預設 "usb_cam"）
@@ -634,13 +726,14 @@ class ServerSettingsPage(DesktopApp):
         self.logger.info(f"[CLICK] 雙擊攝影機: {camera_name}...")
         
         # 🎯 使用圖片優先策略（use_vlm=False），確保圖像辨識優先於 VLM
-        # 使用 smart_click_priority_image 或 smart_click 配合 use_vlm=False
+        # 保底座標參考：server_icon 位置約為 (63, 202)，usb_cam 應在其下方一行
+        # 計算：x_ratio = 63/1920 ≈ 0.033，y_ratio = 225/1200 ≈ 0.188
         success = self.smart_click(
-            x_ratio=0.10,  # 左側面板 x 位置（與 Server 項目對齊）
-            y_ratio=0.18,  # Server 項目下方一點
+            x_ratio=0.035,  # 左側面板 x 位置（與 Server 項目對齊，~67px）
+            y_ratio=0.188,  # Server 項目下方一行位置（~226px）
             target_text="usb",  # OCR 尋找 "usb" 文字（模糊匹配，作為備選）
             image_path="desktop_main/usb_cam_item.png",  # 圖片辨識優先
-            timeout=3,
+            timeout=2,  # 減少超時時間，加快重試速度
             clicks=2,  # 雙擊
             use_vlm=False  # 🎯 關鍵修正：禁用 VLM，確保圖像辨識優先
         )
@@ -704,9 +797,10 @@ class ServerSettingsPage(DesktopApp):
             self.logger.info(f"[ENSURE_CAMERA] 嘗試 {attempt}/{max_retries}: 使用圖像辨識尋找攝影機並雙擊...")
             
             # 🎯 策略 1: 使用圖像辨識優先（use_vlm=False），確保圖像辨識優先於 VLM
+            # 保底座標參考：server_icon 位置約為 (63, 202)，usb_cam 應在其下方一行
             success = self.smart_click(
-                x_ratio=0.10,  # 左側面板 x 位置
-                y_ratio=0.18,  # Server 項目下方一點
+                x_ratio=0.035,  # 左側面板 x 位置（與 Server 項目對齊，~67px）
+                y_ratio=0.188,  # Server 項目下方一行位置（~226px）
                 target_text=target_text,  # OCR 尋找文字（作為備選）
                 image_path="desktop_main/usb_cam_item.png",  # 圖片辨識優先
                 timeout=3,

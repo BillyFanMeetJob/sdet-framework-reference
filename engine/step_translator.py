@@ -73,9 +73,9 @@ class StepTranslator:
             self.action_map["recording"] = RecordingActions(None)
             self.action_map["cloud"] = CloudActions(None)
         
-        # 註冊移動端 Action
-        if mobile_driver is not None:
-            self.action_map["nx_mobile"] = NxMobileActions(mobile_driver)
+        # 註冊移動端 Action（即使 driver 為 None 也創建，使用 ADB 方式）
+        # NxMobileActions.run_login_step 現在使用 ADB 方式，不需要 Appium driver
+        self.action_map["nx_mobile"] = NxMobileActions(mobile_driver)
 
     def execute(self, flow_name, injected_params=None):
         """
@@ -89,11 +89,19 @@ class StepTranslator:
             Action 方法的返回值（通常是 self，支援鏈式呼叫）
         """
         row = self.translate_df[self.translate_df['FlowName'] == flow_name]
-        if row.empty: return
+        if row.empty:
+            raise ValueError(f"[StepTranslator] FlowName '{flow_name}' 在 Translate 表中找不到")
         
         # 從 Excel 取得 ActionKey（如 "login"）和 ActionMethod（如 "run_server_login_step"）
-        target_obj = self.action_map.get(row.iloc[0]['ActionKey'])
+        action_key = row.iloc[0]['ActionKey']
         method_name = row.iloc[0]['ActionMethod']
+        
+        target_obj = self.action_map.get(action_key)
+        if target_obj is None:
+            raise ValueError(f"[StepTranslator] ActionKey '{action_key}' 未在 action_map 中註冊")
+        
         method = getattr(target_obj, method_name, None)
-        if method:
-            return method(**(injected_params or {}))
+        if method is None:
+            raise ValueError(f"[StepTranslator] 方法 '{method_name}' 在 {type(target_obj).__name__} 中不存在")
+        
+        return method(**(injected_params or {}))

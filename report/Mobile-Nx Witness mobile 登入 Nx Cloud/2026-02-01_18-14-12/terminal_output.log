@@ -1,0 +1,130 @@
+================================================================================
+測試案例: Mobile-Nx Witness mobile 登入 Nx Cloud
+執行時間: 2026-02-01 18:10:29
+執行命令: C:\Python314\python.exe -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name Mobile-Nx Witness mobile 登入 Nx Cloud -v -s --tb=short
+工作目錄: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+tests/test_runner.py::test_main_flow[Mobile-Nx Witness mobile \u767b\u5165 Nx Cloud-steps0] >>> [MOBILE_TOOLKIT] [時間戳: 18:10:30] 開始初始化 Appium WebDriver...
+>>> [MOBILE_TOOLKIT] 未指定 Android 版本，將使用第一個可用設備的版本
+>>> [MOBILE_TOOLKIT] [時間戳: 18:10:30] 未指定 Activity，嘗試自動查找主 Activity...
+>>> [MOBILE_TOOLKIT] 找到主 Activity: com.nxvms.mobile.QnActivity
+>>> [MOBILE_TOOLKIT] [耗時: 0.59s] 使用已安裝的 App: com.networkoptix.nxwitness/com.nxvms.mobile.QnActivity
+>>> [MOBILE_TOOLKIT] 已設置 dontStopAppOnReset=True，防止 App 被停止
+>>> [MOBILE_TOOLKIT] 已設置 autoLaunch=True
+>>> [MOBILE_TOOLKIT] [診斷] 原始 URL: http://localhost:4723
+>>> [MOBILE_TOOLKIT] [診斷] 嘗試使用路徑: http://localhost:4723/wd/hub
+>>> [MOBILE_TOOLKIT] [時間戳: 18:10:30] 檢查 Appium Server 是否可用: localhost:4723
+>>> [MOBILE_TOOLKIT] [OK] 端口 4723 已開放
+>>> [MOBILE_TOOLKIT] [診斷] 嘗試檢查 Appium Server 狀態: http://localhost:4723/status
+>>> [MOBILE_TOOLKIT] [診斷] 狀態碼: 404
+>>> [MOBILE_TOOLKIT] [診斷] 嘗試檢查 Appium Server 狀態: http://localhost:4723/wd/hub/status
+>>> [MOBILE_TOOLKIT] [診斷] 狀態碼: 200
+>>> [MOBILE_TOOLKIT] [OK] Appium Server 狀態正常 (路徑: /wd/hub/status)
+>>> [MOBILE_TOOLKIT] Appium Server 版本: 3.1.2
+>>> [MOBILE_TOOLKIT] [診斷] 檢測到 Appium 使用 /wd/hub 路徑，更新連接 URL: http://localhost:4723/wd/hub
+>>> [MOBILE_TOOLKIT] 檢查 Android 設備連接狀態...
+>>> [MOBILE_TOOLKIT] [OK] 找到 1 個已連接的設備
+>>> [MOBILE_TOOLKIT]   - emulator-5554	device
+>>> [MOBILE_TOOLKIT] [時間戳: 18:10:41] 正在連接到 Appium Server
+>>> [MOBILE_TOOLKIT] [診斷] 連接 URL: http://localhost:4723/wd/hub
+>>> [MOBILE_TOOLKIT] [診斷] 原始配置 URL: http://localhost:4723
+>>> [MOBILE_TOOLKIT] 設置連接超時: 120 秒 (從 config: True)
+>>> [MOBILE_TOOLKIT] [背景線程] 開始創建 WebDriver 實例...
+>>> [MOBILE_TOOLKIT] [背景線程] 連接 URL: http://localhost:4723/wd/hub
+>>> [MOBILE_TOOLKIT] [背景線程] Capabilities: {'platform': 'Android', 'package': 'com.networkoptix.nxwitness', 'activity': 'com.nxvms.mobile.QnActivity', 'device_name': 'Android Device', 'automation_name': 'UIAutomator2'}
+>>> [MOBILE_TOOLKIT] 已啟動背景線程創建 WebDriver，開始等待連接...
+>>> [MOBILE_TOOLKIT] [等待中...] 已等待 3 秒，還剩 117 秒...
+>>> [MOBILE_TOOLKIT] [背景線程] 調用 webdriver.Remote()...
+>>> [MOBILE_TOOLKIT] [背景線程] [診斷] 使用連接 URL: http://localhost:4723/wd/hub
+>>> [MOBILE_TOOLKIT] [背景線程] [診斷] Capabilities 完整信息: {'automationName': 'UIAutomator2', 'platformName': 'Android', 'appium:deviceName': 'Android Device', 'appium:automationName': 'UiAutomator2', 'appium:appPackage': 'com.networkoptix.nxwitness', 'appium:appActivity': 'com.nxvms.mobile.QnActivity', 'appium:appWaitActivity': '*', 'appium:appWaitPackage': 'com.networkoptix.nxwitness', 'appium:noReset': True, 'appium:fullReset': False, 'appium:dontStopAppOnReset': True, 'appium:autoLaunch': True}
+>>> [MOBILE_TOOLKIT] [等待中...] 已等待 6 秒，還剩 114 秒...
+>>> [MOBILE_TOOLKIT] [狀態檢查] 設備仍連接: 1 個設備
+>>> [MOBILE_TOOLKIT] [WARN] Appium Server 狀態異常: 404
+>>> [MOBILE_TOOLKIT] [背景線程] WebDriver 實例創建成功 (耗時: 5.24s)
+>>> [MOBILE_TOOLKIT] [耗時: 9.35s] WebDriver 連接成功
+>>> [MOBILE_TOOLKIT] [總耗時: 20.28s] [OK] Appium WebDriver 初始化成功
+>>> [CASE_4-1] [時間戳: 18:10:50] 開始執行 Test Case 4-1: 登錄到 Nx Cloud (login_mobile)
+>>> [CASE_4-1] [耗時: 0.00s] 使用配置中的登錄資訊: email=fanzhenglun2@gmail.com
+>>> [LOGIN_PAGE] 切換到 Cloud 標籤頁（PDF Step 58）...
+>>> [BASE_MOBILE] 超時：找不到元素 (ID): com.networkoptix.nxwitness.mobile:id/cloud_tab
+>>> [BASE_MOBILE] [診斷] 找不到元素 (ID): com.networkoptix.nxwitness.mobile:id/cloud_tab
+>>> [BASE_MOBILE] [診斷] 當前 Activity: com.nxvms.mobile.QnActivity
+>>> [BASE_MOBILE] [診斷] [WARN] 檢測到 SurfaceView，可能需要使用座標點擊
+>>> [BASE_MOBILE] [診斷] 頁面總元素數: 16
+>>> [BASE_MOBILE] [診斷] 頁面可見文字 (前30個): []
+>>> [BASE_MOBILE] [診斷] 頁面 Resource ID (前30個): ['android:id/content', 'android:id/navigationBarBackground']
+>>> [BASE_MOBILE] [診斷] 頁面 Class 類型 (前20個): ['android.view.View', 'android.widget.LinearLayout', 'android.view.SurfaceView', 'hierarchy', 'android.view.ViewGroup', 'android.widget.FrameLayout']
+>>> [BASE_MOBILE] [診斷] 完整頁面源碼已保存: D:\nxwitness-demo\report\diagnostics\page_source_20260201_181101.xml
+>>> [BASE_MOBILE] [診斷] 診斷截圖已保存: D:\nxwitness-demo\report\diagnostics\diagnostic_20260201_181101.png
+>>> [BASE_MOBILE] [診斷] 窗口大小: {'width': 1080, 'height': 2400}
+>>> [BASE_MOBILE] [診斷] 設備信息: {'platform_version': '16', 'device_name': 'emulator-5554', 'automation_name': 'UiAutomator2'}
+>>> [LOGIN_PAGE] Resource ID 定位失敗，嘗試文字定位...
+>>> [BASE_MOBILE] 超時：找不到元素 (Text): Cloud
+>>> [BASE_MOBILE] [診斷] 找不到元素 (Text): Cloud
+>>> [BASE_MOBILE] [診斷] 當前 Activity: com.nxvms.mobile.QnActivity
+>>> [BASE_MOBILE] [診斷] [WARN] 檢測到 SurfaceView，可能需要使用座標點擊
+>>> [BASE_MOBILE] [診斷] 頁面總元素數: 16
+>>> [BASE_MOBILE] [診斷] 頁面可見文字 (前30個): []
+>>> [BASE_MOBILE] [診斷] 頁面 Resource ID (前30個): ['android:id/content', 'android:id/navigationBarBackground']
+>>> [BASE_MOBILE] [診斷] 頁面 Class 類型 (前20個): ['android.view.View', 'android.widget.LinearLayout', 'android.view.SurfaceView', 'hierarchy', 'android.view.ViewGroup', 'android.widget.FrameLayout']
+>>> [BASE_MOBILE] [診斷] 完整頁面源碼已保存: D:\nxwitness-demo\report\diagnostics\page_source_20260201_181112.xml
+>>> [BASE_MOBILE] [診斷] 診斷截圖已保存: D:\nxwitness-demo\report\diagnostics\diagnostic_20260201_181112.png
+>>> [BASE_MOBILE] [診斷] 窗口大小: {'width': 1080, 'height': 2400}
+>>> [BASE_MOBILE] [診斷] 設備信息: {'platform_version': '16', 'device_name': 'emulator-5554', 'automation_name': 'UiAutomator2'}
+>>> [BASE_MOBILE] 超時：找不到元素 (Text): 雲端
+>>> [BASE_MOBILE] [診斷] 找不到元素 (Text): 雲端
+>>> [BASE_MOBILE] [診斷] 當前 Activity: com.nxvms.mobile.QnActivity
+>>> [BASE_MOBILE] [診斷] [WARN] 檢測到 SurfaceView，可能需要使用座標點擊
+>>> [BASE_MOBILE] [診斷] 頁面總元素數: 16
+>>> [BASE_MOBILE] [診斷] 頁面可見文字 (前30個): []
+>>> [BASE_MOBILE] [診斷] 頁面 Resource ID (前30個): ['android:id/content', 'android:id/navigationBarBackground']
+>>> [BASE_MOBILE] [診斷] 頁面 Class 類型 (前20個): ['android.view.View', 'android.widget.LinearLayout', 'android.view.SurfaceView', 'hierarchy', 'android.view.ViewGroup', 'android.widget.FrameLayout']
+>>> [BASE_MOBILE] [診斷] 完整頁面源碼已保存: D:\nxwitness-demo\report\diagnostics\page_source_20260201_181123.xml
+>>> [BASE_MOBILE] [診斷] 診斷截圖已保存: D:\nxwitness-demo\report\diagnostics\diagnostic_20260201_181123.png
+>>> [BASE_MOBILE] [診斷] 窗口大小: {'width': 1080, 'height': 2400}
+>>> [BASE_MOBILE] [診斷] 設備信息: {'platform_version': '16', 'device_name': 'emulator-5554', 'automation_name': 'UiAutomator2'}
+>>> [LOGIN_PAGE] 文字定位失敗，嘗試 XPath 定位...
+>>> [BASE_MOBILE] 超時：找不到元素 (XPath): //*[contains(@text, "Cloud") or contains(@text, "雲端")]
+>>> [BASE_MOBILE] [診斷] 找不到元素 (XPath): //*[contains(@text, "Cloud") or contains(@text, "雲端")]
+>>> [BASE_MOBILE] [診斷] 當前 Activity: com.nxvms.mobile.QnActivity
+>>> [BASE_MOBILE] [診斷] [WARN] 檢測到 SurfaceView，可能需要使用座標點擊
+>>> [BASE_MOBILE] [診斷] 頁面總元素數: 16
+>>> [BASE_MOBILE] [診斷] 頁面可見文字 (前30個): []
+>>> [BASE_MOBILE] [診斷] 頁面 Resource ID (前30個): ['android:id/content', 'android:id/navigationBarBackground']
+>>> [BASE_MOBILE] [診斷] 頁面 Class 類型 (前20個): ['android.view.View', 'android.widget.LinearLayout', 'android.view.SurfaceView', 'hierarchy', 'android.view.ViewGroup', 'android.widget.FrameLayout']
+>>> [BASE_MOBILE] [診斷] 完整頁面源碼已保存: D:\nxwitness-demo\report\diagnostics\page_source_20260201_181134.xml
+>>> [BASE_MOBILE] [診斷] 診斷截圖已保存: D:\nxwitness-demo\report\diagnostics\diagnostic_20260201_181134.png
+>>> [BASE_MOBILE] [診斷] 窗口大小: {'width': 1080, 'height': 2400}
+>>> [BASE_MOBILE] [診斷] 設備信息: {'platform_version': '16', 'device_name': 'emulator-5554', 'automation_name': 'UiAutomator2'}
+>>> [LOGIN_PAGE] [ERROR] 無法切換到 Cloud 標籤頁
+>>> [LOGIN_PAGE] [診斷] 開始診斷當前頁面狀態...
+>>> [LOGIN_PAGE] [診斷] 當前 Activity: com.nxvms.mobile.QnActivity
+>>> [LOGIN_PAGE] [診斷] 找到的標籤相關元素: 0 個
+>>> [LOGIN_PAGE] [診斷] 頁面可見文字 (前30個): []
+>>> [LOGIN_PAGE] [診斷] 頁面 Resource ID (前30個): ['android:id/content']
+>>> [LOGIN_PAGE] [診斷] 未找到包含 'cloud' 或 'local' 的 Resource ID
+>>> [LOGIN_PAGE] [診斷] 診斷截圖已保存: D:\nxwitness-demo\report\diagnostics\cloud_tab_not_found_20260201_181134.png
+>>> [CASE_4-1] [WARN] 未找到 Cloud 標籤頁，可能不需要這一步，繼續執行...
+>>> [CASE_4-1] [耗時: 44.69s] 切換到 Cloud 標籤頁完成
+>>> [CASE_4-1] [時間戳: 18:11:35] 準備執行雲端登錄流程（即將點擊座標 550, 1500）...
+>>> [LOGIN_PAGE] [時間戳: 18:11:35] 開始執行雲端登錄流程（PDF Steps 59-60）...
+>>> [LOGIN_PAGE] [耗時: 0.00s] 準備點擊座標 (550, 1500) 以進入登入頁...
+>>> [LOGIN_PAGE] W3C 點擊動作已執行
+>>> [LOGIN_PAGE] 正在等待登入頁面載入 (最長等待 30 秒)...
+>>> [LOGIN_PAGE] [診斷] 可用 Contexts: ['NATIVE_APP']
+>>> [LOGIN_PAGE] [診斷] 當前 Context: NATIVE_APP
+>>> [LOGIN_PAGE] Resource ID 定位失敗，嘗試使用 Accessibility ID...
+>>> [LOGIN_PAGE] Accessibility ID 定位失敗，嘗試使用 XPath...
+
+================================================================================
+退出碼: 1
+執行結果: 失敗或被中斷
+================================================================================

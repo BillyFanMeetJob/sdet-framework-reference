@@ -1,0 +1,796 @@
+================================================================================
+測試案例: 自動登入伺服器並切換繁體中文
+執行時間: 2026-02-03 02:32:02
+執行命令: C:\Python314\python.exe -u -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name 自動登入伺服器並切換繁體中文 -v -s --tb=short
+工作目錄: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+>>> [DEBUG] 檢查登錄狀態（目標伺服器: LAPTOP-QRJN5735）
+>>> [WAIT] 等待軟件啟動...
+>>> [WARN] 未檢測到主畫面，執行登錄...
+>>> [CASE_1-1] 執行 Case 1-1 登錄流程
+>>> [WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...
+>>> [WINDOW] 當前所有可見窗口列表（共 16 個）:
+>>> [WINDOW]   - 'QA OSD' (222x160)
+>>> [WINDOW]   - '' (1920x60)
+>>> [WINDOW]   - 'Nx Witness 自動化測試主控台' (1145x924)
+>>> [WINDOW]   - 'camera_actions.py - nxwitness-demo - Cursor [Administrator]' (1938x1158)
+>>> [WINDOW]   - '新增 Microsoft Excel 工作表.xlsx - Excel' (199x34)
+>>> [WINDOW]   - 'Windows 輸入體驗' (1920x1200)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (1901x4)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (0x0)
+>>> [START] 啟動程式: C:\Program Files\Network Optix\Nx Witness\Client\6.1.0.42176\Nx Witness Chinese Launcher.exe
+>>> [OK] 已執行啟動命令，等待程式啟動...
+>>> [WAIT] 等待 Nx Witness 視窗出現...
+>>> [OK] 視窗已出現並完全初始化: Nx Witness (1145x924)
+>>> [WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...
+>>> [WINDOW] 當前所有可見窗口列表（共 16 個）:
+>>> [WINDOW]   - 'QA OSD' (222x160)
+>>> [WINDOW]   - '' (1920x60)
+>>> [WINDOW]   - 'Nx Witness 自動化測試主控台' (1145x924)
+>>> [WINDOW]   - 'camera_actions.py - nxwitness-demo - Cursor [Administrator]' (1938x1158)
+>>> [WINDOW]   - '新增 Microsoft Excel 工作表.xlsx - Excel' (199x34)
+>>> [WINDOW]   - 'Windows 輸入體驗' (1920x1200)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (1901x4)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...
+>>> [WINDOW] 當前所有可見窗口列表（共 16 個）:
+>>> [WINDOW]   - 'QA OSD' (222x160)
+>>> [WINDOW]   - '' (1920x60)
+>>> [WINDOW]   - 'Nx Witness 自動化測試主控台' (1145x924)
+>>> [WINDOW]   - 'camera_actions.py - nxwitness-demo - Cursor [Administrator]' (1938x1158)
+>>> [WINDOW]   - '新增 Microsoft Excel 工作表.xlsx - Excel' (199x34)
+>>> [WINDOW]   - 'Windows 輸入體驗' (1920x1200)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (1901x4)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...
+>>> [WINDOW] 當前所有可見窗口列表（共 16 個）:
+>>> [WINDOW]   - 'QA OSD' (222x160)
+>>> [WINDOW]   - '' (1920x60)
+>>> [WINDOW]   - 'Nx Witness 自動化測試主控台' (1145x924)
+>>> [WINDOW]   - 'camera_actions.py - nxwitness-demo - Cursor [Administrator]' (1938x1158)
+>>> [WINDOW]   - '新增 Microsoft Excel 工作表.xlsx - Excel' (199x34)
+>>> [WINDOW]   - 'Windows 輸入體驗' (1920x1200)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (1901x4)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...
+>>> [WINDOW] 當前所有可見窗口列表（共 16 個）:
+>>> [WINDOW]   - 'QA OSD' (222x160)
+>>> [WINDOW]   - '' (1920x60)
+>>> [WINDOW]   - 'Nx Witness 自動化測試主控台' (1145x924)
+>>> [WINDOW]   - 'camera_actions.py - nxwitness-demo - Cursor [Administrator]' (1938x1158)
+>>> [WINDOW]   - '新增 Microsoft Excel 工作表.xlsx - Excel' (199x34)
+>>> [WINDOW]   - 'Windows 輸入體驗' (1920x1200)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (1901x4)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...
+>>> [WINDOW] 當前所有可見窗口列表（共 16 個）:
+>>> [WINDOW]   - 'QA OSD' (222x160)
+>>> [WINDOW]   - '' (1920x60)
+>>> [WINDOW]   - 'Nx Witness 自動化測試主控台' (1145x924)
+>>> [WINDOW]   - 'camera_actions.py - nxwitness-demo - Cursor [Administrator]' (1938x1158)
+>>> [WINDOW]   - '新增 Microsoft Excel 工作表.xlsx - Excel' (199x34)
+>>> [WINDOW]   - 'Windows 輸入體驗' (1920x1200)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (1901x4)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...
+>>> [WINDOW] 當前所有可見窗口列表（共 16 個）:
+>>> [WINDOW]   - 'QA OSD' (222x160)
+>>> [WINDOW]   - '' (1920x60)
+>>> [WINDOW]   - 'Nx Witness 自動化測試主控台' (1145x924)
+>>> [WINDOW]   - 'camera_actions.py - nxwitness-demo - Cursor [Administrator]' (1938x1158)
+>>> [WINDOW]   - '新增 Microsoft Excel 工作表.xlsx - Excel' (199x34)
+>>> [WINDOW]   - 'Windows 輸入體驗' (1920x1200)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (1901x4)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...
+>>> [WINDOW] 當前所有可見窗口列表（共 16 個）:
+>>> [WINDOW]   - 'QA OSD' (222x160)
+>>> [WINDOW]   - '' (1920x60)
+>>> [WINDOW]   - 'Nx Witness 自動化測試主控台' (1145x924)
+>>> [WINDOW]   - 'camera_actions.py - nxwitness-demo - Cursor [Administrator]' (1938x1158)
+>>> [WINDOW]   - '新增 Microsoft Excel 工作表.xlsx - Excel' (199x34)
+>>> [WINDOW]   - 'Windows 輸入體驗' (1920x1200)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (1901x4)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...
+>>> [WINDOW] 當前所有可見窗口列表（共 16 個）:
+>>> [WINDOW]   - 'QA OSD' (222x160)
+>>> [WINDOW]   - '' (1920x60)
+>>> [WINDOW]   - 'Nx Witness 自動化測試主控台' (1145x924)
+>>> [WINDOW]   - 'camera_actions.py - nxwitness-demo - Cursor [Administrator]' (1938x1158)
+>>> [WINDOW]   - '新增 Microsoft Excel 工作表.xlsx - Excel' (199x34)
+>>> [WINDOW]   - 'Windows 輸入體驗' (1920x1200)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (1901x4)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...
+>>> [WINDOW] 當前所有可見窗口列表（共 16 個）:
+>>> [WINDOW]   - 'QA OSD' (222x160)
+>>> [WINDOW]   - '' (1920x60)
+>>> [WINDOW]   - 'Nx Witness 自動化測試主控台' (1145x924)
+>>> [WINDOW]   - 'camera_actions.py - nxwitness-demo - Cursor [Administrator]' (1938x1158)
+>>> [WINDOW]   - '新增 Microsoft Excel 工作表.xlsx - Excel' (199x34)
+>>> [WINDOW]   - 'Windows 輸入體驗' (1920x1200)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (1901x4)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...
+>>> [WINDOW] 當前所有可見窗口列表（共 16 個）:
+>>> [WINDOW]   - 'QA OSD' (222x160)
+>>> [WINDOW]   - '' (1920x60)
+>>> [WINDOW]   - 'Nx Witness 自動化測試主控台' (1145x924)
+>>> [WINDOW]   - 'camera_actions.py - nxwitness-demo - Cursor [Administrator]' (1938x1158)
+>>> [WINDOW]   - '新增 Microsoft Excel 工作表.xlsx - Excel' (199x34)
+>>> [WINDOW]   - 'Windows 輸入體驗' (1920x1200)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (1901x4)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...
+>>> [WINDOW] 當前所有可見窗口列表（共 16 個）:
+>>> [WINDOW]   - 'QA OSD' (222x160)
+>>> [WINDOW]   - '' (1920x60)
+>>> [WINDOW]   - 'Nx Witness 自動化測試主控台' (1145x924)
+>>> [WINDOW]   - 'camera_actions.py - nxwitness-demo - Cursor [Administrator]' (1938x1158)
+>>> [WINDOW]   - '新增 Microsoft Excel 工作表.xlsx - Excel' (199x34)
+>>> [WINDOW]   - 'Windows 輸入體驗' (1920x1200)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (1901x4)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...
+>>> [WINDOW] 當前所有可見窗口列表（共 16 個）:
+>>> [WINDOW]   - 'QA OSD' (222x160)
+>>> [WINDOW]   - '' (1920x60)
+>>> [WINDOW]   - 'Nx Witness 自動化測試主控台' (1145x924)
+>>> [WINDOW]   - 'camera_actions.py - nxwitness-demo - Cursor [Administrator]' (1938x1158)
+>>> [WINDOW]   - '新增 Microsoft Excel 工作表.xlsx - Excel' (199x34)
+>>> [WINDOW]   - 'Windows 輸入體驗' (1920x1200)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (1901x4)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...
+>>> [WINDOW] 當前所有可見窗口列表（共 16 個）:
+>>> [WINDOW]   - 'QA OSD' (222x160)
+>>> [WINDOW]   - '' (1920x60)
+>>> [WINDOW]   - 'Nx Witness 自動化測試主控台' (1145x924)
+>>> [WINDOW]   - 'camera_actions.py - nxwitness-demo - Cursor [Administrator]' (1938x1158)
+>>> [WINDOW]   - '新增 Microsoft Excel 工作表.xlsx - Excel' (199x34)
+>>> [WINDOW]   - 'Windows 輸入體驗' (1920x1200)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (1901x4)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...
+>>> [WINDOW] 當前所有可見窗口列表（共 16 個）:
+>>> [WINDOW]   - 'QA OSD' (222x160)
+>>> [WINDOW]   - '' (1920x60)
+>>> [WINDOW]   - 'Nx Witness 自動化測試主控台' (1145x924)
+>>> [WINDOW]   - 'camera_actions.py - nxwitness-demo - Cursor [Administrator]' (1938x1158)
+>>> [WINDOW]   - '新增 Microsoft Excel 工作表.xlsx - Excel' (199x34)
+>>> [WINDOW]   - 'Windows 輸入體驗' (1920x1200)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (1901x4)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...
+>>> [WINDOW] 當前所有可見窗口列表（共 16 個）:
+>>> [WINDOW]   - 'QA OSD' (222x160)
+>>> [WINDOW]   - '' (1920x60)
+>>> [WINDOW]   - 'Nx Witness 自動化測試主控台' (1145x924)
+>>> [WINDOW]   - 'camera_actions.py - nxwitness-demo - Cursor [Administrator]' (1938x1158)
+>>> [WINDOW]   - '新增 Microsoft Excel 工作表.xlsx - Excel' (199x34)
+>>> [WINDOW]   - 'Windows 輸入體驗' (1920x1200)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (1901x4)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW] 未找到標準 Nx Witness 視窗，嘗試模糊匹配...
+>>> [WINDOW] 當前所有可見窗口列表（共 16 個）:
+>>> [WINDOW]   - 'QA OSD' (222x160)
+>>> [WINDOW]   - '' (1920x60)
+>>> [WINDOW]   - 'Nx Witness 自動化測試主控台' (1145x924)
+>>> [WINDOW]   - 'camera_actions.py - nxwitness-demo - Cursor [Administrator]' (1938x1158)
+>>> [WINDOW]   - '新增 Microsoft Excel 工作表.xlsx - Excel' (199x34)
+>>> [WINDOW]   - 'Windows 輸入體驗' (1920x1200)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (1901x4)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW]   - '' (0x0)
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+tests/test_runner.py::test_main_flow[\u81ea\u52d5\u767b\u5165\u4f3a\u670d\u5668\u4e26\u5207\u63db\u7e41\u9ad4\u4e2d\u6587-steps0] [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [OK] 軟件已完全啟動（視窗尺寸: 1920x1200）
+>>> [LOGIN] 嘗試點擊伺服器卡片: LAPTOP-QRJN5735
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_login\server_tile.png
+>>> [DEBUG] OK Script 辨識結果: True, 方法: ok_script
+>>> [DEBUG] OK Script 辨識成功，開始驗證座標...
+>>> [DEBUG] 座標驗證通過: 左上角=(274, 713), 中心點=(490, 766)，執行點擊...
+>>> [CLICK_COORD] 實際點擊座標: (490, 766), 動作=單擊
+>>> [CLICK_COORD] 實際點擊座標: (490, 766), 動作=單擊
+[CLICK_COORD] 實際點擊座標: (490, 766), 動作=單擊
+>>> [DEBUG] 點擊執行完成
+>>> [OK] OK_SCRIPT 辨識成功並點擊: server_tile.png (信心: 0.96, 耗時: 221.9ms)
+>>> [STAT] [座標庫] 比例座標: x_ratio=0.2552, y_ratio=0.6383 | 視窗尺寸: 1920x1200 | 絕對座標: (490, 766)
+>>> [DEBUG] 點擊結果: True
+>>> [VERIFY] 驗證點擊結果...
+>>> [OK] 未檢測到連接服務器對話框，確認成功點擊了伺服器卡片
+>>> [OK] 等待系統載入...
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+>>> [OK] 找到主畫面視窗，繼續驗證...
+[WINDOW] ✅ 視窗已強制置頂
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [OK] 找到目標視窗: Nx Witness Client (1920x1200)
+>>> [OK] 驗證成功：找到預期元素 desktop_main/server_icon.png
+>>> [OK] 登錄驗證成功：找到主畫面圖示
+>>> [OK] 登錄驗證成功：已進入主畫面
+>>> [CFG] 修改語系為: 繁體中文
+>>> [MAIN_PAGE] [CLICK] Clicking top-left menu icon...
+>>> [MAIN_PAGE] [PARAM] Parameters: image='desktop_main/menu_icon.png', timeout=3s
+>>> [SMART_CLICK] [START] Finding target: text='None', image='desktop_main/menu_icon.png', timeout=3s
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/menu_icon.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_main\menu_icon.png
+>>> [OPENCV] [COORD] Image: menu_icon.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (48, 37)
+>>> [OPENCV] [COORD] Image: menu_icon.png
+>>> [OPENCV] [COORD] Template size: (48, 37)
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Match found: confidence=1.0000
+>>> [OPENCV] [COORD] Absolute screen position (top_left): (0, 0)
+>>> [OPENCV] [COORD] Bounding box: left=0, top=0, right=48, bottom=37
+>>> [OPENCV] [COORD] Time: 191.5ms
+>>> [DEBUG] OK Script 辨識結果: True, 方法: ok_script
+>>> [DEBUG] OK Script 辨識成功，開始驗證座標...
+>>> [DEBUG] 座標驗證通過: 左上角=(0, 0), 中心點=(24, 18)，執行點擊...
+>>> [CLICK_COORD] 實際點擊座標: (24, 18), 動作=單擊
+>>> [CLICK_COORD] 實際點擊座標: (24, 18), 動作=單擊
+[CLICK_COORD] 實際點擊座標: (24, 18), 動作=單擊
+>>> [DEBUG] 點擊執行完成
+>>> [OK] OK_SCRIPT 辨識成功並點擊: menu_icon.png (信心: 1.00, 耗時: 191.5ms)
+>>> [STAT] [座標庫] 比例座標: x_ratio=0.0125, y_ratio=0.0150 | 視窗尺寸: 1920x1200 | 絕對座標: (24, 18)
+>>> [SMART_CLICK] [IMG] Success.
+>>> [MAIN_PAGE] [SUCCESS] Main menu opened successfully
+>>> [DEBUG] 準備點擊本地設置...
+>>> [MAIN_PAGE] [CLICK] Clicking 'Local Settings'...
+>>> [MAIN_PAGE] [PARAM] Parameters: image='desktop_main/local_settings.png', text='本地设置' (with fallbacks), region=(0, 0, 500, 800), timeout=5s, use_vlm=False (image-first)
+>>> [MAIN_PAGE] [CALL] Calling smart_click with image='desktop_main/local_settings.png', text='本地设置' (fallback: ['本地設置', '本機設定', 'Local Settings'])...
+>>> [MAIN_PAGE] [STRATEGY] Using image-first strategy (use_vlm=False)
+>>> [SMART_CLICK] [START] Finding target: text='本地设置', image='desktop_main/local_settings.png', timeout=5s
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] win32gui 置頂失敗: (1400, 'SetForegroundWindow', '無效的視窗控制代碼。')
+[WINDOW] ✅ 視窗已激活（pygetwindow）
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/local_settings.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_main\local_settings.png
+>>> [OPENCV] [COORD] Image: local_settings.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=500, height=800
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (99, 32)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+[33mChecking connectivity to the model hosters, this may take a while. To bypass this check, set `DISABLE_MODEL_SOURCE_CHECK` to `True`.[0m
+>>> [WARN] OCR 引擎初始化失敗: No module named 'paddle'
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/local_settings.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_main\local_settings.png
+>>> [OPENCV] [COORD] Image: local_settings.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=500, height=800
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (99, 32)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/local_settings.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_main\local_settings.png
+>>> [OPENCV] [COORD] Image: local_settings.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=500, height=800
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (99, 32)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/local_settings.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_main\local_settings.png
+[WINDOW] ✅ 視窗已強制置頂
+>>> [OPENCV] [COORD] Image: local_settings.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=500, height=800
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (99, 32)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/local_settings.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_main\local_settings.png
+>>> [OPENCV] [COORD] Image: local_settings.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=500, height=800
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (99, 32)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/local_settings.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_main\local_settings.png
+>>> [OPENCV] [COORD] Image: local_settings.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=500, height=800
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (99, 32)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (5s), attempted strategies: 6
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Image Recognition (OK Script: desktop_main/local_settings.png), Image Recognition (OK Script: desktop_main/local_settings.png), Image Recognition (OK Script: desktop_main/local_settings.png), Image Recognition (OK Script: desktop_main/local_settings.png), Image Recognition (OK Script: desktop_main/local_settings.png), Image Recognition (OK Script: desktop_main/local_settings.png)
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.100, 0.320)...
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [CLICK_COORD] 實際點擊座標: (192, 384), 動作=單擊
+>>> [CLICK_COORD] 實際點擊座標: (192, 384), 動作=單擊
+[CLICK_COORD] 實際點擊座標: (192, 384), 動作=單擊
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (192, 384)
+>>> [MAIN_PAGE] [RESULT] smart_click returned: True
+>>> [MAIN_PAGE] [SUCCESS] Click operation succeeded, waiting for settings window to open...
+>>> [OK] 視窗已出現並完全初始化: Nx Witness Client (1920x1200)
+>>> [MAIN_PAGE] [SUCCESS] Settings window opened: 'Nx Witness Client'
+>>> [DEBUG] select_local_settings 返回: True
+>>> [DEBUG] 本地設置點擊成功，等待視窗載入...
+>>> [DEBUG] 準備切換到外觀分頁...
+>>> [CLICK] 點擊「外觀」分頁...
+>>> [SMART_CLICK] [START] Finding target: text='界面外观', image='desktop_settings/appearance_tab.png', timeout=3.0s
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/appearance_tab.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\appearance_tab.png
+>>> [OPENCV] [COORD] Image: appearance_tab.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (79, 32)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WARN] OCR 引擎初始化失敗: No module named 'paddle'
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/appearance_tab.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\appearance_tab.png
+>>> [OPENCV] [COORD] Image: appearance_tab.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (79, 32)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/appearance_tab.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\appearance_tab.png
+>>> [OPENCV] [COORD] Image: appearance_tab.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (79, 32)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/appearance_tab.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\appearance_tab.png
+>>> [OPENCV] [COORD] Image: appearance_tab.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (79, 32)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/appearance_tab.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\appearance_tab.png
+>>> [OPENCV] [COORD] Image: appearance_tab.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (79, 32)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/appearance_tab.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\appearance_tab.png
+>>> [OPENCV] [COORD] Image: appearance_tab.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (79, 32)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (3.0s), attempted strategies: 6
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Image Recognition (OK Script: desktop_settings/appearance_tab.png), Image Recognition (OK Script: desktop_settings/appearance_tab.png), Image Recognition (OK Script: desktop_settings/appearance_tab.png), Image Recognition (OK Script: desktop_settings/appearance_tab.png), Image Recognition (OK Script: desktop_settings/appearance_tab.png), Image Recognition (OK Script: desktop_settings/appearance_tab.png)
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.169, 0.072)...
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [CLICK_COORD] 實際點擊座標: (323, 86), 動作=單擊
+>>> [CLICK_COORD] 實際點擊座標: (323, 86), 動作=單擊
+[CLICK_COORD] 實際點擊座標: (323, 86), 動作=單擊
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (323, 86)
+>>> [OK] 成功點擊外觀分頁
+>>> [CLICK] 修改語言為: 繁體中文
+>>> [CLICK] 點擊語言下拉選單...
+>>> [SMART_CLICK] [START] Finding target: text='None', image='desktop_settings/language_dropdown.png', timeout=1.5s
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/language_dropdown.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\language_dropdown.png
+>>> [OPENCV] [COORD] Image: language_dropdown.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (536, 33)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/language_dropdown.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\language_dropdown.png
+>>> [OPENCV] [COORD] Image: language_dropdown.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (536, 33)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/language_dropdown.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\language_dropdown.png
+>>> [OPENCV] [COORD] Image: language_dropdown.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (536, 33)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (1.5s), attempted strategies: 3
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Image Recognition (OK Script: desktop_settings/language_dropdown.png), Image Recognition (OK Script: desktop_settings/language_dropdown.png), Image Recognition (OK Script: desktop_settings/language_dropdown.png)
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.579, 0.194)...
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [CLICK_COORD] 實際點擊座標: (1112, 232), 動作=單擊
+>>> [CLICK_COORD] 實際點擊座標: (1112, 232), 動作=單擊
+[CLICK_COORD] 實際點擊座標: (1112, 232), 動作=單擊
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (1112, 232)
+>>> [OK] 成功點擊語言下拉選單
+>>> [CLICK] 選擇語言: 繁體中文
+>>> [語言選擇] 嘗試圖片辨識：traditional_chinese.png
+>>> [SMART_CLICK] [START] Finding target: text='None', image='desktop_settings/traditional_chinese.png', timeout=2s
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/traditional_chinese.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\traditional_chinese.png
+>>> [OPENCV] [COORD] Image: traditional_chinese.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (112, 31)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/traditional_chinese.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\traditional_chinese.png
+>>> [OPENCV] [COORD] Image: traditional_chinese.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (112, 31)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/traditional_chinese.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\traditional_chinese.png
+>>> [OPENCV] [COORD] Image: traditional_chinese.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (112, 31)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/traditional_chinese.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\traditional_chinese.png
+>>> [OPENCV] [COORD] Image: traditional_chinese.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (112, 31)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (2s), attempted strategies: 4
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Image Recognition (OK Script: desktop_settings/traditional_chinese.png), Image Recognition (OK Script: desktop_settings/traditional_chinese.png), Image Recognition (OK Script: desktop_settings/traditional_chinese.png), Image Recognition (OK Script: desktop_settings/traditional_chinese.png)
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.000, 40.000)...
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+>>> [CLICK_COORD] 實際點擊座標: (1112, 272), 動作=單擊
+>>> [CLICK_COORD] 實際點擊座標: (1112, 272), 動作=單擊
+[CLICK_COORD] 實際點擊座標: (1112, 272), 動作=單擊
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (1112, 272)
+>>> [OK] 成功選擇 繁體中文
+>>> [CLICK] 點擊套用按鈕...
+>>> [SMART_CLICK] [START] Finding target: text='None', image='desktop_settings/apply_btn.png', timeout=1.5s
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/apply_btn.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\apply_btn.png
+>>> [OPENCV] [COORD] Image: apply_btn.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (94, 37)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/apply_btn.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\apply_btn.png
+>>> [OPENCV] [COORD] Image: apply_btn.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (94, 37)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/apply_btn.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\apply_btn.png
+>>> [OPENCV] [COORD] Image: apply_btn.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (94, 37)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (1.5s), attempted strategies: 3
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Image Recognition (OK Script: desktop_settings/apply_btn.png), Image Recognition (OK Script: desktop_settings/apply_btn.png), Image Recognition (OK Script: desktop_settings/apply_btn.png)
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.735, 0.945)...
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [CLICK_COORD] 實際點擊座標: (1411, 1133), 動作=單擊
+>>> [CLICK_COORD] 實際點擊座標: (1411, 1133), 動作=單擊
+[CLICK_COORD] 實際點擊座標: (1411, 1133), 動作=單擊
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (1411, 1133)
+>>> [WAIT] 等待重啟彈窗...
+>>> [CLICK] 點擊「立即重新啟動」按鈕...
+>>> [SMART_CLICK] [START] Finding target: text='None', image='desktop_settings/restart_now.png', timeout=1.5s
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/restart_now.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\restart_now.png
+>>> [OPENCV] [COORD] Image: restart_now.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (141, 39)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/restart_now.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\restart_now.png
+>>> [OPENCV] [COORD] Image: restart_now.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (141, 39)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/restart_now.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\restart_now.png
+>>> [OPENCV] [COORD] Image: restart_now.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (141, 39)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (1.5s), attempted strategies: 3
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Image Recognition (OK Script: desktop_settings/restart_now.png), Image Recognition (OK Script: desktop_settings/restart_now.png), Image Recognition (OK Script: desktop_settings/restart_now.png)
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.550, 0.580)...
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+[WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [CLICK_COORD] 實際點擊座標: (1056, 696), 動作=單擊
+>>> [CLICK_COORD] 實際點擊座標: (1056, 696), 動作=單擊
+[CLICK_COORD] 實際點擊座標: (1056, 696), 動作=單擊
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (1056, 696)
+>>> [OK] 成功點擊立即重新啟動
+>>> [OK] 語系切換流程完成
+
+============================================================
+[STATS] Image Recognition Statistics Report
+============================================================
+Total Attempts: 2378
+
+[Hit Rate]
+  OK Script/OpenCV: 739/2378 (31.1%)
+  VLM (LLM Vision): 114/2378 (4.8%)
+  pyautogui:        9/2378 (0.4%)
+  OCR:              0/2378 (0.0%)
+  Coordinate:       340/2378 (14.3%)
+
+[Average Recognition Time]
+  OK Script/OpenCV: 232.29 ms
+  VLM (LLM Vision): 3420.60 ms
+  pyautogui:        87.29 ms
+
+[Per-Image Statistics]
+  appearance_tab.png:
+    Attempts: 28, OK Script: 15 (54%), pyautogui: 0 (0%)
+  apply_btn.png:
+    Attempts: 51, OK Script: 36 (71%), pyautogui: 0 (0%)
+  calendar_header.png:
+    Attempts: 7, OK Script: 7 (100%), pyautogui: 0 (0%)
+  camera_settings_menu.png:
+    Attempts: 151, OK Script: 51 (34%), pyautogui: 1 (1%)
+  language_dropdown.png:
+    Attempts: 34, OK Script: 15 (44%), pyautogui: 0 (0%)
+  license_tab.png:
+    Attempts: 9, OK Script: 0 (0%), pyautogui: 0 (0%)
+  local_settings.png:
+    Attempts: 92, OK Script: 24 (26%), pyautogui: 0 (0%)
+  login_indicator.png:
+    Attempts: 309, OK Script: 0 (0%), pyautogui: 0 (0%)
+  menu_icon.png:
+    Attempts: 24, OK Script: 24 (100%), pyautogui: 0 (0%)
+  ok_btn.png:
+    Attempts: 47, OK Script: 47 (100%), pyautogui: 0 (0%)
+  radio_n.png:
+    Attempts: 35, OK Script: 35 (100%), pyautogui: 0 (0%)
+  recording_tab.png:
+    Attempts: 62, OK Script: 46 (74%), pyautogui: 0 (0%)
+  restart_now.png:
+    Attempts: 29, OK Script: 17 (59%), pyautogui: 0 (0%)
+  schedule_grid_All.png:
+============================================================
+
+================================================================================
+[系統] ✅ Playwright 瀏覽器已保留（供 Case 2-2 使用）
+[系統] 💡 使用類別屬性保持瀏覽器運行（比照 Selenium）
+[系統] 💡 Case 2-2 可以通過 Attach 模式連接
+================================================================================
+[系統] 💡 瀏覽器將保持運行直到程序結束
+================================================================================
+[REPORT] 從環境變數獲取 Terminal log: D:\nxwitness-demo\report\自動登入伺服器並切換繁體中文\2026-02-03_02-32-02\terminal_output.log
+[REPORT] Terminal log 文件存在，大小: 42909 bytes
+[REPORT] 開始生成報告，log_file_path: D:\nxwitness-demo\report\自動登入伺服器並切換繁體中文\2026-02-03_02-32-02\terminal_output.log
+[REPORT] 清理了 0 個 NULL 字節
+[REPORT] Terminal log 已複製到報告目錄: D:\nxwitness-demo\report\自動登入伺服器並切換繁體中文\2026-02-03_02-32-02\terminal_output.log (44334 bytes)
+
+================================================================================
+[REPORT] 測試報告已生成！
+[REPORT] 報告路徑: D:/nxwitness-demo/report/自動登入伺服器並切換繁體中文/2026-02-03_02-32-02/report.html
+[REPORT] 您可以直接在瀏覽器中打開此文件查看詳細報告
+================================================================================
+
+FAILED
+
+================================== FAILURES ===================================
+_ test_main_flow[\u81ea\u52d5\u767b\u5165\u4f3a\u670d\u5668\u4e26\u5207\u63db\u7e41\u9ad4\u4e2d\u6587-steps0] _
+tests\test_runner.py:424: in test_main_flow
+    pytest.fail(fail_msg)
+E   Failed: 測試執行失敗，請查看測試報告了解詳情
+E   報告位置: D:\nxwitness-demo\report\自動登入伺服器並切換繁體中文\2026-02-03_02-32-02\report.html
+============================== warnings summary ===============================
+tests/test_runner.py::test_main_flow[\u81ea\u52d5\u767b\u5165\u4f3a\u670d\u5668\u4e26\u5207\u63db\u7e41\u9ad4\u4e2d\u6587-steps0]
+tests/test_runner.py::test_main_flow[\u81ea\u52d5\u767b\u5165\u4f3a\u670d\u5668\u4e26\u5207\u63db\u7e41\u9ad4\u4e2d\u6587-steps0]
+  D:\nxwitness-demo\base\desktop_app.py:173: DeprecationWarning: The parameter `use_angle_cls` has been deprecated and will be removed in the future. Please use `use_textline_orientation` instead.
+    self._ocr_engine = PaddleOCR(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_runner.py::test_main_flow[\u81ea\u52d5\u767b\u5165\u4f3a\u670d\u5668\u4e26\u5207\u63db\u7e41\u9ad4\u4e2d\u6587-steps0]
+======================= 1 failed, 2 warnings in 44.93s ========================

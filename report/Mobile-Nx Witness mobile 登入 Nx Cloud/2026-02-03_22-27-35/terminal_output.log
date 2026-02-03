@@ -1,0 +1,38 @@
+================================================================================
+測試案例: Mobile-Nx Witness mobile 登入 Nx Cloud
+執行時間: 2026-02-03 22:25:52
+執行命令: C:\Python314\python.exe -u -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name Mobile-Nx Witness mobile 登入 Nx Cloud -v -s --tb=short
+工作目錄: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+tests/test_runner.py::test_main_flow[Mobile-Nx Witness mobile \u767b\u5165 Nx Cloud-steps0] 
+[系統] [時間戳: 22:25:53] 偵測到移動端測試需求
+[系統] 使用 ADB 方式執行（繞過 Appium/UiAutomator2）
+>>> [ADB_TOOLKIT] 初始化 ADB 控制器，設備: 自動選擇
+[系統] [OK] ADB 設備連接正常
+>>> [CASE_4-1] ==================================================
+>>> [CASE_4-1] 開始執行登錄流程
+>>> [CASE_4-1] ==================================================
+>>> [ADB_TOOLKIT] 初始化 ADB 控制器，設備: 自動選擇
+>>> [ADB_TOOLKIT] 螢幕尺寸: 1080 x 2400
+>>> [CASE_4-1] 螢幕尺寸: 1080 x 2400
+>>> [CASE_4-1] 使用帳號: fanzhenglun2@gmail.com
+>>> [CASE_4-1] 步驟 1: 檢測頁面狀態...
+>>> [ADB_LOGIN] 截圖失敗: Command '['adb', 'shell', 'screencap', '-p', '/sdcard/screenshot.png']' timed out after 30 seconds
+>>> [ADB_LOGIN] 無法讀取圖片 D:\nxwitness-demo\report\Mobile-Nx Witness mobile 登入 Nx Cloud\2026-02-03_22-25-52\screenshots\step_001_detect_state.png: [Errno 2] No such file or directory: 'D:\\nxwitness-demo\\report\\Mobile-Nx Witness mobile 登入 Nx Cloud\\2026-02-03_22-25-52\\screenshots\\step_001_detect_state.png'
+>>> [ADB_LOGIN] 無法讀取圖片: D:\nxwitness-demo\report\Mobile-Nx Witness mobile 登入 Nx Cloud\2026-02-03_22-25-52\screenshots\step_001_detect_state.png
+>>> [ADB_LOGIN] 無法讀取圖片 D:\nxwitness-demo\report\Mobile-Nx Witness mobile 登入 Nx Cloud\2026-02-03_22-25-52\screenshots\step_001_detect_state.png: [Errno 2] No such file or directory: 'D:\\nxwitness-demo\\report\\Mobile-Nx Witness mobile 登入 Nx Cloud\\2026-02-03_22-25-52\\screenshots\\step_001_detect_state.png'
+>>> [ADB_LOGIN] 無法讀取圖片: D:\nxwitness-demo\report\Mobile-Nx Witness mobile 登入 Nx Cloud\2026-02-03_22-25-52\screenshots\step_001_detect_state.png
+>>> [CASE_4-1]   當前頁面狀態: unknown
+>>> [CASE_4-1] 步驟 2: 進入登錄流程...
+>>> [CASE_4-1]   未找到 Log In 按鈕，點擊人像圖標: (108, 168)
+>>> [ADB_TOOLKIT] 點擊座標: (108, 168)
+>>> [CASE_4-1]   已點擊 左上角人像圖標 (108, 168)
+>>> [CASE_4-1]   等待頁面內容加載...

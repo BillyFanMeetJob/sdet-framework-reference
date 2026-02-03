@@ -618,63 +618,73 @@ class NxPocActions(BaseAction):
         
         self.logger.info("✅ USB 攝影機自動偵測已啟用")
         
-        # 步驟 5: 雙擊 Server 項目，展開攝影機列表
+        # 步驟 5: 等待 USB 攝影機新增完成，然後展開列表
+        # 新增攝影機需要幾秒鐘，完成後可能直接顯示 usb_cam，或需要點擊 Server 才會展開
         self.logger.info("⏳ 等待設定生效並偵測 USB 攝影機...")
-        time.sleep(3)  # 等待設定生效和系統偵測 USB 攝影機（增加到 3 秒）
         
-        if not self.server_settings_page.double_click_server_icon():
-            if reporter:
-                reporter.add_step(
-                    step_no=step_no,
-                    step_name="雙擊 Server 圖示展開列表",
-                    status="fail",
-                    message="雙擊 Server 圖示失敗",
-                    verification_items=[self.server_settings_page.create_verification_item("Server 圖示")]
-                )
-            self.logger.error("[ERROR] 雙擊 Server 圖示失敗")
-            return self
+        camera_name = kwargs.get("camera_name", "usb_cam")
+        max_attempts = 8  # 最多嘗試 8 次
+        camera_found = False
+        expanded_server = False
+        need_expand = True  # 是否需要展開 Server（首次或找不到時才展開）
         
+        for attempt in range(max_attempts):
+            self.logger.info(f"⏳ 第 {attempt + 1}/{max_attempts} 次嘗試尋找 USB 攝影機...")
+            
+            # 先等待 2 秒，讓系統有時間偵測
+            time.sleep(2)
+            
+            # 嘗試找 usb_cam
+            if self.server_settings_page.find_usb_camera(camera_name):
+                self.logger.info(f"✅ 找到 USB 攝影機，準備雙擊...")
+                # 找到了，執行雙擊（使用圖片辨識，不用保底坐標）
+                if self.server_settings_page.double_click_usb_camera_strict(camera_name):
+                    camera_found = True
+                    self.logger.info(f"✅ 成功雙擊 USB 攝影機")
+                    break
+                else:
+                    # 找到但點擊失敗，可能是圖片匹配不精確，繼續重試找
+                    self.logger.warning(f"⚠️ 找到攝影機但雙擊失敗，繼續重試...")
+                    need_expand = False  # 已經找到過，不需要再展開
+                    continue
+            
+            # 沒找到 usb_cam
+            if need_expand:
+                # 嘗試雙擊 Server 展開列表
+                self.logger.info(f"⚠️ 未找到攝影機，嘗試雙擊 Server 展開列表...")
+                if self.server_settings_page.double_click_server_icon():
+                    expanded_server = True
+                    need_expand = False  # 已展開，下次不再展開
+                    # 等待列表展開動畫
+                    time.sleep(1.0)
+            else:
+                self.logger.debug(f"⚠️ 攝影機尚未出現或匹配失敗，繼續等待...")
+        
+        # 報告步驟 5: 展開列表
         if reporter:
             reporter.add_step(
                 step_no=step_no,
-                step_name="雙擊 Server 圖示展開列表",
-                status="pass",
-                message="成功雙擊 Server 圖示，展開攝影機列表",
+                step_name="展開攝影機列表",
+                status="pass" if expanded_server or camera_found else "warning",
+                message="已嘗試展開攝影機列表" if expanded_server else "攝影機可能已自動展開",
                 verification_items=[self.server_settings_page.create_verification_item("Server 圖示")]
             )
         step_no += 1
         
-        # 步驟 6: 智能等待 USB 攝影機出現（最多 10 秒）
-        camera_name = kwargs.get("camera_name", "usb_cam")
-        self.logger.info(f"⏳ 等待 USB 攝影機「{camera_name}」出現在列表中...")
-        
-        max_wait = 10  # 最多等待 10 秒
-        wait_interval = 1  # 每秒檢查一次
-        camera_found = False
-        
-        for attempt in range(max_wait):
-            # 嘗試雙擊 USB 攝影機
-            if self.server_settings_page.double_click_usb_camera(camera_name):
-                camera_found = True
-                self.logger.info(f"✅ Case 1-2 完成：已開啟攝影機 {camera_name}")
-                break
-            
-            # 如果還沒找到，等待後重試
-            if attempt < max_wait - 1:
-                self.logger.debug(f"⏳ 第 {attempt + 1} 次嘗試，攝影機尚未出現，等待 {wait_interval} 秒後重試...")
-                time.sleep(wait_interval)
-        
+        # 報告步驟 6: 雙擊 USB 攝影機
         if reporter:
             reporter.add_step(
                 step_no=step_no,
                 step_name="雙擊 USB 攝影機",
                 status="pass" if camera_found else "fail",
-                message=f"{'成功找到並雙擊 USB 攝影機' if camera_found else f'等待 {max_wait} 秒後仍未找到攝影機'}",
+                message=f"{'成功找到並雙擊 USB 攝影機' if camera_found else '未找到攝影機（僅使用圖片辨識，未使用保底坐標）'}",
                 verification_items=[self.server_settings_page.create_verification_item(f"USB 攝影機 ({camera_name})")]
             )
         
-        if not camera_found:
-            self.logger.warning(f"⚠️ 等待 {max_wait} 秒後，仍未找到攝影機 {camera_name}")
+        if camera_found:
+            self.logger.info(f"✅ Case 1-2 完成：已開啟攝影機 {camera_name}")
+        else:
+            self.logger.warning(f"⚠️ 嘗試 {max_attempts} 次後，仍未找到攝影機 {camera_name}（未使用保底坐標點擊）")
         
         return self
     
@@ -1408,24 +1418,54 @@ class NxPocActions(BaseAction):
         """
         self.logger.info("[CASE_2-2] 執行 Case 2-2: 調閱一個錄影事件回放")
         
-        # 1. 初始化 Page Object (如果還沒有)
-        if not self.nx_cloud_web_page:
-            from pages.web.nx_cloud_web_page import NxCloudWebPage
-            self.nx_cloud_web_page = NxCloudWebPage()
-            self.logger.info("[CASE_2-2] 已初始化 NxCloudWebPage")
+        try:
+            # 1. 初始化 Page Object (如果還沒有)
+            if not self.nx_cloud_web_page:
+                self.logger.info("[CASE_2-2] 開始初始化 NxCloudWebPage...")
+                from pages.web.nx_cloud_web_page import NxCloudWebPage
+                self.nx_cloud_web_page = NxCloudWebPage()
+                self.logger.info("[CASE_2-2] 已初始化 NxCloudWebPage")
+            else:
+                self.logger.info("[CASE_2-2] NxCloudWebPage 已存在，跳過初始化")
+            
+            # 在開始連線前等待 2 秒，給系統時間釋放 Socket 資源
+            self.logger.info("[CASE_2-2] 等待 2 秒，讓系統釋放 Socket 資源...")
+            time.sleep(2)
+            self.logger.info("[CASE_2-2] 等待完成，開始連線操作")
+        except Exception as e:
+            self.logger.error(f"[CASE_2-2] [ERROR] 初始化或等待階段發生異常: {e}")
+            import traceback
+            self.logger.error(f"[CASE_2-2] [ERROR] 錯誤詳情: {traceback.format_exc()}")
+            raise
         
         # 2. 檢查 Driver 是否活著，如果死了就「重新連接」
-        # 利用 Remote Debugging Port (9222) 的優勢：只要 Chrome 還開著，隨時都能連回去
-        if not self.nx_cloud_web_page.driver:
-            self.logger.info("[CASE_2-2] Driver 未連接，嘗試重新連接到現有的 Debug Chrome (Port 9222)...")
+        # 利用 Remote Debugging Port (9223) 的優勢：只要 Chrome 還開著，隨時都能連回去
+        try:
+            driver_exists = False
+            try:
+                driver_exists = self.nx_cloud_web_page.driver is not None
+                self.logger.info(f"[CASE_2-2] Driver 狀態檢查: {'已連接' if driver_exists else '未連接'}")
+            except Exception as e:
+                self.logger.warning(f"[CASE_2-2] 檢查 driver 時發生異常: {e}，將嘗試重新連接")
+                driver_exists = False
             
-            success = self.nx_cloud_web_page.attach_to_debug_chrome(port=9222)
-            
-            if not success:
-                self.logger.error("[CASE_2-2] ❌ 重新連接失敗！請確認 Chrome (Port 9222) 是否已開啟。")
-                raise AssertionError("[ERROR] WebDriver 重新連接失敗，請確認 Chrome (Port 9222) 是否已開啟")
-            else:
-                self.logger.info("[CASE_2-2] ✅ 重新連接成功！繼續執行測試。")
+            if not driver_exists:
+                self.logger.info("[CASE_2-2] Driver 未連接，嘗試重新連接到現有的 Debug Chrome (Port 9223)...")
+                
+                success = self.nx_cloud_web_page.attach_to_debug_chrome(port=9223)
+                
+                if not success:
+                    self.logger.error("[CASE_2-2] ❌ 重新連接失敗！請確認 Chrome (Port 9223) 是否已開啟。")
+                    raise AssertionError("[ERROR] WebDriver 重新連接失敗，請確認 Chrome (Port 9223) 是否已開啟")
+                else:
+                    self.logger.info("[CASE_2-2] ✅ 重新連接成功！繼續執行測試。")
+        except AssertionError:
+            raise
+        except Exception as e:
+            self.logger.error(f"[CASE_2-2] [ERROR] 連接 Driver 時發生異常: {e}")
+            import traceback
+            self.logger.error(f"[CASE_2-2] [ERROR] 錯誤詳情: {traceback.format_exc()}")
+            raise
         
         # 3. 確保現在是在正確的頁面（記錄當前 URL）
         try:
@@ -1478,6 +1518,12 @@ class NxPocActions(BaseAction):
                     verification_items=verification_items
                 )
             step_no += 1
+            
+            # 等待頁面完全加載（在查詢操作前）
+            wait_before_query = 3  # 等待 3 秒，確保頁面完全加載
+            self.logger.info(f"[CASE_2-2] 等待 {wait_before_query} 秒，確保頁面完全加載後再進行查詢操作...")
+            time.sleep(wait_before_query)
+            self.logger.info(f"[CASE_2-2] [OK] 等待完成，開始查詢操作")
             
             # 步驟 2: 點擊 server
             self.logger.info(f"[CASE_2-2] 步驟 {step_no}: 點擊 server...")

@@ -1,0 +1,28 @@
+================================================================================
+測試案例: 回放錄影事件後停止
+執行時間: 2026-02-03 02:33:14
+執行命令: C:\Python314\python.exe -u -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name 回放錄影事件後停止 -v -s --tb=short
+工作目錄: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+>>> [DEBUG] 檢查登錄狀態（目標伺服器: LAPTOP-QRJN5735）
+>>> [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+tests/test_runner.py::test_main_flow[\u56de\u653e\u9304\u5f71\u4e8b\u4ef6\u5f8c\u505c\u6b62-steps0] [WINDOW] 🔝 將視窗置頂: Nx Witness Client
+>>> [WINDOW] [OK] 視窗已強制置頂（win32gui）
+[WINDOW] ✅ 視窗已強制置頂
+>>> [OK] 驗證成功：找到預期元素 desktop_main/server_icon.png
+>>> [OK] 已在主畫面，無需重新登錄
+>>> [RECORDING] 執行 Case 2-2: 調閱錄影事件回放
+>>> [RECORDING] 委託 CloudActions 執行...
+>>> [CASE_2-2] 執行 Case 2-2: 調閱一個錄影事件回放
+============================================================
+[CASE_2-2] 開始執行（使用 Selenium + Nx Cloud OAuth）
+============================================================
+[CASE_2-2] 步驟 1: 啟動 Chrome 並初始化 WebDriver...

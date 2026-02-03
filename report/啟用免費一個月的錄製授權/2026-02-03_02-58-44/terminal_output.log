@@ -1,0 +1,151 @@
+================================================================================
+測試案例: 啟用免費一個月的錄製授權
+執行時間: 2026-02-03 02:58:44
+執行命令: C:\Python314\python.exe -u -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name 啟用免費一個月的錄製授權 -v -s --tb=short
+工作目錄: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+>>> [DEBUG] 檢查登錄狀態（目標伺服器: LAPTOP-QRJN5735）
+>>> [OK] 驗證成功：找到預期元素 desktop_main/server_icon.png
+>>> [OK] 已在主畫面，無需重新登錄
+>>> [CASE] 執行 Case 1-3: 啟用免費錄製授權
+>>> [CLICK] 在 LAPTOP 上右鍵開啟站點管理...
+>>> [SMART_CLICK] [START] Finding target: text='LAPTOP', image='None', timeout=3s
+>>> [SMART_CLICK] [TEXT] Trying Text Strategy: 'LAPTOP' (Priority: VLM)...
+>>> [DEBUG] _try_vlm_recognition 被調用: target_text='LAPTOP', region=(0, 0, 1920, 1200)
+>>> [DEBUG] VLM 啟用狀態: True
+>>> [DEBUG] 初始化 UnifiedVLM 引擎（Ollama + Gemini 備援）
+>>> [VLM_ENGINE] 初始化完成 - Ollama: llama3.2-vision, 閾值: 15.0px, 特徵進化: True
+>>> [OK] UnifiedVLM 引擎初始化成功
+>>> [DEBUG] 功能: Ollama (主) + Gemini (備援) + 描述校正 + 特徵進化
+>>> [DEBUG] Ollama 可用，已安裝模型: ["model='llava:latest' modified_at=datetime.datetime(2026, 1, 17, 17, 11, 23, 171732, tzinfo=TzInfo(28800)) digest='8dd30f6b0cb19f555f2c7a7ebda861449ea2cc76bf1f44e262931f45fc81d081' size=4733363377 details=ModelDetails(parent_model='', format='gguf', family='llama', families=['llama', 'clip'], parameter_size='7B', quantization_level='Q4_0')"]
+>>> [DEBUG] _get_vlm_engine() 返回: <toolkit.vlm_engine.UnifiedVLM object at 0x0000018AA77527B0> (類型: <class 'toolkit.vlm_engine.UnifiedVLM'>)
+>>> [VLM] 正在使用 UnifiedVLM 搜尋元素: 'LAPTOP'
+>>> [VLM] 截圖已保存: C:\Users\usert\AppData\Local\Temp\vlm_search_20260203_025845.png
+>>> [VLM_ENGINE] 開始識別元素: LAPTOP
+>>> [VLM_ENGINE] Ollama 請求失敗: 404 Client Error: Not Found for url: http://localhost:11434/api/generate
+>>> [VLM_ENGINE] 所有 VLM 策略失敗: LAPTOP
+>>> [VLM] UnifiedVLM 未找到元素: 'LAPTOP'
+>>> [SMART_CLICK] [TEXT] Failed.
+tests/test_runner.py::test_main_flow[\u555f\u7528\u514d\u8cbb\u4e00\u500b\u6708\u7684\u9304\u88fd\u6388\u6b0a-steps0] [33mChecking connectivity to the model hosters, this may take a while. To bypass this check, set `DISABLE_MODEL_SOURCE_CHECK` to `True`.[0m
+>>> [WARN] OCR 引擎初始化失敗: No module named 'paddle'
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (3s), attempted strategies: 1
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Text/VLM Recognition ('LAPTOP')
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.080, 0.100)...
+>>> [CLICK_COORD] 實際點擊座標: (153, 120), 動作=右鍵
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (153, 120)
+>>> [SMART_CLICK] [START] Finding target: text='站點管理', image='desktop_settings/system_admin_menu.png', timeout=3s
+>>> [SMART_CLICK] [TEXT] Trying Text Strategy: '站點管理' (Priority: VLM)...
+>>> [DEBUG] _try_vlm_recognition 被調用: target_text='站點管理', region=(0, 0, 1920, 1200)
+>>> [DEBUG] _get_vlm_engine() 返回: <toolkit.vlm_engine.UnifiedVLM object at 0x0000018AA77527B0> (類型: <class 'toolkit.vlm_engine.UnifiedVLM'>)
+>>> [VLM] 正在使用 UnifiedVLM 搜尋元素: '站點管理'
+>>> [VLM] 截圖已保存: C:\Users\usert\AppData\Local\Temp\vlm_search_20260203_025851.png
+>>> [VLM_ENGINE] 開始識別元素: 站點管理
+>>> [VLM_ENGINE] Ollama 請求失敗: 404 Client Error: Not Found for url: http://localhost:11434/api/generate
+>>> [VLM_ENGINE] 所有 VLM 策略失敗: 站點管理
+>>> [VLM] UnifiedVLM 未找到元素: '站點管理'
+>>> [SMART_CLICK] [TEXT] Failed.
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/system_admin_menu.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\system_admin_menu.png
+>>> [OPENCV] [COORD] Image: system_admin_menu.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (253, 98)
+>>> [OPENCV] [COORD] Image: system_admin_menu.png
+>>> [OPENCV] [COORD] Template size: (253, 98)
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Match found: confidence=0.9681
+>>> [OPENCV] [COORD] Absolute screen position (top_left): (152, 120)
+>>> [OPENCV] [COORD] Bounding box: left=152, top=120, right=405, bottom=218
+>>> [OPENCV] [COORD] Time: 215.8ms
+>>> [DEBUG] OK Script 辨識結果: True, 方法: ok_script
+>>> [DEBUG] OK Script 辨識成功，開始驗證座標...
+>>> [DEBUG] 座標驗證通過: 左上角=(152, 120), 中心點=(278, 169)，執行點擊...
+>>> [CLICK_COORD] 實際點擊座標: (278, 169), 動作=單擊
+>>> [DEBUG] 點擊執行完成
+>>> [OK] OK_SCRIPT 辨識成功並點擊: system_admin_menu.png (信心: 0.97, 耗時: 215.8ms)
+>>> [STAT] [座標庫] 比例座標: x_ratio=0.1448, y_ratio=0.1408 | 視窗尺寸: 1920x1200 | 絕對座標: (278, 169)
+>>> [SMART_CLICK] [IMG] Success.
+>>> [OK] 成功點擊系統管理選項
+>>> [OK] 視窗已出現並完全初始化: Nx Witness Client (706x477)
+>>> [OK] 系統管理視窗已開啟: 合併站點... - Nx Witness Client
+>>> [CLICK] 點擊「授權」分頁...
+>>> [SMART_CLICK] [START] Finding target: text='授權', image='desktop_settings/license_tab.png', timeout=2s
+>>> [SMART_CLICK] [TEXT] Trying Text Strategy: '授權' (Priority: VLM)...
+>>> [DEBUG] _try_vlm_recognition 被調用: target_text='授權', region=(0, 0, 1920, 1200)
+>>> [DEBUG] _get_vlm_engine() 返回: <toolkit.vlm_engine.UnifiedVLM object at 0x0000018AA77527B0> (類型: <class 'toolkit.vlm_engine.UnifiedVLM'>)
+>>> [VLM] 正在使用 UnifiedVLM 搜尋元素: '授權'
+>>> [VLM] 截圖已保存: C:\Users\usert\AppData\Local\Temp\vlm_search_20260203_025856.png
+>>> [VLM_ENGINE] 開始識別元素: 授權
+>>> [VLM_ENGINE] Ollama 請求失敗: 404 Client Error: Not Found for url: http://localhost:11434/api/generate
+>>> [VLM_ENGINE] 所有 VLM 策略失敗: 授權
+>>> [VLM] UnifiedVLM 未找到元素: '授權'
+>>> [SMART_CLICK] [TEXT] Failed.
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/license_tab.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\license_tab.png
+>>> [OPENCV] [COORD] Image: license_tab.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (57, 45)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (2s), attempted strategies: 2
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Text/VLM Recognition ('授權'), Image Recognition (OK Script: desktop_settings/license_tab.png)
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.280, 0.080)...
+>>> [CLICK_COORD] 實際點擊座標: (537, 96), 動作=單擊
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (537, 96)
+>>> [OK] 成功切換到授權分頁
+>>> [CLICK] 嘗試尋找「啟用免費授權」按鈕...
+>>> [SMART_CLICK] [START] Finding target: text='啟動試用授權', image='desktop_settings/activate_free_license_btn.png', timeout=2s
+>>> [SMART_CLICK] [TEXT] Trying Text Strategy: '啟動試用授權' (Priority: VLM)...
+>>> [DEBUG] _try_vlm_recognition 被調用: target_text='啟動試用授權', region=(0, 0, 1920, 1200)
+>>> [DEBUG] _get_vlm_engine() 返回: <toolkit.vlm_engine.UnifiedVLM object at 0x0000018AA77527B0> (類型: <class 'toolkit.vlm_engine.UnifiedVLM'>)
+>>> [VLM] 正在使用 UnifiedVLM 搜尋元素: '啟動試用授權'
+>>> [VLM] 截圖已保存: C:\Users\usert\AppData\Local\Temp\vlm_search_20260203_025859.png
+>>> [VLM_ENGINE] 開始識別元素: 啟動試用授權
+>>> [VLM_ENGINE] Ollama 請求失敗: 404 Client Error: Not Found for url: http://localhost:11434/api/generate
+>>> [VLM_ENGINE] 所有 VLM 策略失敗: 啟動試用授權
+>>> [VLM] UnifiedVLM 未找到元素: '啟動試用授權'
+>>> [SMART_CLICK] [TEXT] Failed.
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (2s), attempted strategies: 1
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Text/VLM Recognition ('啟動試用授權')
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.200, 0.350)...
+>>> [CLICK_COORD] 實際點擊座標: (384, 420), 動作=單擊
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (384, 420)
+>>> [OK] 成功點擊啟用免費授權按鈕
+>>> [OK] 正在啟用免費授權...
+>>> [CLICK] 確認授權啟動...
+>>> [SMART_CLICK] [START] Finding target: text='確認', image='None', timeout=2s
+>>> [SMART_CLICK] [TEXT] Trying Text Strategy: '確認' (Priority: VLM)...
+>>> [DEBUG] _try_vlm_recognition 被調用: target_text='確認', region=(0, 0, 1920, 1200)
+>>> [DEBUG] _get_vlm_engine() 返回: <toolkit.vlm_engine.UnifiedVLM object at 0x0000018AA77527B0> (類型: <class 'toolkit.vlm_engine.UnifiedVLM'>)
+>>> [VLM] 正在使用 UnifiedVLM 搜尋元素: '確認'
+>>> [VLM] 截圖已保存: C:\Users\usert\AppData\Local\Temp\vlm_search_20260203_025904.png
+>>> [VLM_ENGINE] 開始識別元素: 確認
+>>> [VLM_ENGINE] Ollama 請求失敗: 404 Client Error: Not Found for url: http://localhost:11434/api/generate
+>>> [VLM_ENGINE] 所有 VLM 策略失敗: 確認
+>>> [VLM] UnifiedVLM 未找到元素: '確認'
+>>> [SMART_CLICK] [TEXT] Failed.
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (2s), attempted strategies: 1
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Text/VLM Recognition ('確認')
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.650, 0.850)...
+>>> [CLICK_COORD] 實際點擊座標: (1248, 1020), 動作=單擊
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (1248, 1020)
+>>> [OK] 已確認授權啟動
+>>> [OK] 授權啟動成功
+>>> [CLICK] 關閉系統管理視窗...
+>>> [SMART_CLICK] [START] Finding target: text='確認', image='None', timeout=2s
+>>> [SMART_CLICK] [TEXT] Trying Text Strategy: '確認' (Priority: VLM)...
+>>> [DEBUG] _try_vlm_recognition 被調用: target_text='確認', region=(0, 0, 1920, 1200)
+>>> [DEBUG] _get_vlm_engine() 返回: <toolkit.vlm_engine.UnifiedVLM object at 0x0000018AA77527B0> (類型: <class 'toolkit.vlm_engine.UnifiedVLM'>)
+>>> [VLM] 正在使用 UnifiedVLM 搜尋元素: '確認'
+>>> [VLM] 截圖已保存: C:\Users\usert\AppData\Local\Temp\vlm_search_20260203_025907.png
+>>> [VLM_ENGINE] 開始識別元素: 確認

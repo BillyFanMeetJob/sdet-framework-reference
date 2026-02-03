@@ -2,17 +2,13 @@
 """
 VLM (Vision Language Model) 圖像辨識模組
 
-支援多種 VLM 後端：
-1. OpenAI GPT-4V (API)
-2. Claude Vision (API)
-3. Qwen-VL (本地/API)
-4. LLaVA (本地)
-5. Ollama (本地，支援 llava, bakllava 等)
+使用 Ollama 本地 VLM 進行 UI 元素識別。
 
 優點：
 - 更智能的 UI 元素識別
 - 支援自然語言查詢（如 "找到確認按鈕"）
 - 更好的上下文理解
+- 免費、無 API 費用、資料不出本機
 """
 
 import os
@@ -25,24 +21,13 @@ from io import BytesIO
 import pyautogui
 from PIL import Image
 
-# 嘗試導入各種 VLM 客戶端
-try:
-    import openai
-    OPENAI_AVAILABLE = True
-except ImportError:
-    OPENAI_AVAILABLE = False
-
-try:
-    import anthropic
-    ANTHROPIC_AVAILABLE = True
-except ImportError:
-    ANTHROPIC_AVAILABLE = False
-
+# 嘗試導入 Ollama 客戶端
 try:
     import ollama
     OLLAMA_AVAILABLE = True
 except ImportError:
     OLLAMA_AVAILABLE = False
+    ollama = None
 
 
 @dataclass
@@ -62,21 +47,19 @@ class VLMRecognizer:
     """
     VLM 視覺語言模型辨識器
     
-    使用 VLM 來理解螢幕截圖並定位 UI 元素
+    使用 Ollama 本地 VLM 來理解螢幕截圖並定位 UI 元素
     """
     
-    def __init__(self, backend: str = "ollama", model: str = None):
+    def __init__(self, model: str = None):
         """
         初始化 VLM 辨識器
         
         Args:
-            backend: 後端類型 ('openai', 'anthropic', 'ollama', 'qwen')
-            model: 模型名稱（如 'gpt-4-vision-preview', 'llava'）
+            model: Ollama 模型名稱（如 'llava', 'bakllava', 'llava:13b'）
         """
-        self.backend = backend
-        self.model = model or self._get_default_model(backend)
+        self.backend = "ollama"  # 固定使用 Ollama
+        self.model = model or "llava"  # 預設使用 llava
         self.logger = None
-        self._client = None
         self._initialized = False
         
         # 統計
@@ -85,16 +68,6 @@ class VLMRecognizer:
             'hits': 0,
             'total_time': 0.0
         }
-    
-    def _get_default_model(self, backend: str) -> str:
-        """取得預設模型名稱"""
-        defaults = {
-            'openai': 'gpt-4o',  # GPT-4o 支援視覺
-            'anthropic': 'claude-3-5-sonnet-20241022',
-            'ollama': 'llava',  # 本地 LLaVA
-            'qwen': 'qwen-vl-plus'
-        }
-        return defaults.get(backend, 'llava')
     
     def set_logger(self, logger):
         """設置日誌記錄器"""
@@ -115,28 +88,21 @@ class VLMRecognizer:
             return
         
         try:
-            if self.backend == 'openai':
-                if not OPENAI_AVAILABLE:
-                    raise ImportError("openai package not installed")
-                self._client = openai.OpenAI()
-                
-            elif self.backend == 'anthropic':
-                if not ANTHROPIC_AVAILABLE:
-                    raise ImportError("anthropic package not installed")
-                self._client = anthropic.Anthropic()
-                
-            elif self.backend == 'ollama':
-                if not OLLAMA_AVAILABLE:
-                    raise ImportError("ollama package not installed")
-                # Ollama 使用函數調用，不需要客戶端實例
-                self._client = True
-                
+            if not OLLAMA_AVAILABLE:
+                raise ImportError("ollama package not installed. 請執行: pip install ollama")
+            
+            # 檢查 Ollama 服務是否運行
+            try:
+                ollama.list()  # 測試連接
+            except Exception as e:
+                raise ConnectionError(f"無法連接到 Ollama 服務: {e}。請確認 Ollama 是否已啟動。")
+            
             self._initialized = True
-            self._log('info', f"✅ VLM 初始化成功: {self.backend}/{self.model}")
+            self._log('info', f"✅ VLM 初始化成功: Ollama/{self.model}")
             
         except Exception as e:
             self._log('warning', f"⚠️ VLM 初始化失敗: {e}")
-            self._client = None
+            self._initialized = False
     
     def _screenshot_to_base64(self, region: Tuple[int, int, int, int] = None) -> tuple:
         """
@@ -154,7 +120,7 @@ class VLMRecognizer:
             screenshot = pyautogui.screenshot()
             original_size = screenshot.size  # (width, height)
         
-        # 縮小圖片以減少 API 成本和延遲
+        # 縮小圖片以減少處理時間
         max_size = (1280, 720)
         resized_size = screenshot.size  # 記錄縮小前的尺寸
         screenshot.thumbnail(max_size, Image.Resampling.LANCZOS)
@@ -185,7 +151,7 @@ class VLMRecognizer:
         """
         self._init_client()
         
-        if not self._client:
+        if not self._initialized:
             return None
         
         self.stats['attempts'] += 1
@@ -208,148 +174,145 @@ class VLMRecognizer:
             # 構建提示詞
             prompt = self._build_prompt(query, region)
             
-            # 調用 VLM
-            if self.backend == 'openai':
-                result = self._call_openai(img_base64, prompt)
-            elif self.backend == 'anthropic':
-                result = self._call_anthropic(img_base64, prompt)
-            elif self.backend == 'ollama':
-                result = self._call_ollama(img_base64, prompt)
-            else:
+            # 調用 Ollama
+            result = self._call_ollama(img_base64, prompt)
+            
+            if not result:
                 return None
             
             elapsed_ms = (time.perf_counter() - start_time) * 1000
+            result.time_ms = elapsed_ms
             
-            if result:
-                result.time_ms = elapsed_ms
-                if result.success:
-                    self.stats['hits'] += 1
-                    self.stats['total_time'] += elapsed_ms
-                    
-                    # ========================================================================
-                    # 🎯 座標換算邏輯（核心邏輯，請勿隨意修改）
-                    # ========================================================================
-                    # 
-                    # 座標換算流程：
-                    # 1. VLM 返回的座標是相對於縮小後的截圖（如果截圖被縮小）
-                    # 2. 先將座標轉換回原始截圖尺寸
-                    # 3. 如果提供了 region，再加上 region 的左上角偏移，得到屏幕絕對座標
-                    #
-                    # 重要：此邏輯影響所有使用 VLM 的地方，修改前請：
-                    # 1. 運行 test_vlm_coordinate_conversion.py 驗證
-                    # 2. 檢查所有使用 VLM 的地方是否仍然正常工作
-                    # 3. 確保座標換算邏輯的正確性和穩定性
-                    #
-                    # ========================================================================
-                    
-                    if original_size and resized_size:
-                        # 計算縮放比例
-                        scale_x = original_size[0] / resized_size[0] if resized_size[0] > 0 else 1.0
-                        scale_y = original_size[1] / resized_size[1] if resized_size[1] > 0 else 1.0
-                        
-                        # 🎯 VLM 返回的座標可能是比例座標（0-1）或像素座標
-                        # 判斷標準：如果座標值 < 1.0，認為是比例座標；否則是像素座標
-                        # 注意：result.x 和 result.y 在 _parse_response 中已經是 float
-                        is_ratio_coord = (0.0 < abs(result.x) < 1.0) or (0.0 < abs(result.y) < 1.0)
-                        
-                        if is_ratio_coord:
-                            # 比例座標：先轉換為縮小後圖片的像素座標
-                            pixel_x = result.x * resized_size[0]
-                            pixel_y = result.y * resized_size[1]
-                            self._log('debug', f"比例座標轉換: VLM返回比例=({result.x:.3f}, {result.y:.3f}), 縮小後圖片像素=({pixel_x:.1f}, {pixel_y:.1f})")
-                        else:
-                            # 像素座標：直接使用（假設是相對於縮小後的圖片）
-                            pixel_x = result.x
-                            pixel_y = result.y
-                            self._log('debug', f"像素座標: VLM返回=({pixel_x:.1f}, {pixel_y:.1f})")
-                        
-                        # 🎯 將座標（相對於縮小後的圖片）轉換回原始截圖尺寸
-                        # 注意：original_size 是 region 的尺寸（如果提供了 region），否則是全屏尺寸
-                        result.x = int(pixel_x * scale_x)
-                        result.y = int(pixel_y * scale_y)
-                        
-                        self._log('debug', f"座標轉換: 原始尺寸={original_size}, 縮小後={resized_size}, 縮放比例=({scale_x:.3f}, {scale_y:.3f}), 轉換後=({result.x}, {result.y})")
-                        
-                        # 🎯 驗證轉換後的座標是否在原始截圖範圍內
-                        if result.x < 0 or result.x > original_size[0] or result.y < 0 or result.y > original_size[1]:
-                            self._log('warning', f"座標轉換後超出原始截圖範圍: ({result.x}, {result.y}), 原始截圖尺寸={original_size}")
-                        
-                        # 🎯 處理邊界框（box）的座標轉換（在 region 處理之前）
-                        if result.box:
-                            box_xmin, box_ymin, box_xmax, box_ymax = result.box
-                            
-                            # 判斷 box 是否為比例座標
-                            is_box_ratio = (0.0 < abs(box_xmin) < 1.0) or (0.0 < abs(box_ymin) < 1.0)
-                            
-                            if is_box_ratio:
-                                # 比例座標：轉換為縮小後圖片的像素座標
-                                box_xmin = box_xmin * resized_size[0]
-                                box_ymin = box_ymin * resized_size[1]
-                                box_xmax = box_xmax * resized_size[0]
-                                box_ymax = box_ymax * resized_size[1]
-                            
-                            # 轉換回原始截圖尺寸
-                            box_xmin = int(box_xmin * scale_x)
-                            box_ymin = int(box_ymin * scale_y)
-                            box_xmax = int(box_xmax * scale_x)
-                            box_ymax = int(box_ymax * scale_y)
-                            
-                            # 暫時保存轉換後的 box（還未加 region 偏移）
-                            result.box = (int(box_xmin), int(box_ymin), int(box_xmax), int(box_ymax))
-                            self._log('debug', f"邊界框轉換（轉換後）: box=({box_xmin}, {box_ymin}, {box_xmax}, {box_ymax})")
-                    else:
-                        # 如果沒有 original_size/resized_size，box 保持原樣（假設已經是像素座標）
-                        if result.box:
-                            self._log('debug', f"邊界框未轉換（無縮放信息）: box={result.box}")
-                    
-                    # 🎯 加上 region 偏移（如果有）
-                    # 注意：如果提供了 region，VLM 返回的座標是相對於 region 截圖的
-                    # 我們需要加上 region 的左上角座標才能得到屏幕絕對座標
-                    if region:
-                        region_left = region[0]
-                        region_top = region[1]
-                        region_width = region[2]
-                        region_height = region[3]
-                        
-                        # 🎯 驗證座標是否在 region 範圍內（轉換後，加偏移前）
-                        # 此時 result.x, result.y 應該是相對於 region 截圖的座標
-                        coord_before_offset_x = result.x
-                        coord_before_offset_y = result.y
-                        
-                        # 如果座標超出 region 範圍，記錄警告
-                        if coord_before_offset_x < 0 or coord_before_offset_x > region_width or \
-                           coord_before_offset_y < 0 or coord_before_offset_y > region_height:
-                            self._log('warning', f"VLM 返回座標超出 region 範圍: ({coord_before_offset_x:.1f}, {coord_before_offset_y:.1f}), region 尺寸=({region_width}, {region_height})")
-                            # 如果 y 座標明顯超出範圍（超過 50px），可能是 VLM 返回了相對於全屏的座標，拒絕此結果
-                            if coord_before_offset_y > region_height + 50:
-                                self._log('warning', f"檢測到 y 座標明顯超出 region 高度（超過 50px），可能是 VLM 返回了相對於全屏的座標，將拒絕此結果")
-                                result.success = False
-                                return result
-                            # 如果 x 座標明顯超出範圍（超過 50px），也可能是 VLM 返回了錯誤的座標，拒絕此結果
-                            if coord_before_offset_x > region_width + 50:
-                                self._log('warning', f"檢測到 x 座標明顯超出 region 寬度（超過 50px），可能是 VLM 返回了錯誤的座標，將拒絕此結果")
-                                result.success = False
-                                return result
-                        
-                        # 🎯 加上 region 偏移，得到屏幕絕對座標
-                        result.x += region_left
-                        result.y += region_top
-                        self._log('debug', f"加上 region 偏移: region=({region_left}, {region_top}), 轉換前=({coord_before_offset_x:.1f}, {coord_before_offset_y:.1f}), 最終座標=({result.x}, {result.y})")
-                        
-                        # 🎯 為邊界框（box）加上 region 偏移
-                        if result.box:
-                            box_xmin, box_ymin, box_xmax, box_ymax = result.box
-                            box_xmin += region_left
-                            box_ymin += region_top
-                            box_xmax += region_left
-                            box_ymax += region_top
-                            result.box = (int(box_xmin), int(box_ymin), int(box_xmax), int(box_ymax))
-                            self._log('debug', f"邊界框加上 region 偏移: 最終 box=({box_xmin}, {box_ymin}, {box_xmax}, {box_ymax})")
+            if result.success:
+                self.stats['hits'] += 1
+                self.stats['total_time'] += elapsed_ms
                 
-                return result
+                # ========================================================================
+                # 🎯 座標換算邏輯（核心邏輯，請勿隨意修改）
+                # ========================================================================
+                # 
+                # 座標換算流程：
+                # 1. VLM 返回的座標是相對於縮小後的截圖（如果截圖被縮小）
+                # 2. 先將座標轉換回原始截圖尺寸
+                # 3. 如果提供了 region，再加上 region 的左上角偏移，得到屏幕絕對座標
+                #
+                # 重要：此邏輯影響所有使用 VLM 的地方，修改前請：
+                # 1. 運行 test_vlm_coordinate_conversion.py 驗證
+                # 2. 檢查所有使用 VLM 的地方是否仍然正常工作
+                # 3. 確保座標換算邏輯的正確性和穩定性
+                #
+                # ========================================================================
+                
+                if original_size and resized_size:
+                    # 計算縮放比例
+                    scale_x = original_size[0] / resized_size[0] if resized_size[0] > 0 else 1.0
+                    scale_y = original_size[1] / resized_size[1] if resized_size[1] > 0 else 1.0
+                    
+                    # 🎯 VLM 返回的座標可能是比例座標（0-1）或像素座標
+                    # 判斷標準：如果座標值 < 1.0，認為是比例座標；否則是像素座標
+                    # 注意：result.x 和 result.y 在 _parse_response 中已經是 float
+                    is_ratio_coord = (0.0 < abs(result.x) < 1.0) or (0.0 < abs(result.y) < 1.0)
+                    
+                    if is_ratio_coord:
+                        # 比例座標：先轉換為縮小後圖片的像素座標
+                        pixel_x = result.x * resized_size[0]
+                        pixel_y = result.y * resized_size[1]
+                        self._log('debug', f"比例座標轉換: VLM返回比例=({result.x:.3f}, {result.y:.3f}), 縮小後圖片像素=({pixel_x:.1f}, {pixel_y:.1f})")
+                    else:
+                        # 像素座標：直接使用（假設是相對於縮小後的圖片）
+                        pixel_x = result.x
+                        pixel_y = result.y
+                        self._log('debug', f"像素座標: VLM返回=({pixel_x:.1f}, {pixel_y:.1f})")
+                    
+                    # 🎯 將座標（相對於縮小後的圖片）轉換回原始截圖尺寸
+                    # 注意：original_size 是 region 的尺寸（如果提供了 region），否則是全屏尺寸
+                    result.x = int(pixel_x * scale_x)
+                    result.y = int(pixel_y * scale_y)
+                    
+                    self._log('debug', f"座標轉換: 原始尺寸={original_size}, 縮小後={resized_size}, 縮放比例=({scale_x:.3f}, {scale_y:.3f}), 轉換後=({result.x}, {result.y})")
+                    
+                    # 🎯 驗證轉換後的座標是否在原始截圖範圍內
+                    if result.x < 0 or result.x > original_size[0] or result.y < 0 or result.y > original_size[1]:
+                        self._log('warning', f"座標轉換後超出原始截圖範圍: ({result.x}, {result.y}), 原始截圖尺寸={original_size}")
+                    
+                    # 🎯 處理邊界框（box）的座標轉換（在 region 處理之前）
+                    if result.box:
+                        box_xmin, box_ymin, box_xmax, box_ymax = result.box
+                        
+                        # 判斷 box 是否為比例座標
+                        is_box_ratio = (0.0 < abs(box_xmin) < 1.0) or (0.0 < abs(box_ymin) < 1.0)
+                        
+                        if is_box_ratio:
+                            # 比例座標：轉換為縮小後圖片的像素座標
+                            box_xmin = box_xmin * resized_size[0]
+                            box_ymin = box_ymin * resized_size[1]
+                            box_xmax = box_xmax * resized_size[0]
+                            box_ymax = box_ymax * resized_size[1]
+                        
+                        # 轉換回原始截圖尺寸
+                        box_xmin = int(box_xmin * scale_x)
+                        box_ymin = int(box_ymin * scale_y)
+                        box_xmax = int(box_xmax * scale_x)
+                        box_ymax = int(box_ymax * scale_y)
+                        
+                        # 暫時保存轉換後的 box（還未加 region 偏移）
+                        result.box = (int(box_xmin), int(box_ymin), int(box_xmax), int(box_ymax))
+                        self._log('debug', f"邊界框轉換（轉換後）: box=({box_xmin}, {box_ymin}, {box_xmax}, {box_ymax})")
+                else:
+                    # 如果沒有 original_size/resized_size，box 保持原樣（假設已經是像素座標）
+                    if result.box:
+                        self._log('debug', f"邊界框未轉換（無縮放信息）: box={result.box}")
+                
+                # 🎯 加上 region 偏移（如果有）
+                # 注意：如果提供了 region，VLM 返回的座標是相對於 region 截圖的
+                # 我們需要加上 region 的左上角座標才能得到屏幕絕對座標
+                if region:
+                    region_left = region[0]
+                    region_top = region[1]
+                    region_width = region[2]
+                    region_height = region[3]
+                    
+                    # 🎯 驗證座標是否在 region 範圍內（轉換後，加偏移前）
+                    # 此時 result.x, result.y 應該是相對於 region 截圖的座標
+                    coord_before_offset_x = result.x
+                    coord_before_offset_y = result.y
+                    
+                    # 如果座標超出 region 範圍，記錄警告
+                    if coord_before_offset_x < 0 or coord_before_offset_x > region_width or \
+                       coord_before_offset_y < 0 or coord_before_offset_y > region_height:
+                        self._log('warning', f"VLM 返回座標超出 region 範圍: ({coord_before_offset_x:.1f}, {coord_before_offset_y:.1f}), region 尺寸=({region_width}, {region_height})")
+                        # 如果 y 座標明顯超出範圍（超過 50px），可能是 VLM 返回了相對於全屏的座標，拒絕此結果
+                        if coord_before_offset_y > region_height + 50:
+                            self._log('warning', f"檢測到 y 座標明顯超出 region 高度（超過 50px），可能是 VLM 返回了相對於全屏的座標，將拒絕此結果")
+                            result.success = False
+                            return result
+                        # 如果 x 座標明顯超出範圍（超過 50px），也可能是 VLM 返回了錯誤的座標，拒絕此結果
+                        if coord_before_offset_x > region_width + 50:
+                            self._log('warning', f"檢測到 x 座標明顯超出 region 寬度（超過 50px），可能是 VLM 返回了錯誤的座標，將拒絕此結果")
+                            result.success = False
+                            return result
+                    
+                    # 🎯 加上 region 偏移，得到屏幕絕對座標
+                    result.x += region_left
+                    result.y += region_top
+                    self._log('debug', f"加上 region 偏移: region=({region_left}, {region_top}), 轉換前=({coord_before_offset_x:.1f}, {coord_before_offset_y:.1f}), 最終座標=({result.x}, {result.y})")
+                    
+                    # 🎯 為邊界框（box）加上 region 偏移
+                    if result.box:
+                        box_xmin, box_ymin, box_xmax, box_ymax = result.box
+                        box_xmin += region_left
+                        box_ymin += region_top
+                        box_xmax += region_left
+                        box_ymax += region_top
+                        result.box = (int(box_xmin), int(box_ymin), int(box_xmax), int(box_ymax))
+                        self._log('debug', f"邊界框加上 region 偏移: 最終 box=({box_xmin}, {box_ymin}, {box_xmax}, {box_ymax})")
+            
+            return result
                 
         except Exception as e:
             self._log('warning', f"⚠️ VLM 辨識異常: {e}")
+            import traceback
+            self._log('debug', f"錯誤詳情: {traceback.format_exc()}")
         
         return None
     
@@ -396,16 +359,6 @@ class VLMRecognizer:
     "box": null
 }}
 
-如果找不到目標元素，回覆：
-{{
-    "found": false,
-    "x": 0,
-    "y": 0,
-    "confidence": 0,
-    "description": "找不到目標元素的原因",
-    "box": null
-}}
-
 重要規則：
 1. 座標必須是相對於這張截圖左上角 (0, 0) 的像素座標
 2. X 座標範圍：0 到 {region[2] if region else "圖片寬度"}
@@ -413,65 +366,6 @@ class VLMRecognizer:
 4. 請準確定位元素的中心點
 5. 如果使用比例座標（0.0-1.0），請確保轉換為像素座標後在範圍內
 6. 如果有多個匹配項，選擇最可能的一個"""
-    
-    def _call_openai(self, img_base64: str, prompt: str) -> Optional[VLMResult]:
-        """調用 OpenAI GPT-4V"""
-        try:
-            response = self._client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": prompt},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/png;base64,{img_base64}",
-                                    "detail": "high"
-                                }
-                            }
-                        ]
-                    }
-                ],
-                max_tokens=500
-            )
-            
-            return self._parse_response(response.choices[0].message.content)
-            
-        except Exception as e:
-            self._log('warning', f"OpenAI API 錯誤: {e}")
-            return None
-    
-    def _call_anthropic(self, img_base64: str, prompt: str) -> Optional[VLMResult]:
-        """調用 Anthropic Claude"""
-        try:
-            response = self._client.messages.create(
-                model=self.model,
-                max_tokens=500,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "image",
-                                "source": {
-                                    "type": "base64",
-                                    "media_type": "image/png",
-                                    "data": img_base64
-                                }
-                            },
-                            {"type": "text", "text": prompt}
-                        ]
-                    }
-                ]
-            )
-            
-            return self._parse_response(response.content[0].text)
-            
-        except Exception as e:
-            self._log('warning', f"Anthropic API 錯誤: {e}")
-            return None
     
     def _call_ollama(self, img_base64: str, prompt: str) -> Optional[VLMResult]:
         """調用本地 Ollama (LLaVA 等)"""
@@ -491,6 +385,8 @@ class VLMRecognizer:
             
         except Exception as e:
             self._log('warning', f"Ollama 錯誤: {e}")
+            import traceback
+            self._log('debug', f"錯誤詳情: {traceback.format_exc()}")
             return None
     
     def _parse_response(self, response: str) -> Optional[VLMResult]:
@@ -576,7 +472,7 @@ class VLMRecognizer:
         avg_time = (self.stats['total_time'] / self.stats['hits']) if self.stats['hits'] > 0 else 0
         
         return f"""
-[VLM Stats] {self.backend}/{self.model}
+[VLM Stats] Ollama/{self.model}
   Attempts: {self.stats['attempts']}
   Hits: {self.stats['hits']} ({hit_rate:.1f}%)
   Avg Time: {avg_time:.0f}ms
@@ -586,17 +482,15 @@ class VLMRecognizer:
 # 全域實例
 _vlm_recognizer = None
 
-def get_vlm_recognizer(backend: str = None, model: str = None) -> VLMRecognizer:
-    """取得 VLM 辨識器實例"""
+def get_vlm_recognizer(model: str = None) -> VLMRecognizer:
+    """取得 VLM 辨識器實例（僅支援 Ollama）"""
     global _vlm_recognizer
     
     # 從環境變數讀取設定
-    if backend is None:
-        backend = os.environ.get('VLM_BACKEND', 'ollama')
     if model is None:
         model = os.environ.get('VLM_MODEL', None)
     
-    if _vlm_recognizer is None or _vlm_recognizer.backend != backend:
-        _vlm_recognizer = VLMRecognizer(backend=backend, model=model)
+    if _vlm_recognizer is None or _vlm_recognizer.model != (model or "llava"):
+        _vlm_recognizer = VLMRecognizer(model=model)
     
     return _vlm_recognizer

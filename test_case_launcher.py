@@ -7,7 +7,8 @@
 2. 提供勾選介面與執行控制
 3. 多線程執行測試，保持 UI 響應
 4. 即時顯示執行結果 (Pass/Fail)
-5. Appium Server 控制（啟動/停止）
+
+注意：Mobile 測試已改用 ADB 方式，不再需要 Appium Server
 """
 
 import tkinter as tk
@@ -15,324 +16,14 @@ from tkinter import ttk, scrolledtext, messagebox
 import pandas as pd
 import threading
 import time
-import random
 import os
 import subprocess
 import sys
 import shutil
 import datetime
-import socket
 import platform
-import io
 from typing import List, Dict, Optional
 from config import EnvConfig
-
-
-class AppiumManager:
-    """Appium Server 管理器"""
-    
-    def __init__(self, log_callback=None):
-        """
-        初始化 AppiumManager
-        
-        Args:
-            log_callback: 日誌回調函數，用於輸出日誌訊息
-        """
-        self.appium_process: Optional[subprocess.Popen] = None
-        self.appium_port = 4723
-        self.log_callback = log_callback
-        self.is_running = False
-        self.log_file: Optional[io.TextIOWrapper] = None
-    
-    def log(self, message: str, level: str = "INFO"):
-        """輸出日誌"""
-        if self.log_callback:
-            self.log_callback(message, level)
-        else:
-            print(f"[{level}] {message}")
-    
-    def check_port_in_use(self, port: int) -> bool:
-        """
-        檢查指定端口是否被佔用
-        
-        Args:
-            port: 要檢查的端口號
-            
-        Returns:
-            bool: True 表示端口被佔用，False 表示端口可用
-        """
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                sock.settimeout(1)
-                result = sock.connect_ex(('localhost', port))
-                return result == 0
-        except Exception as e:
-            self.log(f"檢查端口 {port} 時發生錯誤: {e}", "WARNING")
-            return False
-    
-    def is_appium_running(self) -> bool:
-        """
-        檢查 Appium Server 是否正在運行
-        
-        Returns:
-            bool: True 表示 Appium 正在運行，False 表示未運行
-        """
-        return self.check_port_in_use(self.appium_port)
-    
-    def start_appium(self) -> bool:
-        """
-        啟動 Appium Server（在背景執行）
-        
-        Returns:
-            bool: 啟動是否成功
-        """
-        if self.is_appium_running():
-            self.log("Appium Server 已經在運行中", "INFO")
-            self.is_running = True
-            return True
-        
-        try:
-            # 查找 appium 命令
-            appium_cmd = shutil.which("appium")
-            if not appium_cmd:
-                # 嘗試常見的安裝位置
-                possible_paths = [
-                    r"C:\Users\usert\AppData\Roaming\npm\appium.cmd",
-                    r"C:\Users\usert\AppData\Local\npm\appium.cmd",
-                    os.path.expanduser(r"~\AppData\Roaming\npm\appium.cmd"),
-                    os.path.expanduser(r"~\AppData\Local\npm\appium.cmd"),
-                ]
-                for path in possible_paths:
-                    if os.path.exists(path):
-                        appium_cmd = path
-                        break
-            
-            if not appium_cmd:
-                self.log("找不到 Appium 命令，請確認 Appium 已安裝並在 PATH 中", "ERROR")
-                return False
-            
-            self.log(f"啟動 Appium Server: {appium_cmd}", "INFO")
-            
-            # 1. 檢查並設置 Android SDK 環境變數
-            env = os.environ.copy()
-            android_home = env.get('ANDROID_HOME') or env.get('ANDROID_SDK_ROOT')
-            
-            if not android_home:
-                # 嘗試自動查找 Android SDK
-                possible_sdk_paths = [
-                    os.path.expanduser(r"~\AppData\Local\Android\Sdk"),
-                    os.path.expanduser(r"~\Android\Sdk"),
-                    r"C:\Users\usert\AppData\Local\Android\Sdk",
-                    r"C:\Android\Sdk",
-                    os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Android', 'Sdk'),
-                ]
-                
-                for sdk_path in possible_sdk_paths:
-                    if os.path.exists(sdk_path) and os.path.isdir(sdk_path):
-                        # 檢查是否包含 platform-tools（確認是有效的 SDK）
-                        platform_tools = os.path.join(sdk_path, 'platform-tools')
-                        if os.path.exists(platform_tools):
-                            android_home = sdk_path
-                            self.log(f"[診斷] 自動檢測到 Android SDK: {android_home}", "INFO")
-                            break
-                
-                if android_home:
-                    env['ANDROID_HOME'] = android_home
-                    env['ANDROID_SDK_ROOT'] = android_home
-                    self.log(f"[診斷] 已設置 ANDROID_HOME={android_home}", "INFO")
-                else:
-                    self.log("[WARN] 無法找到 Android SDK，Appium 可能無法正常工作", "WARNING")
-                    self.log("[診斷] 請設置 ANDROID_HOME 或 ANDROID_SDK_ROOT 環境變數", "WARNING")
-                    self.log("[診斷] 常見位置: %LOCALAPPDATA%\\Android\\Sdk", "WARNING")
-            else:
-                self.log(f"[診斷] 使用現有的 Android SDK: {android_home}", "INFO")
-            
-            # 2. 準備一個 Log 檔案來接收輸出
-            log_file_path = os.path.join(os.getcwd(), "appium_server_output.log")
-            self.log_file = open(log_file_path, "w", encoding="utf-8")
-            self.log(f"Appium Server 日誌將寫入: {log_file_path}", "INFO")
-            
-            # 3. 啟動 Appium，把輸出導向檔案 (這樣就不會卡死了)
-            # 加上 --base-path /wd/hub 以確保相容性
-            cmd_args = [appium_cmd, "--address", "127.0.0.1", "--port", str(self.appium_port), "--base-path", "/wd/hub"]
-            
-            self.log(f"[診斷] 啟動命令: {' '.join(cmd_args)}", "INFO")
-            if android_home:
-                self.log(f"[診斷] 環境變數: ANDROID_HOME={android_home}", "INFO")
-            
-            self.appium_process = subprocess.Popen(
-                cmd_args,
-                stdout=self.log_file,  # <--- 改成寫入檔案
-                stderr=self.log_file,  # <--- 改成寫入檔案
-                text=True,
-                encoding='utf-8',
-                errors='ignore',
-                env=env,  # 傳遞環境變數
-                creationflags=subprocess.CREATE_NO_WINDOW if platform.system() == 'Windows' else 0
-            )
-            
-            # 等待幾秒確認 Appium 是否成功啟動
-            max_wait = 10  # 最多等待 10 秒
-            wait_interval = 0.5
-            waited = 0
-            
-            while waited < max_wait:
-                time.sleep(wait_interval)
-                waited += wait_interval
-                
-                if self.is_appium_running():
-                    self.is_running = True
-                    self.log(f"Appium Server 啟動成功（等待 {waited:.1f} 秒）", "INFO")
-                    return True
-                
-                # 檢查進程是否還在運行
-                if self.appium_process.poll() is not None:
-                    # 進程已結束，讀取錯誤信息（從日誌文件）
-                    if self.log_file:
-                        self.log_file.flush()
-                        try:
-                            with open(log_file_path, "r", encoding="utf-8", errors='ignore') as f:
-                                log_content = f.read()
-                                if log_content:
-                                    error_msg = log_content[-500:]  # 讀取最後 500 字符
-                                    self.log(f"Appium Server 啟動失敗: {error_msg}", "ERROR")
-                        except Exception:
-                            self.log("Appium Server 啟動失敗（無法讀取日誌）", "ERROR")
-                    else:
-                        self.log("Appium Server 啟動失敗（進程已結束）", "ERROR")
-                    return False
-            
-            # 如果等待超時但進程還在運行，可能正在啟動中
-            if self.appium_process.poll() is None:
-                self.log("Appium Server 正在啟動中（進程運行中，但端口尚未就緒）", "WARNING")
-                self.is_running = True
-                return True
-            else:
-                self.log("Appium Server 啟動超時", "ERROR")
-                return False
-                
-        except Exception as e:
-            self.log(f"啟動 Appium Server 時發生錯誤: {e}", "ERROR")
-            import traceback
-            self.log(f"錯誤詳情: {traceback.format_exc()[:300]}", "ERROR")
-            return False
-    
-    def stop_appium(self) -> bool:
-        """
-        停止 Appium Server
-        
-        Returns:
-            bool: 停止是否成功
-        """
-        try:
-            # 方法 1: 如果我們啟動了進程，先嘗試終止它
-            if self.appium_process and self.appium_process.poll() is None:
-                self.log("正在終止 Appium 進程...", "INFO")
-                self.appium_process.terminate()
-                try:
-                    self.appium_process.wait(timeout=5)
-                    self.log("Appium 進程已終止", "INFO")
-                    self.appium_process = None
-                    self.is_running = False
-                    # 關閉日誌文件
-                    if self.log_file:
-                        try:
-                            self.log_file.close()
-                        except Exception:
-                            pass
-                        self.log_file = None
-                    return True
-                except subprocess.TimeoutExpired:
-                    self.log("進程未響應 terminate，強制終止...", "WARNING")
-                    self.appium_process.kill()
-                    self.appium_process.wait()
-                    self.appium_process = None
-                    self.is_running = False
-                    # 關閉日誌文件
-                    if self.log_file:
-                        try:
-                            self.log_file.close()
-                        except Exception:
-                            pass
-                        self.log_file = None
-                    return True
-            
-            # 方法 2: 如果進程已經結束或我們沒有進程引用，嘗試殺掉所有 Node.exe/Appium 進程
-            self.log("嘗試終止所有 Appium/Node 進程...", "INFO")
-            
-            if platform.system() == 'Windows':
-                # Windows: 使用 taskkill 命令
-                try:
-                    # 殺掉所有 node.exe 進程（Appium 通常運行在 Node.js 中）
-                    subprocess.run(
-                        ['taskkill', '/F', '/IM', 'node.exe'],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        timeout=10
-                    )
-                    self.log("已終止所有 Node.exe 進程", "INFO")
-                except Exception as e:
-                    self.log(f"終止 Node.exe 進程時發生錯誤: {e}", "WARNING")
-                
-                # 也嘗試殺掉 appium 進程（如果有的話）
-                try:
-                    subprocess.run(
-                        ['taskkill', '/F', '/IM', 'appium.exe'],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        timeout=10
-                    )
-                except:
-                    pass  # 如果沒有 appium.exe 進程，忽略錯誤
-            else:
-                # Linux/Mac: 使用 pkill 命令
-                try:
-                    subprocess.run(
-                        ['pkill', '-f', 'appium'],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        timeout=10
-                    )
-                    self.log("已終止所有 Appium 進程", "INFO")
-                except Exception as e:
-                    self.log(f"終止 Appium 進程時發生錯誤: {e}", "WARNING")
-            
-            # 等待一下，然後檢查端口是否釋放
-            time.sleep(2)
-            if not self.is_appium_running():
-                self.is_running = False
-                # 關閉日誌文件
-                if self.log_file:
-                    try:
-                        self.log_file.close()
-                    except Exception:
-                        pass
-                    self.log_file = None
-                self.log("Appium Server 已停止", "INFO")
-                return True
-            else:
-                self.log("警告：Appium Server 可能仍在運行（端口仍被佔用）", "WARNING")
-                # 即使端口仍被佔用，也嘗試關閉日誌文件
-                if self.log_file:
-                    try:
-                        self.log_file.close()
-                    except Exception:
-                        pass
-                    self.log_file = None
-                return False
-                
-        except Exception as e:
-            self.log(f"停止 Appium Server 時發生錯誤: {e}", "ERROR")
-            import traceback
-            self.log(f"錯誤詳情: {traceback.format_exc()[:300]}", "ERROR")
-            # 發生錯誤時也嘗試關閉日誌文件
-            if self.log_file:
-                try:
-                    self.log_file.close()
-                except Exception:
-                    pass
-                self.log_file = None
-            return False
 
 
 class TestCaseLauncher:
@@ -341,7 +32,7 @@ class TestCaseLauncher:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("Nx Witness 自動化測試主控台")
-        self.root.geometry("900x800")
+        self.root.geometry("900x700")
         
         # 測試案例資料
         self.test_cases: List[Dict[str, str]] = []
@@ -359,141 +50,11 @@ class TestCaseLauncher:
         # 追蹤當前執行的 subprocess，用於強制終止
         self.current_process: Optional[subprocess.Popen] = None
         
-        # Appium 管理器
-        self.appium_manager = AppiumManager(log_callback=self.log)
-        
         # 載入測試清單
         self.load_test_cases()
         
         # 建立 UI
         self.build_ui()
-        
-        # 啟動時檢查 Appium 狀態
-        self.check_appium_status()
-    
-    def check_appium_status(self):
-        """檢查 Appium 狀態並更新按鈕"""
-        def _check():
-            is_running = self.appium_manager.is_appium_running()
-            self.appium_manager.is_running = is_running
-            self.root.after(0, self._update_appium_button_state, is_running)
-        
-        # 在背景線程中檢查，避免凍結 UI
-        threading.Thread(target=_check, daemon=True).start()
-    
-    def _update_appium_button_state(self, is_running: bool):
-        """更新 Appium 按鈕狀態"""
-        if is_running:
-            self.btn_appium.config(
-                text="停止 Appium",
-                bg="#ff4444",  # 紅色
-                fg="white",
-                activebackground="#ff6666",  # 滑鼠懸停時的顏色
-                activeforeground="white",
-                state=tk.NORMAL
-            )
-            self.appium_status_label.config(
-                text="[運行中]",
-                foreground="green",
-                font=("Arial", 10, "bold")
-            )
-        else:
-            self.btn_appium.config(
-                text="啟動 Appium",
-                bg="#44ff44",  # 綠色
-                fg="black",
-                activebackground="#66ff66",  # 滑鼠懸停時的顏色
-                activeforeground="black",
-                state=tk.NORMAL
-            )
-            self.appium_status_label.config(
-                text="[已停止]",
-                foreground="red",
-                font=("Arial", 10, "bold")
-            )
-    
-    def toggle_appium(self):
-        """切換 Appium Server 狀態"""
-        def _toggle():
-            # 先檢查當前實際狀態（而不是依賴緩存的 is_running）
-            current_status = self.appium_manager.is_appium_running()
-            
-            if current_status:
-                # 停止 Appium
-                self.log("正在停止 Appium Server...", "INFO")
-                self.root.after(0, lambda: self.btn_appium.config(state=tk.DISABLED))
-                success = self.appium_manager.stop_appium()
-                # 再次檢查實際狀態
-                final_status = self.appium_manager.is_appium_running()
-                self.root.after(0, self._update_appium_button_state, final_status)
-                if success:
-                    self.log("Appium Server 已停止", "INFO")
-                else:
-                    self.log("停止 Appium Server 失敗", "ERROR")
-                self.root.after(0, lambda: self.btn_appium.config(state=tk.NORMAL))
-            else:
-                # 啟動 Appium
-                self.log("正在啟動 Appium Server...", "INFO")
-                self.root.after(0, lambda: self.btn_appium.config(state=tk.DISABLED))
-                success = self.appium_manager.start_appium()
-                # 再次檢查實際狀態
-                final_status = self.appium_manager.is_appium_running()
-                self.root.after(0, self._update_appium_button_state, final_status)
-                if success:
-                    self.log("Appium Server 已啟動", "INFO")
-                else:
-                    self.log("啟動 Appium Server 失敗", "ERROR")
-                self.root.after(0, lambda: self.btn_appium.config(state=tk.NORMAL))
-        
-        # 在背景線程中執行，避免凍結 UI
-        threading.Thread(target=_toggle, daemon=True).start()
-    
-    def check_test_needs_mobile(self, test_name: str) -> bool:
-        """
-        檢查測試是否需要 Mobile 測試（通過檢查 Excel 的 Translate 工作表）
-        
-        Args:
-            test_name: 測試案例名稱
-            
-        Returns:
-            bool: True 表示需要 Mobile 測試，False 表示不需要
-        """
-        try:
-            excel_path = EnvConfig.TEST_PLAN_PATH
-            if not os.path.exists(excel_path):
-                return False
-            
-            # 讀取 TestDir 工作表，找到測試案例的 FunctionalClassification
-            dir_df = pd.read_excel(excel_path, sheet_name="TestDir")
-            test_row = dir_df[dir_df['TestName'] == test_name]
-            
-            if test_row.empty:
-                return False
-            
-            functional_class = test_row.iloc[0].get('FunctionalClassification')
-            if pd.isna(functional_class):
-                return False
-            
-            # 讀取對應的功能分類工作表
-            case_df = pd.read_excel(excel_path, sheet_name=str(functional_class))
-            steps_df = case_df[case_df['TestName'] == test_name]
-            
-            # 讀取 Translate 工作表
-            translate_df = pd.read_excel(excel_path, sheet_name="Translate")
-            
-            # 檢查是否有任何步驟使用 nx_mobile ActionKey
-            for _, step_row in steps_df.iterrows():
-                flow_name = step_row.get('FlowName')
-                if pd.notna(flow_name):
-                    translate_row = translate_df[translate_df['FlowName'] == flow_name]
-                    if not translate_row.empty and translate_row.iloc[0].get('ActionKey') == 'nx_mobile':
-                        return True
-            
-            return False
-            
-        except Exception as e:
-            self.log(f"檢查測試是否需要 Mobile 時發生錯誤: {e}", "WARNING")
-            return False
     
     def load_test_cases(self):
         """
@@ -632,42 +193,7 @@ class TestCaseLauncher:
         )
         title_label.pack()
         
-        # === Appium 控制區（上方） ===
-        appium_frame = ttk.LabelFrame(self.root, text="Appium 控制區", padding="10")
-        appium_frame.pack(fill=tk.X, padx=10, pady=5)
-        
-        appium_control_frame = ttk.Frame(appium_frame)
-        appium_control_frame.pack(fill=tk.X)
-        
-        # Appium 控制按鈕（開關按鈕）
-        # 使用 tk.Button 而不是 ttk.Button，以便更好地控制顏色
-        self.btn_appium = tk.Button(
-            appium_control_frame,
-            text="啟動 Appium",
-            command=self.toggle_appium,
-            font=("Arial", 11, "bold"),
-            bg="#44ff44",  # 綠色（未運行）
-            fg="black",
-            activebackground="#66ff66",  # 滑鼠懸停時的顏色
-            activeforeground="black",
-            relief=tk.RAISED,
-            borderwidth=2,
-            width=15,
-            height=2,
-            cursor="hand2"
-        )
-        self.btn_appium.pack(side=tk.LEFT, padx=5)
-        
-        # Appium 狀態標籤
-        self.appium_status_label = ttk.Label(
-            appium_control_frame,
-            text="[檢查中...]",
-            font=("Arial", 10),
-            foreground="gray"
-        )
-        self.appium_status_label.pack(side=tk.LEFT, padx=10)
-        
-        # === 測試執行區（下方） ===
+        # === 測試執行區 ===
         test_frame = ttk.LabelFrame(self.root, text="測試執行區", padding="10")
         test_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
         
@@ -892,63 +418,6 @@ class TestCaseLauncher:
             messagebox.showinfo("提示", "測試正在執行中，請等待完成或點擊停止")
             return
         
-        # 檢查是否需要 Mobile 測試，以及 Appium 是否運行
-        needs_mobile = False
-        for test_name in selected_tests:
-            if self.check_test_needs_mobile(test_name):
-                needs_mobile = True
-                break
-        
-        if needs_mobile and not self.appium_manager.is_appium_running():
-            # 彈出警告視窗
-            result = messagebox.askyesno(
-                "Appium 未運行",
-                "檢測到您選擇的測試需要 Mobile 測試，但 Appium Server 未運行。\n\n"
-                "是否要先啟動 Appium Server？\n\n"
-                "點擊「是」將自動啟動 Appium，點擊「否」將繼續執行（可能會失敗）。"
-            )
-            
-            if result:
-                # 用戶選擇啟動 Appium
-                self.log("用戶選擇啟動 Appium Server...", "INFO")
-                self.btn_appium.config(state=tk.DISABLED)
-                
-                def _start_and_wait():
-                    success = self.appium_manager.start_appium()
-                    self.root.after(0, self._update_appium_button_state, success)
-                    if success:
-                        self.log("Appium Server 已啟動，開始執行測試...", "INFO")
-                        self.root.after(0, self._start_tests_after_appium, selected_tests)
-                    else:
-                        self.log("Appium Server 啟動失敗，無法執行 Mobile 測試", "ERROR")
-                        messagebox.showerror("錯誤", "Appium Server 啟動失敗，無法執行 Mobile 測試")
-                        self.root.after(0, lambda: self.btn_appium.config(state=tk.NORMAL))
-                
-                threading.Thread(target=_start_and_wait, daemon=True).start()
-                return
-            else:
-                # 用戶選擇繼續執行（可能會失敗）
-                self.log("用戶選擇繼續執行（Appium 未運行，Mobile 測試可能會失敗）", "WARNING")
-        
-        # 清除之前的狀態
-        for test_name in selected_tests:
-            self.update_status(test_name, "")
-        
-        # 更新按鈕狀態
-        self.btn_run.config(state=tk.DISABLED)
-        self.btn_stop.config(state=tk.NORMAL)
-        self.is_running = True
-        
-        # 在背景線程中執行測試
-        self.execution_thread = threading.Thread(
-            target=self._execute_tests_worker,
-            args=(selected_tests,),
-            daemon=True
-        )
-        self.execution_thread.start()
-    
-    def _start_tests_after_appium(self, selected_tests: List[str]):
-        """在 Appium 啟動後開始執行測試"""
         # 清除之前的狀態
         for test_name in selected_tests:
             self.update_status(test_name, "")
@@ -1070,9 +539,10 @@ class TestCaseLauncher:
                 python_exe = sys.executable
                 self.log(f"使用當前 Python 解釋器: {python_exe}", "INFO")
             
-            # 構建 pytest 命令
+            # 構建 pytest 命令（使用 -u 確保無緩衝輸出）
             cmd = [
                 python_exe,
+                "-u",  # 無緩衝輸出
                 "-m", "pytest",
                 test_file,
                 "--test_name", test_name,
@@ -1134,6 +604,9 @@ class TestCaseLauncher:
             else:
                 env['PYTHONPATH'] = project_root
             
+            # 禁用 Python 輸出緩衝，確保日誌即時寫入
+            env['PYTHONUNBUFFERED'] = '1'
+            
             # 設置環境變數
             if log_file:
                 env['TEST_TERMINAL_LOG'] = log_file
@@ -1145,79 +618,106 @@ class TestCaseLauncher:
             if log_file:
                 self.log(f"TEST_TERMINAL_LOG: {log_file}", "INFO")
             
-            # 使用 subprocess 執行 pytest
+            # 使用 subprocess 執行 pytest（使用 PIPE 捕獲輸出，避免文件句柄傳遞問題）
             result = None
             if log_file:
                 log_file_path = log_file  # 保存文件路徑，避免被覆蓋
                 try:
-                    with open(log_file_path, 'a', encoding='utf-8', errors='ignore', buffering=1) as log_file_handle:
-                        self.current_process = subprocess.Popen(
-                            cmd,
-                            cwd=project_root,
-                            env=env,
-                            stdout=log_file_handle,
-                            stderr=subprocess.STDOUT,
-                            text=True,
-                            encoding='utf-8',
-                            errors='ignore'
-                        )
-                        
-                        # 等待進程完成，但定期檢查 is_running 狀態
+                    import threading
+                    
+                    # 用於存儲輸出的列表
+                    output_lines = []
+                    
+                    def read_output(pipe, output_list, log_path):
+                        """讀取管道輸出並寫入日誌文件"""
                         try:
-                            while self.current_process.poll() is None:
-                                if not self.is_running:
-                                    self.log("檢測到停止請求，正在終止測試進程...", "WARNING")
-                                    
-                                    if log_file_path:
-                                        try:
-                                            log_file_handle.flush()
-                                            self.log(f"Log 文件已刷新: {log_file_path}", "INFO")
-                                        except Exception as flush_e:
-                                            self.log(f"刷新 log 文件時發生錯誤: {str(flush_e)}", "WARNING")
-                                    
-                                    self.current_process.terminate()
-                                    try:
-                                        self.current_process.wait(timeout=5)
-                                    except subprocess.TimeoutExpired:
-                                        self.log("進程未響應 terminate，強制終止...", "WARNING")
-                                        self.current_process.kill()
-                                        self.current_process.wait()
-                                    
-                                    if log_file_path:
-                                        try:
-                                            log_file_handle.write("\n" + "=" * 80 + "\n")
-                                            log_file_handle.write("測試進程被用戶手動終止\n")
-                                            log_file_handle.write(f"終止時間: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                                            log_file_handle.write("=" * 80 + "\n")
-                                            log_file_handle.flush()
-                                            self.log(f"Log 文件已保存: {log_file_path}", "INFO")
-                                        except Exception as save_e:
-                                            self.log(f"保存 log 文件時發生錯誤: {str(save_e)}", "WARNING")
-                                    
-                                    break
-                                time.sleep(0.5)
-                            
-                            # 獲取進程返回碼
-                            returncode = self.current_process.returncode
-                            
-                            class ProcessResult:
-                                def __init__(self, returncode):
-                                    self.returncode = returncode
-                                    self.stdout = None
-                                    self.stderr = None
-                            
-                            result = ProcessResult(returncode)
-                            
-                        except KeyboardInterrupt:
-                            self.log("收到中斷信號，正在終止測試進程...", "WARNING")
-                            if self.current_process:
+                            with open(log_path, 'a', encoding='utf-8', errors='ignore') as f:
+                                for line in iter(pipe.readline, ''):
+                                    if line:
+                                        output_list.append(line)
+                                        f.write(line)
+                                        f.flush()
+                        except Exception as e:
+                            pass
+                        finally:
+                            pipe.close()
+                    
+                    self.current_process = subprocess.Popen(
+                        cmd,
+                        cwd=project_root,
+                        env=env,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                        encoding='utf-8',
+                        errors='ignore',
+                        bufsize=1  # 行緩衝
+                    )
+                    
+                    # 啟動讀取線程
+                    read_thread = threading.Thread(
+                        target=read_output,
+                        args=(self.current_process.stdout, output_lines, log_file_path)
+                    )
+                    read_thread.daemon = True
+                    read_thread.start()
+                    
+                    # 等待進程完成，但定期檢查 is_running 狀態
+                    try:
+                        while self.current_process.poll() is None:
+                            if not self.is_running:
+                                self.log("檢測到停止請求，正在終止測試進程...", "WARNING")
+                                
                                 self.current_process.terminate()
                                 try:
                                     self.current_process.wait(timeout=5)
                                 except subprocess.TimeoutExpired:
+                                    self.log("進程未響應 terminate，強制終止...", "WARNING")
                                     self.current_process.kill()
                                     self.current_process.wait()
-                            result = ProcessResult(-1)
+                                
+                                # 等待讀取線程結束
+                                read_thread.join(timeout=2)
+                                
+                                # 寫入終止信息
+                                if log_file_path:
+                                    try:
+                                        with open(log_file_path, 'a', encoding='utf-8') as f:
+                                            f.write("\n" + "=" * 80 + "\n")
+                                            f.write("測試進程被用戶手動終止\n")
+                                            f.write(f"終止時間: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                                            f.write("=" * 80 + "\n")
+                                        self.log(f"Log 文件已保存: {log_file_path}", "INFO")
+                                    except Exception as save_e:
+                                        self.log(f"保存 log 文件時發生錯誤: {str(save_e)}", "WARNING")
+                                
+                                break
+                            time.sleep(0.5)
+                        
+                        # 等待讀取線程結束
+                        read_thread.join(timeout=5)
+                        
+                        # 獲取進程返回碼
+                        returncode = self.current_process.returncode
+                        
+                        class ProcessResult:
+                            def __init__(self, returncode):
+                                self.returncode = returncode
+                                self.stdout = None
+                                self.stderr = None
+                        
+                        result = ProcessResult(returncode)
+                        
+                    except KeyboardInterrupt:
+                        self.log("收到中斷信號，正在終止測試進程...", "WARNING")
+                        if self.current_process:
+                            self.current_process.terminate()
+                            try:
+                                self.current_process.wait(timeout=5)
+                            except subprocess.TimeoutExpired:
+                                self.current_process.kill()
+                                self.current_process.wait()
+                        result = ProcessResult(-1)
                         
                         # 寫入結尾信息
                         log_file_handle.write("\n" + "=" * 80 + "\n")

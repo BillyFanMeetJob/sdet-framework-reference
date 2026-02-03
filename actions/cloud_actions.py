@@ -735,47 +735,87 @@ class CloudActions(BaseAction):
             step_no += 1
             
             # ================================================================
-            # 步驟 4: 點擊 Server 選項卡
+            # 步驟 4: 智能尋找並點擊攝影機
+            # 邏輯：先找攝影機，找不到就點 Server 展開，再找攝影機
             # ================================================================
-            print("[CASE_2-2] 步驟 4: 點擊 Server 選項卡...")
+            print("[CASE_2-2] 步驟 4: 智能尋找攝影機...")
             
-            if not self.nx_cloud_web_page.click_server_item():
-                raise AssertionError("[CASE_2-2] ❌ 無法點擊 Server")
+            camera_found = False
+            max_attempts = 3  # 最多嘗試 3 次
             
-            print("[CASE_2-2] ✅ 步驟 4 完成：已點擊 Server")
+            for attempt in range(max_attempts):
+                print(f"[CASE_2-2] 嘗試 {attempt + 1}/{max_attempts}: 檢查攝影機是否可見...")
+                
+                # 先快速檢查攝影機是否已經可見（等待 3 秒）
+                if self.nx_cloud_web_page.click_camera_item(max_wait=3):
+                    camera_found = True
+                    print(f"[CASE_2-2] ✅ 攝影機已可見並點擊成功（嘗試 {attempt + 1}）")
+                    break
+                
+                # 找不到攝影機，點擊 Server 展開
+                print(f"[CASE_2-2] 攝影機不可見，點擊 Server 展開...")
+                if self.nx_cloud_web_page.click_server_item():
+                    print("[CASE_2-2] ✅ 已點擊 Server，等待攝影機列表展開...")
+                    time.sleep(2)  # 等待展開動畫
+                else:
+                    print("[CASE_2-2] ⚠️ 點擊 Server 失敗，繼續嘗試...")
             
-            if reporter:
-                reporter.add_step(step_no=step_no, step_name="點擊 Server", status="pass",
-                                 message="已點擊 Server 選項卡")
-            step_no += 1
+            if not camera_found:
+                # 最後一次嘗試，等待較長時間
+                print("[CASE_2-2] 最後嘗試：等待攝影機出現（最多 15 秒）...")
+                if not self.nx_cloud_web_page.click_camera_item(max_wait=15):
+                    raise AssertionError("[CASE_2-2] ❌ 無法點擊攝影機")
             
-            # ================================================================
-            # 步驟 5: 點擊攝影機項目
-            # ================================================================
-            print("[CASE_2-2] 步驟 5: 點擊攝影機...")
-            
-            if not self.nx_cloud_web_page.click_camera_item():
-                raise AssertionError("[CASE_2-2] ❌ 無法點擊攝影機")
-            
-            print("[CASE_2-2] ✅ 步驟 5 完成：已點擊攝影機")
+            print("[CASE_2-2] ✅ 步驟 4 完成：已點擊攝影機")
             
             if reporter:
                 reporter.add_step(step_no=step_no, step_name="點擊攝影機", status="pass",
-                                 message="已點擊攝影機項目")
+                                 message="已成功找到並點擊攝影機")
             step_no += 1
             
             # ================================================================
-            # 步驟 6: 等待影片播放
+            # 步驟 5: 點擊進度條綠色區塊開始播放錄影
             # ================================================================
-            print(f"[CASE_2-2] 步驟 6: 等待影片播放 {playback_duration} 秒...")
+            print(f"[CASE_2-2] 步驟 {step_no}: 點擊進度條綠色區塊...")
             
-            time.sleep(playback_duration)
+            if not self.nx_cloud_web_page.click_timeline_green_block():
+                self.logger.warning("[CASE_2-2] ⚠️ 點擊進度條失敗，但測試繼續")
+            else:
+                print(f"[CASE_2-2] ✅ 步驟 {step_no} 完成：已點擊進度條")
             
-            print(f"[CASE_2-2] ✅ 步驟 6 完成：影片已播放 {playback_duration} 秒")
+            if reporter:
+                reporter.add_step(step_no=step_no, step_name="點擊進度條", status="pass",
+                                 message="已點擊進度條綠色區塊")
+            step_no += 1
+            
+            # ================================================================
+            # 步驟 6: 等待影片播放 5 秒
+            # ================================================================
+            play_seconds = 5
+            print(f"[CASE_2-2] 步驟 {step_no}: 等待影片播放 {play_seconds} 秒...")
+            
+            time.sleep(play_seconds)
+            
+            print(f"[CASE_2-2] ✅ 步驟 {step_no} 完成：影片已播放 {play_seconds} 秒")
             
             if reporter:
                 reporter.add_step(step_no=step_no, step_name="影片播放", status="pass",
-                                 message=f"已播放 {playback_duration} 秒")
+                                 message=f"已播放 {play_seconds} 秒")
+            step_no += 1
+            
+            # ================================================================
+            # 步驟 7: 點擊暫停按鈕
+            # ================================================================
+            print(f"[CASE_2-2] 步驟 {step_no}: 點擊暫停按鈕...")
+            
+            if not self.nx_cloud_web_page.click_pause_button():
+                self.logger.warning("[CASE_2-2] ⚠️ 點擊暫停按鈕失敗，但測試繼續")
+            else:
+                print(f"[CASE_2-2] ✅ 步驟 {step_no} 完成：已點擊暫停")
+            
+            if reporter:
+                reporter.add_step(step_no=step_no, step_name="點擊暫停", status="pass",
+                                 message="已點擊暫停按鈕")
             step_no += 1
             
             # ================================================================

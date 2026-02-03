@@ -1,0 +1,41 @@
+================================================================================
+測試案例: 回放錄影事件後停止
+執行時間: 2026-02-03 02:54:40
+執行命令: C:\Python314\python.exe -u -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name 回放錄影事件後停止 -v -s --tb=short
+工作目錄: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+>>> [DEBUG] 檢查登錄狀態（目標伺服器: LAPTOP-QRJN5735）
+>>> [OK] 驗證成功：找到預期元素 desktop_main/server_icon.png
+>>> [OK] 已在主畫面，無需重新登錄
+>>> [RECORDING] 執行 Case 2-2: 調閱錄影事件回放
+>>> [RECORDING] 委託 CloudActions 執行...
+>>> [CASE_2-2] 執行 Case 2-2: 調閱一個錄影事件回放
+tests/test_runner.py::test_main_flow[\u56de\u653e\u9304\u5f71\u4e8b\u4ef6\u5f8c\u505c\u6b62-steps0] ============================================================
+[CASE_2-2] 開始執行（使用 Selenium + Nx Cloud OAuth）
+============================================================
+[CASE_2-2] 步驟 1: 啟動 Chrome 並初始化 WebDriver...
+>>> [CASE_2-2] 置頂視窗失敗: (0, 'SetForegroundWindow', 'No error message is available')
+[CASE_2-2] ✅ 步驟 1 完成：Chrome 已啟動並置頂
+[CASE_2-2] 步驟 2: 通過 Nx Cloud OAuth 登錄...
+>>> [NX_CLOUD_WEB] [LOGIN] 開始 Nx Cloud OAuth 登錄流程...
+>>> [NX_CLOUD_WEB] [LOGIN] 使用帳號: fanzhenglun2@gmail.com
+>>> [NX_CLOUD_WEB] [LOGIN] Step 1: 導航到 https://localhost:7001...
+>>> [NX_CLOUD_WEB] [LOGIN] Step 2: 點擊「登入 Nx Cloud」...
+>>> [NX_CLOUD_WEB] [LOGIN] [OK] 已點擊「登入 Nx Cloud」
+>>> [NX_CLOUD_WEB] [LOGIN] Step 3: 點擊「接受風險並繼續」...
+>>> [NX_CLOUD_WEB] [LOGIN] 未找到「接受風險」按鈕，跳過
+>>> [NX_CLOUD_WEB] [LOGIN] Step 4: 輸入郵箱...
+>>> [NX_CLOUD_WEB] [LOGIN] 未找到郵箱輸入框，可能已登錄
+>>> [NX_CLOUD_WEB] [LOGIN] [WARN] 仍在登錄頁面
+>>> [CASE_2-2] [WARN] 登錄可能未完全成功，繼續執行...
+[CASE_2-2] ✅ 步驟 2 完成：登錄流程已執行
+[CASE_2-2] 步驟 3: 點擊「瀏覽」分頁...
+>>> [NX_CLOUD_WEB] [BROWSE] 點擊「瀏覽」分頁...

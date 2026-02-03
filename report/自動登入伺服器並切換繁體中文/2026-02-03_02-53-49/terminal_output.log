@@ -1,0 +1,316 @@
+================================================================================
+測試案例: 自動登入伺服器並切換繁體中文
+執行時間: 2026-02-03 02:53:49
+執行命令: C:\Python314\python.exe -u -m pytest D:\nxwitness-demo\tests\test_runner.py --test_name 自動登入伺服器並切換繁體中文 -v -s --tb=short
+工作目錄: D:\nxwitness-demo
+================================================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: D:\nxwitness-demo
+plugins: anyio-4.12.1
+collecting ... collected 1 item
+
+>>> [DEBUG] 檢查登錄狀態（目標伺服器: LAPTOP-QRJN5735）
+>>> [WARN] 未檢測到主畫面，執行登錄...
+>>> [CASE_1-1] 執行 Case 1-1 登錄流程
+>>> [OK] 軟件已在運行，將視窗置頂（視窗: 'Nx Witness Client', 尺寸: 1920x1200）
+>>> [OK] 視窗已置頂
+>>> [LOGIN] 嘗試點擊伺服器卡片: LAPTOP-QRJN5735
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_login\server_tile.png
+>>> [DEBUG] OK Script 辨識結果: True, 方法: ok_script
+>>> [DEBUG] OK Script 辨識成功，開始驗證座標...
+>>> [DEBUG] 座標驗證通過: 左上角=(274, 713), 中心點=(490, 766)，執行點擊...
+tests/test_runner.py::test_main_flow[\u81ea\u52d5\u767b\u5165\u4f3a\u670d\u5668\u4e26\u5207\u63db\u7e41\u9ad4\u4e2d\u6587-steps0] >>> [CLICK_COORD] 實際點擊座標: (490, 766), 動作=單擊
+>>> [DEBUG] 點擊執行完成
+>>> [OK] OK_SCRIPT 辨識成功並點擊: server_tile.png (信心: 0.92, 耗時: 273.0ms)
+>>> [STAT] [座標庫] 比例座標: x_ratio=0.2552, y_ratio=0.6383 | 視窗尺寸: 1920x1200 | 絕對座標: (490, 766)
+>>> [DEBUG] 點擊結果: True
+>>> [VERIFY] 驗證點擊結果...
+>>> [OK] 未檢測到連接服務器對話框，確認成功點擊了伺服器卡片
+>>> [OK] 等待系統載入...
+>>> [OK] 找到主畫面視窗，繼續驗證...
+>>> [OK] 找到目標視窗: Nx Witness Client (1920x1200)
+>>> [OK] 驗證成功：找到預期元素 desktop_main/server_icon.png
+>>> [OK] 登錄驗證成功：找到主畫面圖示
+>>> [OK] 登錄驗證成功：已進入主畫面
+>>> [CFG] 修改語系為: 繁體中文
+>>> [MAIN_PAGE] [CLICK] Clicking top-left menu icon...
+>>> [MAIN_PAGE] [PARAM] Parameters: image='desktop_main/menu_icon.png', timeout=3s
+>>> [SMART_CLICK] [START] Finding target: text='None', image='desktop_main/menu_icon.png', timeout=3s
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/menu_icon.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_main\menu_icon.png
+>>> [OPENCV] [COORD] Image: menu_icon.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (48, 37)
+>>> [OPENCV] [COORD] Image: menu_icon.png
+>>> [OPENCV] [COORD] Template size: (48, 37)
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Match found: confidence=1.0000
+>>> [OPENCV] [COORD] Absolute screen position (top_left): (0, 0)
+>>> [OPENCV] [COORD] Bounding box: left=0, top=0, right=48, bottom=37
+>>> [OPENCV] [COORD] Time: 213.9ms
+>>> [DEBUG] OK Script 辨識結果: True, 方法: ok_script
+>>> [DEBUG] OK Script 辨識成功，開始驗證座標...
+>>> [DEBUG] 座標驗證通過: 左上角=(0, 0), 中心點=(24, 18)，執行點擊...
+>>> [CLICK_COORD] 實際點擊座標: (24, 18), 動作=單擊
+>>> [DEBUG] 點擊執行完成
+>>> [OK] OK_SCRIPT 辨識成功並點擊: menu_icon.png (信心: 1.00, 耗時: 213.9ms)
+>>> [STAT] [座標庫] 比例座標: x_ratio=0.0125, y_ratio=0.0150 | 視窗尺寸: 1920x1200 | 絕對座標: (24, 18)
+>>> [SMART_CLICK] [IMG] Success.
+>>> [MAIN_PAGE] [SUCCESS] Main menu opened successfully
+>>> [DEBUG] 準備點擊本地設置...
+>>> [MAIN_PAGE] [CLICK] Clicking 'Local Settings'...
+>>> [MAIN_PAGE] [PARAM] Parameters: image='desktop_main/local_settings.png', text='本地设置' (with fallbacks), region=(0, 0, 500, 800), timeout=5s, use_vlm=False (image-first)
+>>> [MAIN_PAGE] [CALL] Calling smart_click with image='desktop_main/local_settings.png', text='本地设置' (fallback: ['本地設置', '本機設定', 'Local Settings'])...
+>>> [MAIN_PAGE] [STRATEGY] Using image-first strategy (use_vlm=False)
+>>> [SMART_CLICK] [START] Finding target: text='本地设置', image='desktop_main/local_settings.png', timeout=5s
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_main/local_settings.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_main\local_settings.png
+>>> [OPENCV] [COORD] Image: local_settings.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=500, height=800
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (99, 32)
+>>> [OPENCV] [COORD] Image: local_settings.png
+>>> [OPENCV] [COORD] Template size: (99, 32)
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=500, height=800
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Match found: confidence=0.7943
+>>> [OPENCV] [COORD] Absolute screen position (top_left): (25, 339)
+>>> [OPENCV] [COORD] Bounding box: left=25, top=339, right=124, bottom=371
+>>> [OPENCV] [COORD] Time: 54.6ms
+>>> [DEBUG] OK Script 辨識結果: True, 方法: ok_script
+>>> [DEBUG] OK Script 辨識成功，開始驗證座標...
+>>> [DEBUG] 座標驗證通過: 左上角=(25, 339), 中心點=(74, 355)，執行點擊...
+>>> [CLICK_COORD] 實際點擊座標: (74, 355), 動作=單擊
+>>> [DEBUG] 點擊執行完成
+>>> [OK] OK_SCRIPT 辨識成功並點擊: local_settings.png (信心: 0.79, 耗時: 54.6ms)
+>>> [STAT] [座標庫] 比例座標: x_ratio=0.0385, y_ratio=0.2958 | 視窗尺寸: 1920x1200 | 絕對座標: (74, 355)
+>>> [SMART_CLICK] [IMG] Success.
+>>> [MAIN_PAGE] [RESULT] smart_click returned: True
+>>> [MAIN_PAGE] [SUCCESS] Click operation succeeded, waiting for settings window to open...
+>>> [OK] 視窗已出現並完全初始化: Nx Witness Client (706x847)
+>>> [MAIN_PAGE] [SUCCESS] Settings window opened: '本地用戶端設定 - Nx Witness Client'
+>>> [DEBUG] select_local_settings 返回: True
+>>> [DEBUG] 本地設置點擊成功，等待視窗載入...
+>>> [DEBUG] 準備切換到外觀分頁...
+>>> [CLICK] 點擊「外觀」分頁...
+>>> [SMART_CLICK] [START] Finding target: text='界面外观', image='desktop_settings/appearance_tab.png', timeout=3.0s
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/appearance_tab.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\appearance_tab.png
+>>> [OPENCV] [COORD] Image: appearance_tab.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (79, 32)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+[33mChecking connectivity to the model hosters, this may take a while. To bypass this check, set `DISABLE_MODEL_SOURCE_CHECK` to `True`.[0m
+>>> [WARN] OCR 引擎初始化失敗: No module named 'paddle'
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (3.0s), attempted strategies: 1
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Image Recognition (OK Script: desktop_settings/appearance_tab.png)
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.169, 0.072)...
+>>> [CLICK_COORD] 實際點擊座標: (323, 86), 動作=單擊
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (323, 86)
+>>> [OK] 成功點擊外觀分頁
+>>> [CLICK] 修改語言為: 繁體中文
+>>> [CLICK] 點擊語言下拉選單...
+>>> [SMART_CLICK] [START] Finding target: text='None', image='desktop_settings/language_dropdown.png', timeout=1.5s
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/language_dropdown.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\language_dropdown.png
+>>> [OPENCV] [COORD] Image: language_dropdown.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (536, 33)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/language_dropdown.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\language_dropdown.png
+>>> [OPENCV] [COORD] Image: language_dropdown.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (536, 33)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/language_dropdown.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\language_dropdown.png
+>>> [OPENCV] [COORD] Image: language_dropdown.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (536, 33)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (1.5s), attempted strategies: 3
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Image Recognition (OK Script: desktop_settings/language_dropdown.png), Image Recognition (OK Script: desktop_settings/language_dropdown.png), Image Recognition (OK Script: desktop_settings/language_dropdown.png)
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.579, 0.194)...
+>>> [CLICK_COORD] 實際點擊座標: (1112, 232), 動作=單擊
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (1112, 232)
+>>> [OK] 成功點擊語言下拉選單
+>>> [CLICK] 選擇語言: 繁體中文
+>>> [語言選擇] 嘗試圖片辨識：traditional_chinese.png
+>>> [SMART_CLICK] [START] Finding target: text='None', image='desktop_settings/traditional_chinese.png', timeout=2s
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/traditional_chinese.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\traditional_chinese.png
+>>> [OPENCV] [COORD] Image: traditional_chinese.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (112, 31)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/traditional_chinese.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\traditional_chinese.png
+>>> [OPENCV] [COORD] Image: traditional_chinese.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (112, 31)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/traditional_chinese.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\traditional_chinese.png
+>>> [OPENCV] [COORD] Image: traditional_chinese.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (112, 31)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/traditional_chinese.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\traditional_chinese.png
+>>> [OPENCV] [COORD] Image: traditional_chinese.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (112, 31)
+>>> [DEBUG] OK Script 辨識結果: None, 方法: None
+>>> [SMART_CLICK] [IMG] Failed (Confidence too low or not found).
+>>> [SMART_CLICK] [TIMEOUT] Recognition timeout (2s), attempted strategies: 4
+>>> [SMART_CLICK] [FAIL] All strategies failed. Attempted strategies: Image Recognition (OK Script: desktop_settings/traditional_chinese.png), Image Recognition (OK Script: desktop_settings/traditional_chinese.png), Image Recognition (OK Script: desktop_settings/traditional_chinese.png), Image Recognition (OK Script: desktop_settings/traditional_chinese.png)
+>>> [SMART_CLICK] [COORD] Trying Coordinate Strategy: Ratio (0.000, 40.000)...
+>>> [CLICK_COORD] 實際點擊座標: (1112, 272), 動作=單擊
+>>> [SMART_CLICK] [COORD] Success. Final coordinates: (1112, 272)
+>>> [OK] 成功選擇 繁體中文
+>>> [CLICK] 點擊套用按鈕...
+>>> [SMART_CLICK] [START] Finding target: text='None', image='desktop_settings/apply_btn.png', timeout=1.5s
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/apply_btn.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\apply_btn.png
+>>> [OPENCV] [COORD] Image: apply_btn.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (94, 37)
+>>> [OPENCV] [COORD] Image: apply_btn.png
+>>> [OPENCV] [COORD] Template size: (94, 37)
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Match found: confidence=0.7366
+>>> [OPENCV] [COORD] Absolute screen position (top_left): (1067, 932)
+>>> [OPENCV] [COORD] Bounding box: left=1067, top=932, right=1161, bottom=969
+>>> [OPENCV] [COORD] Time: 198.1ms
+>>> [DEBUG] OK Script 辨識結果: True, 方法: ok_script
+>>> [DEBUG] OK Script 辨識成功，開始驗證座標...
+>>> [DEBUG] 座標驗證通過: 左上角=(1067, 932), 中心點=(1114, 950)，執行點擊...
+>>> [CLICK_COORD] 實際點擊座標: (1114, 950), 動作=單擊
+>>> [DEBUG] 點擊執行完成
+>>> [OK] OK_SCRIPT 辨識成功並點擊: apply_btn.png (信心: 0.74, 耗時: 198.1ms)
+>>> [STAT] [座標庫] 比例座標: x_ratio=0.5802, y_ratio=0.7917 | 視窗尺寸: 1920x1200 | 絕對座標: (1114, 950)
+>>> [SMART_CLICK] [IMG] Success.
+>>> [WAIT] 等待重啟彈窗...
+>>> [CLICK] 點擊「立即重新啟動」按鈕...
+>>> [SMART_CLICK] [START] Finding target: text='None', image='desktop_settings/restart_now.png', timeout=1.5s
+>>> [SMART_CLICK] [IMG] Trying Image Strategy: desktop_settings/restart_now.png...
+>>> [DEBUG] 嘗試 OK Script 圖像辨識: D:\nxwitness-demo\res\desktop_settings\restart_now.png
+>>> [OPENCV] [COORD] Image: restart_now.png
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Template size: (141, 39)
+>>> [OPENCV] [COORD] Image: restart_now.png
+>>> [OPENCV] [COORD] Template size: (141, 39)
+>>> [OPENCV] [COORD] Search region: left=0, top=0, width=1920, height=1200
+>>> [OPENCV] [COORD] Region offset: (0, 0)
+>>> [OPENCV] [COORD] Match found: confidence=0.7755
+>>> [OPENCV] [COORD] Absolute screen position (top_left): (872, 149)
+>>> [OPENCV] [COORD] Bounding box: left=872, top=149, right=1013, bottom=188
+>>> [OPENCV] [COORD] Time: 284.7ms
+>>> [DEBUG] OK Script 辨識結果: True, 方法: ok_script
+>>> [DEBUG] OK Script 辨識成功，開始驗證座標...
+>>> [DEBUG] 座標驗證通過: 左上角=(872, 149), 中心點=(942, 168)，執行點擊...
+>>> [CLICK_COORD] 實際點擊座標: (942, 168), 動作=單擊
+>>> [DEBUG] 點擊執行完成
+>>> [OK] OK_SCRIPT 辨識成功並點擊: restart_now.png (信心: 0.78, 耗時: 284.7ms)
+>>> [STAT] [座標庫] 比例座標: x_ratio=0.4906, y_ratio=0.1400 | 視窗尺寸: 1920x1200 | 絕對座標: (942, 168)
+>>> [SMART_CLICK] [IMG] Success.
+>>> [OK] 成功點擊立即重新啟動
+>>> [OK] 語系切換流程完成
+
+============================================================
+[STATS] Image Recognition Statistics Report
+============================================================
+Total Attempts: 2422
+
+[Hit Rate]
+  OK Script/OpenCV: 757/2422 (31.3%)
+  VLM (LLM Vision): 114/2422 (4.7%)
+  pyautogui:        9/2422 (0.4%)
+  OCR:              0/2422 (0.0%)
+  Coordinate:       343/2422 (14.2%)
+
+[Average Recognition Time]
+  OK Script/OpenCV: 231.79 ms
+  VLM (LLM Vision): 3420.60 ms
+  pyautogui:        87.29 ms
+
+[Per-Image Statistics]
+  appearance_tab.png:
+    Attempts: 30, OK Script: 16 (53%), pyautogui: 0 (0%)
+  apply_btn.png:
+    Attempts: 53, OK Script: 38 (72%), pyautogui: 0 (0%)
+  calendar_header.png:
+    Attempts: 7, OK Script: 7 (100%), pyautogui: 0 (0%)
+  camera_settings_menu.png:
+    Attempts: 151, OK Script: 51 (34%), pyautogui: 1 (1%)
+  language_dropdown.png:
+    Attempts: 38, OK Script: 16 (42%), pyautogui: 0 (0%)
+  license_tab.png:
+    Attempts: 9, OK Script: 0 (0%), pyautogui: 0 (0%)
+  local_settings.png:
+    Attempts: 94, OK Script: 26 (28%), pyautogui: 0 (0%)
+  login_indicator.png:
+    Attempts: 313, OK Script: 0 (0%), pyautogui: 0 (0%)
+  menu_icon.png:
+    Attempts: 26, OK Script: 26 (100%), pyautogui: 0 (0%)
+  ok_btn.png:
+    Attempts: 47, OK Script: 47 (100%), pyautogui: 0 (0%)
+  radio_n.png:
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 traditional_chinese.png:
+    Attempts: 33, OK Script: 15 (45%), pyautogui: 0 (0%)
+  usb_cam_item.png:
+    Attempts: 121, OK Script: 73 (60%), pyautogui: 0 (0%)
+============================================================
+
+================================================================================
+[系統] ✅ Playwright 瀏覽器已保留（供 Case 2-2 使用）
+[系統] 💡 使用類別屬性保持瀏覽器運行（比照 Selenium）
+[系統] 💡 Case 2-2 可以通過 Attach 模式連接
+================================================================================
+[系統] 💡 瀏覽器將保持運行直到程序結束
+================================================================================
+[REPORT] 從環境變數獲取 Terminal log: D:\nxwitness-demo\report\自動登入伺服器並切換繁體中文\2026-02-03_02-53-49\terminal_output.log
+[REPORT] Terminal log 文件存在，大小: 16659 bytes
+[REPORT] 開始生成報告，log_file_path: D:\nxwitness-demo\report\自動登入伺服器並切換繁體中文\2026-02-03_02-53-49\terminal_output.log
+[REPORT] 清理了 0 個 NULL 字節
+[REPORT] Terminal log 已複製到報告目錄: D:\nxwitness-demo\report\自動登入伺服器並切換繁體中文\2026-02-03_02-53-49\terminal_output.log (19321 bytes)
+
+================================================================================
+[REPORT] 測試報告已生成！
+[REPORT] 報告路徑: D:/nxwitness-demo/report/自動登入伺服器並切換繁體中文/2026-02-03_02-53-49/report.html
+[REPORT] 您可以直接在瀏覽器中打開此文件查看詳細報告
+================================================================================
+
+PASSED
+
+============================== warnings summary ===============================
+tests/test_runner.py::test_main_flow[\u81ea\u52d5\u767b\u5165\u4f3a\u670d\u5668\u4e26\u5207\u63db\u7e41\u9ad4\u4e2d\u6587-steps0]
+  D:\nxwitness-demo\base\desktop_app.py:173: DeprecationWarning: The parameter `use_angle_cls` has been deprecated and will be removed in the future. Please use `use_textline_orientation` instead.
+    self._ocr_engine = PaddleOCR(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 1 passed, 1 warning in 25.00s ========================

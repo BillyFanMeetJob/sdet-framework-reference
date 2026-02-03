@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "version": "2.0",
+    "feature_evolution_enabled": true
+  },
+  "elements": {
+    "確認按鈕": {
+      "avg_coord": [
+        960,
+        540
+      ],
+      "resolution": [
+        1920,
+        1080
+      ],
+      "count": 5,
+      "key_features": "圓形, 按鈕, 確認",
+      "secondary_features": "綠色, 白色文字",
+      "observed_features": [
+        "綠色",
+        "圓形",
+        "按鈕",
+        "確認",
+        "白色文字"
+      ]
+    }
+  }
+}
