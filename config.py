@@ -47,6 +47,24 @@ class DevConfig(BaseConfig):
     # 管理員密碼（用於伺服器設定確認彈窗）
     ADMIN_PASSWORD = "1q2w!Q@W"  # 預設空密碼，如有密碼請在此設置
     
+    # ================================================================
+    # AI Vision Learning Mode (VLM 自癒機制)
+    # ================================================================
+    # 是否啟用 VLM 學習模式（用於 UI 變動觀測與自動修復建議）
+    ENABLE_VLM_LEARNING: bool = False  # 預設關閉，避免消耗 API Token
+    
+    # VLM API 配置（根據使用的模型選擇）
+    VLM_PROVIDER: str = "gemini"  # 可選: "gemini", "ollama", "openai"
+    VLM_API_KEY: str = os.getenv("GEMINI_API_KEY", "")  # 從環境變數讀取
+    VLM_MODEL: str = "gemini-pro-vision"  # 或 "gpt-4-vision-preview"
+    
+    # 隨機掃描頻率（當 ENABLE_VLM_LEARNING=True 時）
+    # 即使操作成功，也會在每 N 次操作中隨機執行一次 VLM 掃描
+    VLM_RANDOM_SCAN_FREQUENCY: int = 10  # 每 10 次操作掃描 1 次
+    
+    # AI 分析結果存放路徑
+    AI_INTELLIGENCE_LOG_DIR: str = os.path.join(BaseConfig.LOG_PATH, "ai_intelligence")
+    
     # Nx Cloud 登錄資訊
     NX_CLOUD_EMAIL = "fanzhenglun2@gmail.com"  # Nx Cloud 登錄郵箱
     NX_CLOUD_PASSWORD = "1q2w!Q@W"  # Nx Cloud 登錄密碼（預設與管理員密碼相同）
@@ -426,6 +444,28 @@ class LocatorConfig:
     WEB_NEXT_BTN_XPATH: str = "//button[contains(., '下一') or contains(., 'Next')]"
     WEB_PASSWORD_INPUT_XPATH: str = "//input[@type='password']"
     WEB_LOGIN_SUBMIT_BTN_XPATH: str = "//button[contains(., '登录') or contains(., '登入') or @type='submit']"
+    
+    # 語言切換相關
+    # 語言下拉按鈕：<button id="dropdownMenuButton">
+    WEB_LANGUAGE_DROPDOWN_XPATHS: list = [
+        "//button[@id='dropdownMenuButton']",
+        "//button[contains(@class, 'btn-dropdown-toggle')]",
+        "//button[contains(@class, 'legacy-btn') and contains(@class, 'dropdown')]",
+        "//div[contains(@class, 'language')]//button",
+        "//*[contains(@class, 'locale-selector')]",
+    ]
+    
+    # 繁體中文選項：<ul aria-labelledby="dropdownMenuButton"><a><span>繁体中文</span></a></ul>
+    WEB_CHINESE_OPTION_XPATHS: list = [
+        "//ul[@aria-labelledby='dropdownMenuButton']//span[contains(text(), '繁体中文')]",
+        "//ul[@aria-labelledby='dropdownMenuButton']//span[contains(text(), '繁體中文')]",
+        "//ul[@aria-labelledby='dropdownMenuButton']//a[contains(@class, 'dropdown-item')]//span[contains(text(), '繁')]",
+        "//a[contains(@class, 'dropdown-item')]//span[contains(text(), '繁体中文')]",
+        "//a[contains(@class, 'dropdown-item')]//span[contains(text(), '繁體中文')]",
+        "//*[contains(text(), '繁體中文')]",
+        "//*[contains(text(), '繁体中文')]",
+        "//*[contains(text(), 'Traditional Chinese')]",
+    ]
 
 
 # 創建全局配置實例（追加到現有配置）

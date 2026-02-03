@@ -1595,21 +1595,16 @@ class NxCloudWebPage(BasePage):
         Returns:
             bool: 修改是否成功
         """
+        from config import LocatorConfig
+        
         self.logger.info("[NX_CLOUD_WEB] [LANG] 嘗試修改語言為繁體中文...")
         
         if not self.driver:
             return False
         
         try:
-            # 優先使用 Nx Cloud 的語言選擇器（根據實際 DOM 結構）
-            # 按鈕 ID 是 dropdownMenuButton，帶有小三角下拉箭頭
-            language_selectors = [
-                "//button[@id='dropdownMenuButton']",  # Nx Cloud 主要語言按鈕
-                "//button[contains(@class, 'btn-dropdown-toggle')]",  # 備選：按 class 找
-                "//button[contains(@class, 'legacy-btn') and contains(@class, 'dropdown')]",
-                "//div[contains(@class, 'language')]//button",
-                "//*[contains(@class, 'locale-selector')]",
-            ]
+            # 使用配置中的語言選擇器 XPath
+            language_selectors = LocatorConfig.WEB_LANGUAGE_DROPDOWN_XPATHS
             
             for selector in language_selectors:
                 try:
@@ -1619,19 +1614,8 @@ class NxCloudWebPage(BasePage):
                         self.logger.info(f"[NX_CLOUD_WEB] [LANG] 點擊語言選擇器: {selector}")
                         time.sleep(1)
                         
-                        # 嘗試選擇繁體中文（根據實際 DOM 結構）
-                        # 下拉選單是 <ul aria-labelledby="dropdownMenuButton">
-                        # 選項在 <a class="anchor dropdown-item"> 裡的 <span> 中
-                        chinese_options = [
-                            "//ul[@aria-labelledby='dropdownMenuButton']//span[contains(text(), '繁体中文')]",  # 簡體字"繁体"
-                            "//ul[@aria-labelledby='dropdownMenuButton']//span[contains(text(), '繁體中文')]",  # 繁體字
-                            "//ul[@aria-labelledby='dropdownMenuButton']//a[contains(@class, 'dropdown-item')]//span[contains(text(), '繁')]",
-                            "//a[contains(@class, 'dropdown-item')]//span[contains(text(), '繁体中文')]",
-                            "//a[contains(@class, 'dropdown-item')]//span[contains(text(), '繁體中文')]",
-                            "//*[contains(text(), '繁體中文')]",
-                            "//*[contains(text(), '繁体中文')]",
-                            "//*[contains(text(), 'Traditional Chinese')]",
-                        ]
+                        # 使用配置中的繁體中文選項 XPath
+                        chinese_options = LocatorConfig.WEB_CHINESE_OPTION_XPATHS
                         
                         for chinese_selector in chinese_options:
                             try:
