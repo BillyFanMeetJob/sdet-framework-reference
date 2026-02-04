@@ -2111,13 +2111,24 @@ class DesktopApp:
                     ty = win.top + int(win.height * y_ratio)
                     self.logger.info(f"[COORD] [TEXT_PRIORITY] 執行視窗比例點擊: 原始座標=({tx}, {ty}), 偏移=(offset_x={offset_x}, offset_y={offset_y})")
                 
+                # 🎯 VLM 驗證：點擊前截圖並標記位置
+                final_x = tx + offset_x
+                final_y = ty + offset_y
+                screenshot_path = self._capture_click_preview(
+                    click_x=final_x,
+                    click_y=final_y,
+                    target_text=target_text,
+                    image_path=image_path
+                )
+                
                 # 🎯 執行點擊並獲取最終座標（應用偏移）
                 final_x, final_y = self._perform_click(tx, ty, clicks, click_type, offset_x, offset_y)
                 # 🎯 使用最終座標記錄（已應用偏移）
                 DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
                 
-                # 🎯 VLM 驗證：座標保底點擊後驗證
+                # 🎯 VLM 驗證：點擊後，使用點擊前的截圖進行驗證
                 vlm_verification_result = self._verify_coordinate_click_with_vlm(
+                    screenshot_path=screenshot_path,
                     click_x=final_x,
                     click_y=final_y,
                     target_text=target_text,
@@ -2412,13 +2423,24 @@ class DesktopApp:
                     ty = win.top + int(win.height * y_ratio)
                     self.logger.debug(f"[SMART_CLICK] [COORD] Executing ratio-based click: ({tx}, {ty}), offset=({offset_x}, {offset_y}), clicks={clicks}")
                 
+                # 🎯 VLM 驗證：點擊前截圖並標記位置
+                final_x = tx + offset_x
+                final_y = ty + offset_y
+                screenshot_path = self._capture_click_preview(
+                    click_x=final_x,
+                    click_y=final_y,
+                    target_text=target_text,
+                    image_path=image_path
+                )
+                
                 # 執行點擊並獲取最終座標（應用偏移）
                 final_x, final_y = self._perform_click(tx, ty, clicks, click_type, offset_x, offset_y)
                 # 使用最終座標記錄（已應用偏移）
                 DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
                 
-                # 🎯 VLM 驗證：座標保底點擊後，使用 VLM 驗證是否點擊正確
+                # 🎯 VLM 驗證：點擊後，使用點擊前的截圖進行驗證
                 vlm_verification_result = self._verify_coordinate_click_with_vlm(
+                    screenshot_path=screenshot_path,
                     click_x=final_x,
                     click_y=final_y,
                     target_text=target_text,
@@ -2486,47 +2508,33 @@ class DesktopApp:
         recognizer.reset_stats()
         self.logger.info("✅ 辨識統計已重置")
     
-    def _verify_coordinate_click_with_vlm(self, click_x, click_y, target_text=None, image_path=None, expected_action="點擊元素"):
+    def _capture_click_preview(self, click_x, click_y, target_text=None, image_path=None):
         """
-        🤖 使用 VLM 驗證座標點擊是否正確
-        
-        在使用座標保底點擊後，截圖並標記點擊位置，讓 VLM 判斷是否點擊到預期的元素。
+        📸 點擊前截圖並標記將要點擊的位置
         
         Args:
-            click_x: 點擊的 X 座標
-            click_y: 點擊的 Y 座標
+            click_x: 將要點擊的 X 座標
+            click_y: 將要點擊的 Y 座標
             target_text: 目標文字（如果有）
             image_path: 目標圖片路徑（如果有）
-            expected_action: 預期的操作描述
             
         Returns:
-            dict: {
-                'verified': bool,  # 是否驗證通過
-                'description': str,  # VLM 的描述
-                'confidence': float  # 信心度（0-1）
-            }
+            str: 標記後的截圖路徑，如果失敗則返回 None
         """
         # 檢查 VLM 是否啟用
         vlm_enabled = getattr(EnvConfig, 'VLM_ENABLED', False)
         if not vlm_enabled:
-            return {
-                'verified': True,  # VLM 未啟用時，假設驗證通過
-                'description': 'VLM 驗證未啟用',
-                'confidence': 0.0
-            }
+            return None
         
         try:
-            self.logger.info(f"[VLM_VERIFY] 開始驗證座標點擊: ({click_x}, {click_y})")
+            self.logger.info(f"[VLM_PREVIEW] 點擊前截圖並標記位置: ({click_x}, {click_y})")
             
-            # 等待一下讓畫面穩定
-            time.sleep(0.3)
-            
-            # 截圖並標記點擊位置
+            # 截圖
             screenshot = pyautogui.screenshot()
-            from PIL import ImageDraw, ImageFont
+            from PIL import ImageDraw
             draw = ImageDraw.Draw(screenshot)
             
-            # 繪製紅色圓圈標記點擊位置
+            # 繪製紅色圓圈標記將要點擊的位置
             marker_size = 30
             draw.ellipse(
                 [click_x - marker_size, click_y - marker_size, 
@@ -2546,10 +2554,56 @@ class DesktopApp:
                 screenshot_path = tmp_file.name
                 screenshot.save(screenshot_path)
             
+            self.logger.info(f"[VLM_PREVIEW] 截圖已保存: {screenshot_path}")
+            return screenshot_path
+            
+        except Exception as e:
+            self.logger.warning(f"[VLM_PREVIEW] 截圖失敗: {e}")
+            return None
+    
+    def _verify_coordinate_click_with_vlm(self, screenshot_path, click_x, click_y, target_text=None, image_path=None, expected_action="點擊元素"):
+        """
+        🤖 使用 VLM 驗證座標點擊是否正確
+        
+        使用點擊前的截圖（已標記點擊位置），讓 VLM 判斷點擊位置是否正確。
+        
+        Args:
+            screenshot_path: 點擊前的截圖路徑（已標記點擊位置）
+            click_x: 點擊的 X 座標
+            click_y: 點擊的 Y 座標
+            target_text: 目標文字（如果有）
+            image_path: 目標圖片路徑（如果有）
+            expected_action: 預期的操作描述
+            
+        Returns:
+            dict: {
+                'verified': bool,  # 是否驗證通過
+                'description': str,  # VLM 的描述
+                'confidence': float  # 信心度（0-1）
+            }
+        """
+        # 檢查 VLM 是否啟用或截圖是否存在
+        vlm_enabled = getattr(EnvConfig, 'VLM_ENABLED', False)
+        if not vlm_enabled or not screenshot_path:
+            return {
+                'verified': True,  # VLM 未啟用時，假設驗證通過
+                'description': 'VLM 驗證未啟用',
+                'confidence': 0.0
+            }
+        
+        try:
+            self.logger.info(f"[VLM_VERIFY] 開始驗證座標點擊: ({click_x}, {click_y})")
+            
             # 獲取 VLM 引擎
             vlm_engine = self._get_vlm_engine()
             if not vlm_engine:
                 self.logger.warning("[VLM_VERIFY] VLM 引擎未初始化")
+                # 清理臨時文件
+                try:
+                    import os
+                    os.unlink(screenshot_path)
+                except:
+                    pass
                 return {
                     'verified': True,  # VLM 不可用時，假設驗證通過
                     'description': 'VLM 引擎不可用',
@@ -2568,20 +2622,20 @@ class DesktopApp:
             else:
                 target_description = "目標元素"
             
-            prompt = f"""請分析這張截圖，紅色圓圈和十字線標記了剛才點擊的位置。
+            prompt = f"""請分析這張截圖，紅色圓圈和十字線標記了將要點擊的位置。
 
 預期操作：{expected_action}
 目標元素：{target_description}
 
 請判斷：
-1. 點擊位置是否在正確的元素上？
-2. 該位置的元素是否符合預期？
-3. 畫面是否符合點擊後的預期狀態？
+1. 標記的點擊位置是否在正確的元素上？
+2. 該位置的元素是否符合預期的目標元素？
+3. 點擊這個位置是否能達成預期的操作？
 
 請用以下格式回答：
 驗證結果：[通過/警告/失敗]
 信心度：[0-100]%
-說明：[簡短描述點擊位置的元素和狀態]"""
+說明：[簡短描述標記位置的元素，並說明是否正確]"""
 
             # 調用 VLM
             self.logger.info(f"[VLM_VERIFY] 調用 VLM 進行驗證...")
@@ -2589,6 +2643,7 @@ class DesktopApp:
             
             # 清理臨時文件
             try:
+                import os
                 os.unlink(screenshot_path)
             except:
                 pass
