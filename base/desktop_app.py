@@ -2177,6 +2177,44 @@ class DesktopApp:
         """
         return self.smart_click(**locator.to_smart_click_kwargs())
     
+    def smart_click_priority_image(self, x_ratio, y_ratio, target_text=None, image_path=None, timeout=3, is_relative=False, from_bottom=False, clicks=1, click_type='left', window_obj=None, use_vlm=None, offset_x=0, offset_y=0):
+        """
+        圖片優先策略：OK Script > PyAutoGUI > VLM > OCR
+        適用於圖標類場景
+        
+        此方法為向後兼容性保留，實際上調用 smart_click() 實現相同功能。
+        
+        :param x_ratio: X 軸比例(0.0 - 1.0)
+        :param y_ratio: Y 軸比例(0.0 - 1.0)
+        :param target_text: 要尋找的文字（用於VLM/OCR，可選）
+        :param image_path: 圖片路徑（相對於 res/，優先使用）
+        :param timeout: 超時時間（秒，默認3）
+        :param clicks: 點擊次數（1=單擊，2=雙擊）
+        :param click_type: 點擊類型（'left'=左鍵, 'right'=右鍵）
+        :param use_vlm: 是否使用 VLM 辨識（None=依照設置, True=強制使用, False=強制禁用）
+        :param offset_x: X 軸偏移量（像素），用於微調點擊位置（默認0）
+        :param offset_y: Y 軸偏移量（像素），用於微調點擊位置（默認0）
+        :return: True (成功) / False (失敗)
+        """
+        # 向後兼容：直接調用 smart_click，它已經支持圖片優先模式
+        return self.smart_click(
+            x_ratio=x_ratio,
+            y_ratio=y_ratio,
+            target_text=target_text,
+            image_path=image_path,
+            timeout=timeout,
+            is_relative=is_relative,
+            from_bottom=from_bottom,
+            clicks=clicks,
+            click_type=click_type,
+            window_obj=window_obj,
+            use_ok_script=True,  # 圖片優先模式啟用 OK Script
+            use_vlm=use_vlm,
+            offset_x=offset_x,
+            offset_y=offset_y,
+            region=None  # 使用默認區域
+        )
+    
     def smart_click(self, x_ratio, y_ratio, target_text=None, image_path=None, timeout=3, is_relative=False, from_bottom=False, clicks=1, click_type='left', window_obj=None, use_ok_script=True, use_vlm=None, offset_x=0, offset_y=0, region=None):
         """ 
         🎯 智能點擊：優先級 OK Script > VLM > OCR 文字 > 座標保底
