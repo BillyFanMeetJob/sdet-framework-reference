@@ -19,9 +19,6 @@ import time
 from datetime import datetime
 from typing import Optional
 from base.base_action import BaseAction
-from pages.mobile.login_page import LoginPage
-from pages.mobile.main_page import MainPage
-from pages.mobile.playback_page import PlaybackPage
 from toolkit.logger import get_logger
 from toolkit.adb_toolkit import AdbController, find_image_on_screen, find_color_region, BLUE_BUTTON
 from config import EnvConfig
@@ -41,20 +38,15 @@ class NxMobileActions(BaseAction):
         初始化移動端操作類
         
         Args:
-            driver: Appium WebDriver 實例
+            driver: Appium WebDriver 實例（未使用，Android 測試使用 ADB 方式）
         """
         super().__init__(browser=None)  # 移動端不使用 browser
         self.driver = driver
         self.logger = get_logger(self.__class__.__name__)
-        
-        # 初始化 Page Objects
-        self.login_page = LoginPage(driver)
-        self.main_page = MainPage(driver)
-        self.playback_page = PlaybackPage(driver)
     
     def set_driver(self, driver: object) -> 'NxMobileActions':
         """
-        設置 Appium WebDriver 實例
+        設置 Appium WebDriver 實例（未使用，Android 測試使用 ADB 方式）
         
         Args:
             driver: Appium WebDriver 實例
@@ -63,9 +55,6 @@ class NxMobileActions(BaseAction):
             NxMobileActions: 返回自身以支持鏈式調用
         """
         self.driver = driver
-        self.login_page.set_driver(driver)
-        self.main_page.set_driver(driver)
-        self.playback_page.set_driver(driver)
         return self
     
     def run_login_step(self, **kwargs) -> 'NxMobileActions':
