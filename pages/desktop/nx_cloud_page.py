@@ -1382,10 +1382,6 @@ class NxCloudPage(DesktopApp):
         except Exception as e:
             self.logger.warning(f"[NX_CLOUD] [CLEANUP] ⚠️ 清理時發生錯誤: {e}")
             print(f"[NX_CLOUD] [CLEANUP] ⚠️ 清理時發生錯誤: {e}")
-    
-    def attach_and_manage_nx_cloud(self) -> bool:
-        """
-        使用 Playwright 接管 Chrome 瀏覽器並處理 Nx Cloud 登錄
         
         此方法會：
         1. 透過 CDP (Chrome DevTools Protocol) 連接到已打開的 Chrome
