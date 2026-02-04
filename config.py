@@ -387,6 +387,33 @@ class LocatorConfig:
     注意：所有 image_path 都應該相對於 RES_PATH，在 Page 層統一拼接。
     """
     
+    # ==================== LoginPage 定位器 ====================
+    
+    # 伺服器入口（Server Tile）
+    # 使用真實記錄的座標：x_ratio=0.4995, y_ratio=0.6375 (來自 1920x1200 視窗)
+    SERVER_TILE_X_RATIO: float = 0.4995
+    SERVER_TILE_Y_RATIO: float = 0.6375
+    SERVER_TILE_IMAGE: str = "desktop_login/server_tile.png"
+    
+    # ==================== SettingsPage 定位器 ====================
+    
+    # 語言下拉選單
+    # 使用真實記錄的座標：x_ratio=0.5793, y_ratio=0.1936 (來自 706x847 視窗)
+    LANGUAGE_DROPDOWN_X_RATIO: float = 0.5793
+    LANGUAGE_DROPDOWN_Y_RATIO: float = 0.1936
+    LANGUAGE_DROPDOWN_IMAGE: str = "desktop_settings/language_dropdown.png"
+    
+    # 繁體中文選項（相對於語言下拉選單）
+    TRADITIONAL_CHINESE_OFFSET_X: int = 0  # 保持 X 座標不變
+    TRADITIONAL_CHINESE_OFFSET_Y: int = 40  # 向下偏移 40 像素
+    TRADITIONAL_CHINESE_IMAGE: str = "desktop_settings/traditional_chinese.png"
+    
+    # 套用按鈕
+    # 使用真實記錄的座標：x_ratio=0.7351, y_ratio=0.9445 (來自 706x847 視窗)
+    APPLY_BTN_X_RATIO: float = 0.7351
+    APPLY_BTN_Y_RATIO: float = 0.9445
+    APPLY_BTN_IMAGE: str = "desktop_settings/apply_btn.png"
+    
     # ==================== MainPage 定位器 ====================
     
     # 主選單圖標（左上角）

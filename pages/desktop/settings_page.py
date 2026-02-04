@@ -52,12 +52,19 @@ class SettingsPage(DesktopApp):
         
         # 1. 點擊語言下拉選單
         self.logger.info("🖱️ 點擊語言下拉選單...")
-        # 使用真實記錄的座標：x_ratio=0.5793, y_ratio=0.1936 (來自 706x847 視窗)
+        
+        # 🎯 從 LocatorConfig 獲取配置
+        from config import EnvConfig
+        locator = getattr(EnvConfig, 'LOCATOR_CONFIG', None)
+        dropdown_x = getattr(locator, 'LANGUAGE_DROPDOWN_X_RATIO', 0.5793) if locator else 0.5793
+        dropdown_y = getattr(locator, 'LANGUAGE_DROPDOWN_Y_RATIO', 0.1936) if locator else 0.1936
+        dropdown_image = getattr(locator, 'LANGUAGE_DROPDOWN_IMAGE', "desktop_settings/language_dropdown.png") if locator else "desktop_settings/language_dropdown.png"
+        
         success = self.smart_click(
-            x_ratio=0.5793,    # 真實座標（從測試記錄）
-            y_ratio=0.1936,    # 真實座標（從測試記錄）
+            x_ratio=dropdown_x,
+            y_ratio=dropdown_y,
             target_text=None,  # 移除 OCR，優先圖片辨識
-            image_path="desktop_settings/language_dropdown.png",
+            image_path=dropdown_image,
             is_relative=False,  # 使用比例座標而非相對座標
             timeout=1.5
         )
@@ -82,12 +89,18 @@ class SettingsPage(DesktopApp):
         # 繁體中文通常是第一個選項，位置在語言下拉選單下方約 30-50 像素處
         if "繁體" in language or "Traditional" in language:
             self.logger.info("[語言選擇] 嘗試圖片辨識：traditional_chinese.png")
+            
+            # 🎯 從 LocatorConfig 獲取配置
+            offset_x = getattr(locator, 'TRADITIONAL_CHINESE_OFFSET_X', 0) if locator else 0
+            offset_y = getattr(locator, 'TRADITIONAL_CHINESE_OFFSET_Y', 40) if locator else 40
+            chinese_image = getattr(locator, 'TRADITIONAL_CHINESE_IMAGE', "desktop_settings/traditional_chinese.png") if locator else "desktop_settings/traditional_chinese.png"
+            
             # 使用相對座標，從上次點擊位置（語言下拉選單）向下偏移
             success = self.smart_click(
-                x_ratio=0,  # 保持 X 座標不變（相對於上次點擊）
-                y_ratio=40,  # 向下偏移 40 像素（第一個選項位置）
+                x_ratio=offset_x,  # 保持 X 座標不變（相對於上次點擊）
+                y_ratio=offset_y,  # 向下偏移（第一個選項位置）
                 target_text=None,  # 禁用文字辨識，優先圖片
-                image_path="desktop_settings/traditional_chinese.png",
+                image_path=chinese_image,
                 is_relative=True,  # 使用相對座標
                 use_ok_script=True,
                 use_vlm=False,  # 圖片優先模式
@@ -157,12 +170,17 @@ class SettingsPage(DesktopApp):
         
         # 3. 點擊套用按鈕
         self.logger.info("🖱️ 點擊套用按鈕...")
-        # 使用真實記錄的座標：x_ratio=0.7351, y_ratio=0.9445 (來自 706x847 視窗)
+        
+        # 🎯 從 LocatorConfig 獲取配置
+        apply_x = getattr(locator, 'APPLY_BTN_X_RATIO', 0.7351) if locator else 0.7351
+        apply_y = getattr(locator, 'APPLY_BTN_Y_RATIO', 0.9445) if locator else 0.9445
+        apply_image = getattr(locator, 'APPLY_BTN_IMAGE', "desktop_settings/apply_btn.png") if locator else "desktop_settings/apply_btn.png"
+        
         self.smart_click(
-            x_ratio=0.7351,    # 真實座標（從測試記錄）
-            y_ratio=0.9445,    # 真實座標（從測試記錄）
+            x_ratio=apply_x,
+            y_ratio=apply_y,
             target_text=None,  # 移除 OCR，優先圖片辨識
-            image_path="desktop_settings/apply_btn.png",
+            image_path=apply_image,
             from_bottom=False,  # 使用比例座標
             timeout=1.5
         )
