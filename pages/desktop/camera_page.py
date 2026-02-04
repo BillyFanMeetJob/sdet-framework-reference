@@ -88,7 +88,7 @@ class CameraPage(DesktopApp):
         print("=" * 80, file=sys.stderr)
         
         self.logger.info("🖱️ 點擊「攝影機設定」選單項目...")
-        print("[CLICK_MENU] 準備點擊「攝影機設定」選單項目...")
+        self._safe_log("info", "[CLICK_MENU] 準備點擊「攝影機設定」選單項目...")
         
         # 🎯 獲取視窗並限制搜索區域到右鍵菜單附近
         win = self.get_nx_window()
@@ -102,7 +102,7 @@ class CameraPage(DesktopApp):
             menu_region_height = int(win.height * 0.40)          # 菜單高度約 40%
             menu_region = (menu_region_left, menu_region_top, menu_region_width, menu_region_height)
             self._safe_log("info", f"[CLICK_MENU] 限制搜索區域到右鍵菜單附近: {menu_region}")
-            print(f"[CLICK_MENU] 限制搜索區域: {menu_region}")
+            self._safe_log("info", f"[CLICK_MENU] 限制搜索區域: {menu_region}")
         else:
             self._safe_log("warning", "[CLICK_MENU] 無法獲取視窗，使用全屏搜索")
         
@@ -113,7 +113,7 @@ class CameraPage(DesktopApp):
         camera_settings_image = getattr(locator, 'CAMERA_SETTINGS_MENU_IMAGE', "desktop_main/camera_settings_menu.png") if locator else "desktop_main/camera_settings_menu.png"
         
         # 優先使用圖片辨識（右鍵選單出現後，圖片辨識更可靠）
-        print("[CLICK_MENU] 調用 smart_click 點擊「攝影機設定」選單...")
+        self._safe_log("info", "[CLICK_MENU] 調用 smart_click 點擊「攝影機設定」選單...")
         success = self.smart_click(
             x_ratio=camera_settings_x_ratio,
             y_ratio=camera_settings_y_ratio,
@@ -126,19 +126,19 @@ class CameraPage(DesktopApp):
         # 如果圖片辨識失敗，再嘗試文字辨識（限制在菜單區域）
         if not success:
             self._safe_log("warning", "[WARN] 圖片辨識失敗，嘗試文字辨識（繁體中文，限制區域）...")
-            print("[CLICK_MENU] 圖片辨識失敗，嘗試 VLM 文字辨識（限制區域）...")
+            self._safe_log("info", "[CLICK_MENU] 圖片辨識失敗，嘗試 VLM 文字辨識（限制區域）...")
             # 🎯 手動調用 VLM，限制在菜單區域
             if menu_region and win:
                 vlm_result = self._try_vlm_recognition("攝影機設定", menu_region, win)
                 if vlm_result:
                     success = True
                     self._safe_log("info", "[CLICK_MENU] VLM 在限制區域內找到「攝影機設定」")
-                    print("[CLICK_MENU] VLM 在限制區域內找到「攝影機設定」")
+                    self._safe_log("info", "[CLICK_MENU] VLM 在限制區域內找到「攝影機設定」")
             
             # 如果限制區域內 VLM 失敗，再嘗試全屏搜索（但這是最後手段）
             if not success:
                 self._safe_log("warning", "[WARN] 限制區域內文字辨識失敗，嘗試全屏搜索...")
-                print("[CLICK_MENU] 限制區域內 VLM 失敗，嘗試全屏搜索...")
+                self._safe_log("info", "[CLICK_MENU] 限制區域內 VLM 失敗，嘗試全屏搜索...")
                 success = self.smart_click(
                     x_ratio=camera_settings_x_ratio,
                     y_ratio=camera_settings_y_ratio,
@@ -151,19 +151,19 @@ class CameraPage(DesktopApp):
         # 如果繁體中文失敗，嘗試英文（限制在菜單區域）
         if not success:
             self._safe_log("warning", "[WARN] 繁體中文文字辨識失敗，嘗試英文（限制區域）...")
-            print("[CLICK_MENU] 繁體中文失敗，嘗試英文 VLM（限制區域）...")
+            self._safe_log("info", "[CLICK_MENU] 繁體中文失敗，嘗試英文 VLM（限制區域）...")
             if menu_region and win:
                 # 手動調用 VLM，限制在菜單區域
                 vlm_result = self._try_vlm_recognition("Camera Settings", menu_region, win)
                 if vlm_result:
                     success = True
                     self._safe_log("info", "[CLICK_MENU] VLM 在限制區域內找到「Camera Settings」")
-                    print("[CLICK_MENU] VLM 在限制區域內找到「Camera Settings」")
+                    self._safe_log("info", "[CLICK_MENU] VLM 在限制區域內找到「Camera Settings」")
             
             # 如果限制區域內 VLM 失敗，再嘗試全屏搜索（但這是最後手段）
             if not success:
                 self._safe_log("warning", "[WARN] 限制區域內英文文字辨識失敗，嘗試全屏搜索...")
-                print("[CLICK_MENU] 限制區域內英文 VLM 失敗，嘗試全屏搜索...")
+                self._safe_log("info", "[CLICK_MENU] 限制區域內英文 VLM 失敗，嘗試全屏搜索...")
                 success = self.smart_click(
                     x_ratio=camera_settings_x_ratio,
                     y_ratio=camera_settings_y_ratio,
@@ -189,7 +189,7 @@ class CameraPage(DesktopApp):
                 self._safe_log("info", f"[CLICK_MENU] 當前所有可見窗口: {[(w.title, w.width, w.height) for w in all_wins[:10]]}")
                 self._safe_log("info", f"[CLICK_MENU] 可能的攝影機設定窗口: {camera_candidates}")
                 print(f"[CLICK_MENU] 當前所有可見窗口: {[(w.title, w.width, w.height) for w in all_wins[:10]]}")
-                print(f"[CLICK_MENU] 可能的攝影機設定窗口: {camera_candidates}")
+                self._safe_log("info", f"[CLICK_MENU] 可能的攝影機設定窗口: {camera_candidates}")
             except Exception as e:
                 self._safe_log("warning", f"[CLICK_MENU] 無法列出窗口: {e}")
             
@@ -203,7 +203,7 @@ class CameraPage(DesktopApp):
             found = self.wait_for_window(window_titles=window_titles, timeout=5)
             if found:
                 self.logger.info("✅ 攝影機設定視窗已開啟")
-                print("[CLICK_MENU] 攝影機設定視窗已開啟")
+                self._safe_log("info", "[CLICK_MENU] 攝影機設定視窗已開啟")
                 return True
             else:
                 # 🎯 嘗試使用 find_window 方法（支持部分匹配）
@@ -215,15 +215,15 @@ class CameraPage(DesktopApp):
                     )
                     if camera_win:
                         self.logger.info(f"✅ 使用 find_window 找到攝影機設定視窗: {camera_win.title} ({camera_win.width}x{camera_win.height})")
-                        print(f"[CLICK_MENU] 使用 find_window 找到攝影機設定視窗: {camera_win.title}")
+                        self._safe_log("info", f"[CLICK_MENU] 使用 find_window 找到攝影機設定視窗: {camera_win.title}")
                         return True
                 except Exception as e:
                     self._safe_log("warning", f"[CLICK_MENU] find_window 查找失敗: {e}")
-                    print(f"[CLICK_MENU] find_window 查找失敗: {e}")
+                    self._safe_log("info", f"[CLICK_MENU] find_window 查找失敗: {e}")
                 
                 # 即使找不到視窗，也記錄警告但繼續執行
                 self.logger.warning("⚠️ wait_for_window 未找到視窗，但點擊已成功，繼續執行後續步驟")
-                print("[CLICK_MENU] wait_for_window 未找到視窗，但點擊已成功")
+                self._safe_log("info", "[CLICK_MENU] wait_for_window 未找到視窗，但點擊已成功")
                 # 給視窗一點時間完全載入
                 time.sleep(0.5)
                 print("[CLICK_MENU] click_camera_settings_menu() 完成，返回 True")
@@ -243,7 +243,7 @@ class CameraPage(DesktopApp):
         
         self.logger.info("🖱️ 點擊「錄影」分頁簽...")
         self._safe_log("info", "[CLICK] 點擊「錄製」頁籤...")
-        print("[SWITCH_TAB] 準備切換到「錄影」分頁簽...")
+        self._safe_log("info", "[SWITCH_TAB] 準備切換到「錄影」分頁簽...")
         
         # 🎯 關鍵修復：獲取攝影機設定視窗，而不是主視窗
         # 因為 get_nx_window() 可能返回主視窗，而我們需要的是攝影機設定視窗
@@ -362,14 +362,14 @@ class CameraPage(DesktopApp):
                                 
                                 time.sleep(1.0)  # 等待頁籤切換
                                 self._safe_log("info", f"[OK] 成功點擊「錄影」頁籤（使用 VLM，分頁簽區域搜索）")
-                                print("[SWITCH_TAB] 已點擊錄影分頁簽，準備驗證是否切換成功...")
+                                self._safe_log("info", "[SWITCH_TAB] 已點擊錄影分頁簽，準備驗證是否切換成功...")
                                 
                                 # 🎯 驗證：檢查是否能找到 radio-button（使用 radio_n.png 或 radio_y.png）
                                 if self._verify_recording_tab_switched():
-                                    print("[SWITCH_TAB] 驗證成功：已切換到錄影分頁簽")
+                                    self._safe_log("info", "[SWITCH_TAB] 驗證成功：已切換到錄影分頁簽")
                                     return True
                                 else:
-                                    print("[SWITCH_TAB] 驗證失敗：未找到 radio-button，可能未切換成功")
+                                    self._safe_log("info", "[SWITCH_TAB] 驗證失敗：未找到 radio-button，可能未切換成功")
                                     self.logger.warning("[SWITCH_TAB] ⚠️ 點擊後未找到 radio-button，可能未切換到錄影分頁")
                             else:
                                 self._safe_log("warning", f"[WARN] VLM 返回的座標超出視窗範圍: ({click_x}, {click_y}), 視窗範圍=({win.left}, {win.top}, {win.width}, {win.height})")
@@ -378,7 +378,7 @@ class CameraPage(DesktopApp):
                                 self._save_vlm_error_screenshot("vlm_coord_out_of_range", tab_region, win, click_x, click_y)
                     except Exception as e:
                         self._safe_log("warning", f"[WARN] VLM 搜索異常: {e}")
-                        print(f"[SWITCH_TAB] [ERROR] VLM 搜索異常: {e}")
+                        self._safe_log("error", f"[SWITCH_TAB] [ERROR] VLM 搜索異常: {e}")
                         import traceback
                         traceback.print_exc()
         
@@ -406,7 +406,7 @@ class CameraPage(DesktopApp):
                 )
                 if success:
                     self._safe_log("info", f"[OK] 成功點擊「錄製」頁籤（使用圖片辨識, y_ratio={y_ratio}）")
-                    print(f"[SWITCH_TAB] 已點擊錄影分頁簽（圖片辨識），準備驗證...")
+                    self._safe_log("info", f"[SWITCH_TAB] 已點擊錄影分頁簽（圖片辨識），準備驗證...")
                     
                     # 🎯 點擊後保存截圖，標記實際點擊的座標（從 DesktopApp._last_x, _last_y 獲取）
                     if win and DesktopApp._last_x > 0 and DesktopApp._last_y > 0:
@@ -416,13 +416,13 @@ class CameraPage(DesktopApp):
                     
                     # 🎯 驗證：檢查是否能找到 radio-button
                     if self._verify_recording_tab_switched():
-                        print("[SWITCH_TAB] 驗證成功：已切換到錄影分頁簽")
+                        self._safe_log("info", "[SWITCH_TAB] 驗證成功：已切換到錄影分頁簽")
                         return True
                     else:
-                        print("[SWITCH_TAB] 驗證失敗：未找到 radio-button，但點擊已成功")
+                        self._safe_log("info", "[SWITCH_TAB] 驗證失敗：未找到 radio-button，但點擊已成功")
         
         # 最終失敗
-        print("[SWITCH_TAB] 所有方法都失敗，無法切換到錄影分頁簽")
+        self._safe_log("info", "[SWITCH_TAB] 所有方法都失敗，無法切換到錄影分頁簽")
         self._safe_log("warning", "[WARN] 點擊「錄製」頁籤失敗：文字辨識和圖片辨識都失敗")
         self._safe_log("warning", "[TIP] 請確認：1) 頁籤文字是否為「錄影」、「錄製」或「Recording」 2) 是否有錄影頁籤的圖片資源 (res/desktop_settings/recording_tab.png) 3) 頁籤的實際位置")
         raise AssertionError("點擊「錄製」頁籤失敗：無法找到或點擊錄製頁籤")
@@ -434,7 +434,7 @@ class CameraPage(DesktopApp):
         
         :return: True 如果找到 radio-button，False 如果未找到
         """
-        print("[VERIFY_TAB] 開始驗證是否已切換到錄影分頁簽...")
+        self._safe_log("info", "[VERIFY_TAB] 開始驗證是否已切換到錄影分頁簽...")
         self.logger.info("[VERIFY_TAB] 驗證是否已切換到錄影分頁簽（檢查 radio-button）...")
         
         try:
@@ -452,7 +452,7 @@ class CameraPage(DesktopApp):
             radio_y_image_full_path = os.path.join(EnvConfig.RES_PATH, radio_y_image_path)
             radio_y_exists = os.path.exists(radio_y_image_full_path)
             
-            print(f"[VERIFY_TAB] 圖片文件檢查: radio_n_exists={radio_n_exists}, radio_y_exists={radio_y_exists}")
+            self._safe_log("info", f"[VERIFY_TAB] 圖片文件檢查: radio_n_exists={radio_n_exists}, radio_y_exists={radio_y_exists}")
             
             # 嘗試找到 radio_n 或 radio_y
             found_radio = False
@@ -479,13 +479,13 @@ class CameraPage(DesktopApp):
                 radio_scan_region_width = int(camera_win.width * 0.35)  # 左側 35% 寬度（擴大寬度）
                 radio_scan_region_height = int(camera_win.height * 0.20)  # 高度 20%（擴大高度）
                 radio_scan_region = (radio_scan_region_left, radio_scan_region_top, radio_scan_region_width, radio_scan_region_height)
-                print(f"[VERIFY_TAB] 計算 radio 掃描區域: {radio_scan_region}")
+                self._safe_log("info", f"[VERIFY_TAB] 計算 radio 掃描區域: {radio_scan_region}")
             else:
                 radio_scan_region = None
             
             if radio_n_exists:
                 try:
-                    print(f"[VERIFY_TAB] 檢查 radio_n.png: {radio_n_image_full_path}")
+                    self._safe_log("info", f"[VERIFY_TAB] 檢查 radio_n.png: {radio_n_image_full_path}")
                     # 🎯 在掃描前保存截圖，標記掃描區域
                     if radio_scan_region:
                         self._save_radio_scan_region_screenshot("verify_radio_n_scan", radio_scan_region, camera_win)
@@ -500,16 +500,16 @@ class CameraPage(DesktopApp):
                             self._save_radio_found_screenshot("verify_radio_n_found", radio_scan_region, camera_win, center.x, center.y)
                         found_radio = True
                     else:
-                        print(f"[VERIFY_TAB] 未找到 radio_n.png")
+                        self._safe_log("info", f"[VERIFY_TAB] 未找到 radio_n.png")
                         # 🎯 保存未找到的截圖
                         if radio_scan_region:
                             self._save_radio_not_found_screenshot("verify_radio_n_not_found", radio_scan_region, camera_win)
                 except Exception as e:
-                    print(f"[VERIFY_TAB] 檢查 radio_n.png 異常: {e}")
+                    self._safe_log("info", f"[VERIFY_TAB] 檢查 radio_n.png 異常: {e}")
             
             if not found_radio and radio_y_exists:
                 try:
-                    print(f"[VERIFY_TAB] 檢查 radio_y.png: {radio_y_image_full_path}")
+                    self._safe_log("info", f"[VERIFY_TAB] 檢查 radio_y.png: {radio_y_image_full_path}")
                     # 🎯 在掃描前保存截圖，標記掃描區域
                     if radio_scan_region:
                         self._save_radio_scan_region_screenshot("verify_radio_y_scan", radio_scan_region, camera_win)
@@ -524,24 +524,24 @@ class CameraPage(DesktopApp):
                             self._save_radio_found_screenshot("verify_radio_y_found", radio_scan_region, camera_win, center.x, center.y)
                         found_radio = True
                     else:
-                        print(f"[VERIFY_TAB] 未找到 radio_y.png")
+                        self._safe_log("info", f"[VERIFY_TAB] 未找到 radio_y.png")
                         # 🎯 保存未找到的截圖
                         if radio_scan_region:
                             self._save_radio_not_found_screenshot("verify_radio_y_not_found", radio_scan_region, camera_win)
                 except Exception as e:
-                    print(f"[VERIFY_TAB] 檢查 radio_y.png 異常: {e}")
+                    self._safe_log("info", f"[VERIFY_TAB] 檢查 radio_y.png 異常: {e}")
             
             if found_radio:
-                print("[VERIFY_TAB] 驗證成功：已切換到錄影分頁簽（找到 radio-button）")
+                self._safe_log("info", "[VERIFY_TAB] 驗證成功：已切換到錄影分頁簽（找到 radio-button）")
                 self.logger.info("[VERIFY_TAB] 驗證成功：已切換到錄影分頁簽")
                 return True
             else:
-                print("[VERIFY_TAB] 驗證失敗：未找到 radio-button，可能未切換到錄影分頁簽")
+                self._safe_log("info", "[VERIFY_TAB] 驗證失敗：未找到 radio-button，可能未切換到錄影分頁簽")
                 self.logger.warning("[VERIFY_TAB] 驗證失敗：未找到 radio-button")
                 return False
                 
         except Exception as e:
-            print(f"[VERIFY_TAB] 驗證過程異常: {e}")
+            self._safe_log("info", f"[VERIFY_TAB] 驗證過程異常: {e}")
             self.logger.warning(f"[VERIFY_TAB] ❌ 驗證過程異常: {e}")
             import traceback
             traceback.print_exc()
@@ -571,7 +571,7 @@ class CameraPage(DesktopApp):
             screenshot_path = os.path.join(debug_dir, f"00_start_check_radio_{timestamp}.png")
             screenshot.save(screenshot_path)
             self.logger.info(f"[RADIO] [SCREENSHOT] 開始檢查時的截圖已保存: {screenshot_path}")
-            print(f"[RADIO] [SCREENSHOT] 開始檢查時的截圖已保存: {screenshot_path}")
+            self._safe_log("info", f"[RADIO] [SCREENSHOT] 開始檢查時的截圖已保存: {screenshot_path}")
         except Exception as e:
             self.logger.warning(f"[RADIO] [SCREENSHOT] 保存開始截圖失敗: {e}")
         
@@ -614,24 +614,23 @@ class CameraPage(DesktopApp):
         radio_y_image_exists = os.path.exists(radio_y_image_full_path)
         
         # 🎯 步驟 1: 先檢查是否已經是 "Y"（使用圖片辨識，只檢查不點擊）
-        print(f"[RADIO] [STEP 1-1] 檢查圖片文件是否存在: radio_y_image_exists={radio_y_image_exists}")
+        self._safe_log("info", f"[RADIO] [STEP 1-1] 檢查圖片文件是否存在: radio_y_image_exists={radio_y_image_exists}")
         self.logger.info(f"[RADIO] [STEP 1-1] 檢查圖片文件是否存在: radio_y_image_exists={radio_y_image_exists}, 路徑={radio_y_image_full_path}")
         
         if radio_y_image_exists:
             self.logger.info(f"[RADIO] [CHECK] 檢查是否為 'Y'（使用圖片辨識）: {radio_y_image_path}")
-            print(f"[RADIO] [CHECK] 檢查是否為 'Y'（使用圖片辨識）: {radio_y_image_path}")
+            self._safe_log("debug", f"[RADIO] [CHECK] 檢查是否為 'Y'（使用圖片辨識）: {radio_y_image_path}")
             try:
                 import pyautogui
                 # 構建完整路徑
                 full_path = os.path.join(EnvConfig.RES_PATH, radio_y_image_path)
-                print(f"[RADIO] [CHECK] 使用 pyautogui.locateOnScreen 檢查 'Y' 圖片，完整路徑={full_path}")
+                self._safe_log("debug", f"[RADIO] [CHECK] 使用 pyautogui.locateOnScreen 檢查 'Y' 圖片，完整路徑={full_path}")
                 # 使用 locateOnScreen 檢查圖片是否存在（不點擊）
                 # 注意：新版本的 pyautogui 不支持 timeout 參數
                 loc = pyautogui.locateOnScreen(full_path, confidence=0.8)
                 if loc:
                     center = pyautogui.center(loc)
                     self.logger.info(f"[RADIO] ✅ 找到 'Y' 圖片辨識: 位置=({center.x}, {center.y}), 區域={loc}")
-                    print(f"[RADIO] 找到 'Y' 圖片辨識: 位置=({center.x}, {center.y})")
                     self._safe_log("info", f"[RADIO] 找到 'Y' 圖片辨識: 位置=({center.x}, {center.y})")
                     
                     # 🎯 關鍵修復：驗證是否同時找到 "N"，如果同時找到，說明辨識可能有誤，應該繼續處理
@@ -645,12 +644,12 @@ class CameraPage(DesktopApp):
                                 distance = ((center.x - center_n.x) ** 2 + (center.y - center_n.y) ** 2) ** 0.5
                                 if distance < 50:  # 如果距離小於 50 像素，可能是同一個位置
                                     self.logger.warning(f"[RADIO] ⚠️ 同時找到 'Y' 和 'N'，位置接近（距離={distance:.1f}px），可能是誤判，繼續檢查 'N'...")
-                                    print(f"[RADIO] ⚠️ 同時找到 'Y' 和 'N'，位置接近，可能是誤判，繼續處理")
+                                    self._safe_log("warning", f"[RADIO] ⚠️ 同時找到 'Y' 和 'N'，位置接近，可能是誤判，繼續處理")
                                     # 不返回，繼續檢查 "N"
                                 else:
                                     # 兩個位置距離較遠，可能是不同的元素，優先相信 "N"（因為目標是要設置為 Y）
                                     self.logger.warning(f"[RADIO] ⚠️ 同時找到 'Y' 和 'N'，但位置距離較遠（距離={distance:.1f}px），優先相信 'N'，繼續處理")
-                                    print(f"[RADIO] ⚠️ 同時找到 'Y' 和 'N'，但位置距離較遠，優先相信 'N'")
+                                    self._safe_log("warning", f"[RADIO] ⚠️ 同時找到 'Y' 和 'N'，但位置距離較遠，優先相信 'N'")
                                     # 不返回，繼續檢查 "N"
                             else:
                                 # 只找到 "Y"，沒有找到 "N"，確認是 Y
@@ -673,28 +672,28 @@ class CameraPage(DesktopApp):
                         return (True, True)  # 已經是 Y，不需要框選
                 else:
                     self.logger.info(f"[RADIO] [CHECK] 未找到 'Y' 圖片辨識，繼續檢查 'N'...")
-                    print(f"[RADIO] [CHECK] 未找到 'Y' 圖片辨識，loc={loc}")
+                    self._safe_log("debug", f"[RADIO] [CHECK] 未找到 'Y' 圖片辨識，loc={loc}")
             except Exception as e:
                 self.logger.warning(f"[RADIO] [CHECK] 檢查 'Y' 圖片異常: {e}")
-                print(f"[RADIO] [CHECK] 檢查 'Y' 圖片異常: {e}")
+                self._safe_log("debug", f"[RADIO] [CHECK] 檢查 'Y' 圖片異常: {e}")
                 import traceback
                 traceback.print_exc()
         else:
             self.logger.info(f"[RADIO] [CHECK] radio_y.png 圖片文件不存在，跳過 'Y' 檢查")
-            print(f"[RADIO] [CHECK] radio_y.png 圖片文件不存在: {radio_y_image_full_path}")
+            self._safe_log("debug", f"[RADIO] [CHECK] radio_y.png 圖片文件不存在: {radio_y_image_full_path}")
         
         # 🎯 步驟 2: 檢查是否為 "N"（使用圖片辨識，只檢查不點擊）
-        print(f"[RADIO] [STEP 1-2] 檢查圖片文件是否存在: radio_n_image_exists={radio_n_image_exists}")
+        self._safe_log("info", f"[RADIO] [STEP 1-2] 檢查圖片文件是否存在: radio_n_image_exists={radio_n_image_exists}")
         self.logger.info(f"[RADIO] [STEP 1-2] 檢查圖片文件是否存在: radio_n_image_exists={radio_n_image_exists}, 路徑={radio_n_image_full_path}")
         
         if radio_n_image_exists:
             self.logger.info(f"[RADIO] [CHECK] 檢查是否為 'N'（使用圖片辨識）: {radio_n_image_path}")
-            print(f"[RADIO] [CHECK] 檢查是否為 'N'（使用圖片辨識）: {radio_n_image_path}")
+            self._safe_log("debug", f"[RADIO] [CHECK] 檢查是否為 'N'（使用圖片辨識）: {radio_n_image_path}")
             try:
                 import pyautogui
                 # 構建完整路徑
                 full_path = os.path.join(EnvConfig.RES_PATH, radio_n_image_path)
-                print(f"[RADIO] [CHECK] 使用 pyautogui.locateOnScreen 檢查 'N' 圖片，完整路徑={full_path}")
+                self._safe_log("debug", f"[RADIO] [CHECK] 使用 pyautogui.locateOnScreen 檢查 'N' 圖片，完整路徑={full_path}")
                 # 使用 locateOnScreen 檢查圖片是否存在（不點擊）
                 # 注意：新版本的 pyautogui 不支持 timeout 參數
                 loc = pyautogui.locateOnScreen(full_path, confidence=0.8)
@@ -706,10 +705,10 @@ class CameraPage(DesktopApp):
                     # 截圖記錄
                     self._save_radio_debug_screenshot("02_found_radio_n", center.x, center.y)
                     self.logger.info("[RADIO] ✅ 當前 radio-button 是 'N'，需要點擊改為 'Y'")
-                    print("[RADIO] 當前 radio-button 是 'N'，準備點擊改為 'Y'")
+                    self._safe_log("info", "[RADIO] 當前 radio-button 是 'N'，準備點擊改為 'Y'")
                     # 🎯 修復：使用 radio_n.png 定位（當前狀態是 N），點擊同一位置會切換為 Y
                     self.logger.info(f"[RADIO] 準備點擊 'N' 位置（點擊後會切換為 'Y'）: x_ratio={radio_y_x_ratio}, y_ratio={radio_y_y_ratio}")
-                    print(f"[RADIO] 調用 smart_click_priority_image 使用 radio_n.png 定位: x_ratio={radio_y_x_ratio}, y_ratio={radio_y_y_ratio}")
+                    self._safe_log("info", f"[RADIO] 調用 smart_click_priority_image 使用 radio_n.png 定位: x_ratio={radio_y_x_ratio}, y_ratio={radio_y_y_ratio}")
                     success = self.smart_click_priority_image(
                         x_ratio=radio_y_x_ratio,
                         y_ratio=radio_y_y_ratio,
@@ -717,14 +716,14 @@ class CameraPage(DesktopApp):
                         image_path=radio_n_image_path,  # 🎯 修復：使用 radio_n.png 定位（當前狀態）
                         timeout=2
                     )
-                    print(f"[RADIO] smart_click_priority_image 返回: {success}")
+                    self._safe_log("info", f"[RADIO] smart_click_priority_image 返回: {success}")
                     if success:
                         # 等待狀態切換
                         time.sleep(0.5)
                         
                         # 🎯 驗證：點擊後檢查是否成功變為 'Y'
                         self.logger.info("[RADIO] [VERIFY] 點擊後驗證是否成功變為 'Y'...")
-                        print("[RADIO] [VERIFY] 點擊後驗證是否成功變為 'Y'...")
+                        self._safe_log("info", "[RADIO] [VERIFY] 點擊後驗證是否成功變為 'Y'...")
                         
                         if radio_y_image_exists:
                             try:
@@ -743,7 +742,7 @@ class CameraPage(DesktopApp):
                                     return (True, False)  # 已改為 Y，需要框選
                                 else:
                                     self.logger.warning("[RADIO] [VERIFY] ⚠️ 驗證失敗：點擊後仍未找到 'Y' 圖片，可能點擊失敗")
-                                    print("[RADIO] [VERIFY] ⚠️ 驗證失敗：點擊後仍未找到 'Y' 圖片")
+                                    self._safe_log("warning", "[RADIO] [VERIFY] ⚠️ 驗證失敗：點擊後仍未找到 'Y' 圖片")
                                     # 截圖記錄驗證失敗
                                     win = self.get_nx_window()
                                     if win:
@@ -754,36 +753,36 @@ class CameraPage(DesktopApp):
                                     return (False, False)
                             except Exception as e:
                                 self.logger.warning(f"[RADIO] [VERIFY] 驗證過程中異常: {e}")
-                                print(f"[RADIO] [VERIFY] 驗證過程中異常: {e}")
+                                self._safe_log("info", f"[RADIO] [VERIFY] 驗證過程中異常: {e}")
                                 # 驗證失敗，但不確定是否成功，假設成功繼續
                                 self.logger.info("[RADIO] ⚠️ 驗證失敗但假設成功，繼續執行")
                                 return (True, False)
                         else:
                             # 如果 radio_y.png 不存在，無法驗證，假設成功
                             self.logger.warning("[RADIO] [VERIFY] radio_y.png 不存在，無法驗證，假設成功")
-                            print("[RADIO] [VERIFY] radio_y.png 不存在，無法驗證")
+                            self._safe_log("info", "[RADIO] [VERIFY] radio_y.png 不存在，無法驗證")
                             return (True, False)  # 假設成功
                     else:
                         self.logger.warning("[RADIO] ⚠️ smart_click_priority_image 點擊 'N' 位置失敗")
-                        print("[RADIO] smart_click_priority_image 點擊 'N' 位置失敗")
+                        self._safe_log("info", "[RADIO] smart_click_priority_image 點擊 'N' 位置失敗")
                 else:
                     self.logger.info(f"[RADIO] [CHECK] 未找到 'N' 圖片辨識，繼續其他方法...")
-                    print(f"[RADIO] [CHECK] 未找到 'N' 圖片辨識，loc={loc}")
+                    self._safe_log("debug", f"[RADIO] [CHECK] 未找到 'N' 圖片辨識，loc={loc}")
             except Exception as e:
                 self.logger.warning(f"[RADIO] [CHECK] 檢查 'N' 圖片異常: {e}")
-                print(f"[RADIO] [CHECK] 檢查 'N' 圖片異常: {e}")
+                self._safe_log("debug", f"[RADIO] [CHECK] 檢查 'N' 圖片異常: {e}")
                 import traceback
                 traceback.print_exc()
         else:
             self.logger.info(f"[RADIO] [CHECK] radio_n.png 圖片文件不存在，跳過 'N' 檢查")
-            print(f"[RADIO] [CHECK] radio_n.png 圖片文件不存在: {radio_n_image_full_path}")
+            self._safe_log("debug", f"[RADIO] [CHECK] radio_n.png 圖片文件不存在: {radio_n_image_full_path}")
         
         # 🎯 如果圖片辨識都失敗，嘗試使用文字辨識或直接點擊 "Y"
         self.logger.info("[RADIO] [WARN] 無法通過圖片辨識判斷 radio-button 狀態，嘗試其他方法...")
-        print("[RADIO] [WARN] 無法通過圖片辨識判斷 radio-button 狀態，嘗試 VLM 或座標點擊")
+        self._safe_log("warning", "[RADIO] [WARN] 無法通過圖片辨識判斷 radio-button 狀態，嘗試 VLM 或座標點擊")
         
         # 如果圖片辨識失敗或圖片不存在，嘗試使用 VLM 尋找 "Y" 文字（在左上角區域）
-        print(f"[RADIO] [STEP 1-3] 嘗試使用 VLM 尋找 'Y'，視窗信息: win={win}")
+        self._safe_log("info", f"[RADIO] [STEP 1-3] 嘗試使用 VLM 尋找 'Y'，視窗信息: win={win}")
         self.logger.info(f"[RADIO] [STEP 1-3] 嘗試使用 VLM 尋找 'Y'，視窗信息: win={win}")
         try:
             # 限制搜索區域到左上角（更小更精確的區域）
@@ -793,11 +792,11 @@ class CameraPage(DesktopApp):
             
             # 直接使用 VLM 尋找 "Y"，然後手動點擊
             vlm = self._get_vlm_engine()
-            print(f"[RADIO] [VLM] VLM 引擎狀態: {vlm is not None}")
+            self._safe_log("info", f"[RADIO] [VLM] VLM 引擎狀態: {vlm is not None}")
             if vlm:
-                print(f"[RADIO] [VLM] 在區域 {search_region} 中搜索 'Y'...")
+                self._safe_log("info", f"[RADIO] [VLM] 在區域 {search_region} 中搜索 'Y'...")
                 result = vlm.find_element("Y", region=search_region)
-                print(f"[RADIO] [VLM] VLM 搜索結果: result={result}, success={result.success if result else None}, confidence={result.confidence if result else None}")
+                self._safe_log("info", f"[RADIO] [VLM] VLM 搜索結果: result={result}, success={result.success if result else None}, confidence={result.confidence if result else None}")
                 if result and result.success and result.confidence > 0.5:
                     click_x = result.x
                     click_y = result.y
@@ -827,22 +826,22 @@ class CameraPage(DesktopApp):
                             return (True, False)  # 無法判斷狀態，假設需要框選
                         else:
                             self.logger.warning(f"[RADIO] [VLM] VLM 找到的 'Y' 位置 y_ratio={ratio_y:.4f} 不在預期範圍內（0.10-0.20），使用座標保底")
-                            print(f"[RADIO] [VLM] y_ratio={ratio_y:.4f} 不在預期範圍，跳過")
+                            self._safe_log("info", f"[RADIO] [VLM] y_ratio={ratio_y:.4f} 不在預期範圍，跳過")
                 else:
                     self.logger.info(f"[RADIO] [VLM] VLM 未找到 'Y' 或信心度不足: result={result}")
-                    print(f"[RADIO] [VLM] VLM 未找到 'Y': result={result}")
+                    self._safe_log("info", f"[RADIO] [VLM] VLM 未找到 'Y': result={result}")
             else:
                 self.logger.info("[RADIO] [VLM] VLM 引擎不可用，跳過 VLM 搜索")
-                print("[RADIO] [VLM] VLM 引擎不可用")
+                self._safe_log("info", "[RADIO] [VLM] VLM 引擎不可用")
         except Exception as e:
             self.logger.warning(f"[RADIO] [VLM] VLM 尋找 'Y' 異常: {e}")
-            print(f"[RADIO] [VLM] VLM 尋找 'Y' 異常: {e}")
+            self._safe_log("info", f"[RADIO] [VLM] VLM 尋找 'Y' 異常: {e}")
             import traceback
             traceback.print_exc()
         
         # 如果 VLM 失敗，使用座標點擊
         self.logger.info(f"[RADIO] [STEP 1-4] 使用座標點擊 'Y' radio-button: x_ratio={radio_y_x_ratio}, y_ratio={radio_y_y_ratio}")
-        print(f"[RADIO] [STEP 1-4] 調用 smart_click: x_ratio={radio_y_x_ratio}, y_ratio={radio_y_y_ratio}")
+        self._safe_log("info", f"[RADIO] [STEP 1-4] 調用 smart_click: x_ratio={radio_y_x_ratio}, y_ratio={radio_y_y_ratio}")
         
         # 🎯 計算保底座標
         win = self.get_nx_window()
@@ -860,7 +859,7 @@ class CameraPage(DesktopApp):
             timeout=2,
             use_vlm=False  # 禁用 VLM，直接使用坐标
         )
-        print(f"[RADIO] [STEP 1-4] smart_click 返回: {success}")
+        self._safe_log("info", f"[RADIO] [STEP 1-4] smart_click 返回: {success}")
         
         if success:
             # 截圖記錄點擊後的位置
@@ -896,7 +895,7 @@ class CameraPage(DesktopApp):
         self.logger.info("[DRAG] ========== 開始框選錄影排程範圍 ==========")
         self.logger.info("=" * 80)
         self._safe_log("info", "[DRAG] 在錄影排程網格上框選範圍...")
-        print("[DRAG] ========== 開始框選錄影排程範圍 ==========")
+        self._safe_log("info", "[DRAG] ========== 開始框選錄影排程範圍 ==========")
         
         # 獲取視窗信息
         win = self.get_nx_window()
@@ -1000,7 +999,7 @@ class CameraPage(DesktopApp):
                     
                     if is_in_search_region and is_in_upper_half:
                         self.logger.info(f"[DRAG] 圖像識別找到網格大致範圍: 左={image_left}, 右={image_right}, 上={image_top}, 下={image_bottom}")
-                        print(f"[DRAG] 圖像識別找到網格大致範圍: 左={image_left}, 右={image_right}, 上={image_top}, 下={image_bottom}")
+                        self._safe_log("info", f"[DRAG] 圖像識別找到網格大致範圍: 左={image_left}, 右={image_right}, 上={image_top}, 下={image_bottom}")
                         
                         # 🎯 步驟 2: 在 schedule_grid_corner.png 識別的範圍內，使用 schedule_grid_All.png 識別"全部"字樣
                         # 新策略（根據用戶要求）：
@@ -1058,39 +1057,39 @@ class CameraPage(DesktopApp):
                                         self.logger.info(f"[DRAG] schedule_grid_corner.png 右下角（終點）: ({grid_end_x}, {grid_end_y})")
                                         self.logger.info(f"[DRAG] 框選範圍: 寬度={drag_width}px, 高度={drag_height}px")
                                         self.logger.info(f"[DRAG] 設置 grid_coordinates_calculated = True，起點=({grid_start_x}, {grid_start_y}), 終點=({grid_end_x}, {grid_end_y})")
-                                        print(f"[DRAG] [OK] 基於圖像識別計算框選座標")
+                                        self._safe_log("info", f"[DRAG] [OK] 基於圖像識別計算框選座標")
                                         print(f"[DRAG] schedule_grid_All.png 識別成功: 位置=({all_image_x}, {all_image_y}), 尺寸={all_image_width}x{all_image_height}")
                                         print(f"[DRAG] schedule_grid_All.png 右下角（起點）: ({grid_start_x}, {grid_start_y})")
                                         print(f"[DRAG] schedule_grid_corner.png 右下角（終點）: ({grid_end_x}, {grid_end_y})")
-                                        print(f"[DRAG] 框選範圍: 寬度={drag_width}px, 高度={drag_height}px")
+                                        self._safe_log("info", f"[DRAG] 框選範圍: 寬度={drag_width}px, 高度={drag_height}px")
                                         print(f"[DRAG] 設置 grid_coordinates_calculated = True，起點=({grid_start_x}, {grid_start_y}), 終點=({grid_end_x}, {grid_end_y})")
                                         # 🎯 直接返回計算出的座標，避免後續邏輯覆蓋
                                         # 注意：這裡不能直接 return，因為後續還有驗證和調試截圖邏輯
                                         # 但我們已經設置了 grid_coordinates_calculated = True，後續邏輯應該會跳過
                                     else:
                                         self.logger.warning(f"[DRAG] ⚠️ 框選範圍無效: 寬度={drag_width}px, 高度={drag_height}px")
-                                        print(f"[DRAG] ⚠️ 框選範圍無效")
+                                        self._safe_log("warning", f"[DRAG] ⚠️ 框選範圍無效")
                                         grid_start_x = None
                                         grid_start_y = None
                                         grid_coordinates_calculated = False
                                 else:
                                     self.logger.warning("[DRAG] ⚠️ 在圖像識別範圍內未找到 schedule_grid_All.png，將嘗試其他方法")
-                                    print("[DRAG] ⚠️ 在圖像識別範圍內未找到 schedule_grid_All.png")
+                                    self._safe_log("warning", "[DRAG] ⚠️ 在圖像識別範圍內未找到 schedule_grid_All.png")
                                     grid_start_x = None
                                     grid_start_y = None
                             except Exception as e:
                                 self.logger.warning(f"[DRAG] 識別 schedule_grid_All.png 失敗: {e}")
-                                print(f"[DRAG] 識別 schedule_grid_All.png 失敗: {e}")
+                                self._safe_log("info", f"[DRAG] 識別 schedule_grid_All.png 失敗: {e}")
                                 grid_start_x = None
                                 grid_start_y = None
                         else:
                             self.logger.warning(f"[DRAG] ⚠️ schedule_grid_All.png 不存在: {grid_all_image_path}")
-                            print(f"[DRAG] ⚠️ schedule_grid_All.png 不存在")
+                            self._safe_log("warning", f"[DRAG] ⚠️ schedule_grid_All.png 不存在")
                             grid_start_x = None
                             grid_start_y = None
                     else:
                         self.logger.warning(f"[DRAG] ⚠️ 圖像識別範圍位置不合理: 左上=({image_left}, {image_top}), 在搜索區域內={is_in_search_region}, 在上半部分={is_in_upper_half}")
-                        print(f"[DRAG] ⚠️ 圖像識別範圍位置不合理")
+                        self._safe_log("warning", f"[DRAG] ⚠️ 圖像識別範圍位置不合理")
                         grid_start_x = None
                         grid_start_y = None
                 else:
@@ -1245,11 +1244,11 @@ class CameraPage(DesktopApp):
                 self.logger.info(f"[DRAG] 圖片範圍=({image_left}, {image_top}) - ({image_right}, {image_bottom})")
                 self.logger.info(f"[DRAG] 框選尺寸=({drag_width}x{drag_height}), 圖片尺寸=({image_width}x{image_height})")
                 self.logger.info(f"[DRAG] 起點在圖片範圍內: {is_start_in_image}, 終點在圖片範圍內: {is_end_in_image}")
-                print(f"[DRAG] 驗證框選範圍是否在圖片範圍內:")
+                self._safe_log("info", f"[DRAG] 驗證框選範圍是否在圖片範圍內:")
                 print(f"[DRAG] 起點=({grid_start_x}, {grid_start_y}), 終點=({grid_end_x}, {grid_end_y})")
                 print(f"[DRAG] 圖片範圍=({image_left}, {image_top}) - ({image_right}, {image_bottom})")
                 print(f"[DRAG] 框選尺寸=({drag_width}x{drag_height}), 圖片尺寸=({image_width}x{image_height})")
-                print(f"[DRAG] 起點在圖片範圍內: {is_start_in_image}, 終點在圖片範圍內: {is_end_in_image}")
+                self._safe_log("info", f"[DRAG] 起點在圖片範圍內: {is_start_in_image}, 終點在圖片範圍內: {is_end_in_image}")
                 
                 # 🎯 強制限制：確保框選範圍完全在圖像識別範圍內
                 # 如果框選範圍超出圖像識別範圍，進行強制補正
@@ -1293,7 +1292,7 @@ class CameraPage(DesktopApp):
                             grid_start_x = image_left
                     drag_width = grid_end_x - grid_start_x
                     self.logger.info(f"[DRAG] 補正後框選寬度: {drag_width}px")
-                    print(f"[DRAG] 補正後框選寬度: {drag_width}px")
+                    self._safe_log("info", f"[DRAG] 補正後框選寬度: {drag_width}px")
                 
                 if drag_height > image_height:
                     self.logger.warning(f"[DRAG] [WARN] 框選高度 ({drag_height}px) 超過圖片識別範圍高度 ({image_height}px)，強制限制")
@@ -1305,13 +1304,13 @@ class CameraPage(DesktopApp):
                             grid_start_y = image_top
                     drag_height = grid_end_y - grid_start_y
                     self.logger.info(f"[DRAG] 補正後框選高度: {drag_height}px")
-                    print(f"[DRAG] 補正後框選高度: {drag_height}px")
+                    self._safe_log("info", f"[DRAG] 補正後框選高度: {drag_height}px")
                 
                 # 🎯 驗證框選高度是否合理（必須大於 0）
                 drag_height = grid_end_y - grid_start_y
                 if drag_height <= 0:
                     self.logger.error(f"[DRAG] [ERROR] 框選高度為 0 或負數: 起始=({grid_start_x}, {grid_start_y}), 結束=({grid_end_x}, {grid_end_y}), 高度={drag_height}")
-                    print(f"[DRAG] [ERROR] 框選高度為 0 或負數，使用估算高度補正")
+                    self._safe_log("error", f"[DRAG] [ERROR] 框選高度為 0 或負數，使用估算高度補正")
                     # 🎯 如果高度為 0，使用估算高度重新計算結束位置
                     # 網格有 7 行，每個格子高度約為窗口高度的 28% / 7
                     num_rows = 7
@@ -1335,7 +1334,7 @@ class CameraPage(DesktopApp):
             self.logger.info(f"[DRAG] 基於「全部」位置計算網格範圍: 起始=({grid_start_x}, {grid_start_y}), 估算尺寸={estimated_grid_width}x{estimated_grid_height}, 結束=({grid_end_x}, {grid_end_y})")
             self.logger.info(f"[DRAG] 框選起點有效性: {is_start_valid}, 框選終點有效性: {is_end_valid}")
             print(f"[DRAG] 基於「全部」位置計算網格範圍: 起始=({grid_start_x}, {grid_start_y}), 估算尺寸={estimated_grid_width}x{estimated_grid_height}, 結束=({grid_end_x}, {grid_end_y})")
-            print(f"[DRAG] 框選起點有效性: {is_start_valid}, 框選終點有效性: {is_end_valid}")
+            self._safe_log("info", f"[DRAG] 框選起點有效性: {is_start_valid}, 框選終點有效性: {is_end_valid}")
             
             # 🎯 如果座標超出窗口範圍，進行輕微補正（僅在必要時）
             # 🎯 如果已經通過新策略計算出座標，跳過補正邏輯，直接使用計算出的座標
@@ -1372,7 +1371,7 @@ class CameraPage(DesktopApp):
                     self.logger.warning(f"[DRAG] [WARN] 框選範圍驗證失敗，起點有效={is_start_valid}, 終點有效={is_end_valid}")
             else:
                 self.logger.info(f"[DRAG] 已通過新策略計算座標，跳過補正邏輯，直接使用計算出的座標")
-                print(f"[DRAG] 已通過新策略計算座標，跳過補正邏輯，直接使用計算出的座標")
+                self._safe_log("info", f"[DRAG] 已通過新策略計算座標，跳過補正邏輯，直接使用計算出的座標")
         
         # 🎯 最終驗證：確保座標在視窗範圍內（僅在必要時進行最後的輕微補正）
         # 🎯 如果已經通過新策略計算出座標，跳過最終補正邏輯
@@ -1442,14 +1441,14 @@ class CameraPage(DesktopApp):
         self.logger.info("[ENABLE_RECORDING] ========== 開始開啟錄影功能 ==========")
         self.logger.info("=" * 80)
         self._safe_log("info", "[ENABLE_RECORDING] 開啟「錄製」開關...")
-        print("=" * 80)
-        print("[ENABLE_RECORDING] ========== 開始開啟錄影功能 ==========")
-        print("=" * 80)
+        self._safe_log("info", "=" * 80)
+        self._safe_log("info", "[ENABLE_RECORDING] ========== 開始開啟錄影功能 ==========")
+        self._safe_log("info", "=" * 80)
         
         # 🎯 步驟 1: 檢查並設置左上角 radio-button 為 "Y"（必須先執行）
         self.logger.info("[ENABLE_RECORDING] [STEP 1] ========== 步驟 1: 檢查並設置左上角 radio-button 為 'Y' ==========")
         self._safe_log("info", "[ENABLE_RECORDING] [STEP 1] 步驟 1: 檢查並設置左上角 radio-button 為 'Y'...")
-        print("[ENABLE_RECORDING] [STEP 1] 開始執行步驟 1: 檢查並設置 radio-button")
+        self._safe_log("info", "[ENABLE_RECORDING] [STEP 1] 開始執行步驟 1: 檢查並設置 radio-button")
         
         # 返回: (success, was_already_y)
         print("[ENABLE_RECORDING] [STEP 1] 調用 check_and_set_recording_radio_y()...")
@@ -1469,7 +1468,7 @@ class CameraPage(DesktopApp):
         # 🎯 步驟 2: 在錄影排程網格上框選一個範圍（只有在需要時才執行）
         self.logger.info("[ENABLE_RECORDING] [STEP 2] ========== 步驟 2: 在錄影排程網格上框選一個範圍 ==========")
         self._safe_log("info", "[ENABLE_RECORDING] [STEP 2] 步驟 2: 在錄影排程網格上框選一個範圍...")
-        print("[ENABLE_RECORDING] [STEP 2] 開始執行步驟 2: 框選錄影排程範圍")
+        self._safe_log("info", "[ENABLE_RECORDING] [STEP 2] 開始執行步驟 2: 框選錄影排程範圍")
         print("[ENABLE_RECORDING] [STEP 2] 調用 select_recording_schedule_range()...")
         range_success = self.select_recording_schedule_range()
         print(f"[ENABLE_RECORDING] [STEP 2] select_recording_schedule_range() 返回: {range_success}")
@@ -1481,7 +1480,7 @@ class CameraPage(DesktopApp):
         # 🎯 步驟 3: 框選成功後，不需要額外的 checkbox 檢查
         # 根據用戶反饋，框選成功後應該直接點擊確認，不需要檢查其他 checkbox
         self.logger.info("[ENABLE_RECORDING] [STEP 3] 框選成功，準備點擊確認按鈕")
-        print("[ENABLE_RECORDING] [STEP 3] 框選成功，不需要額外檢查")
+        self._safe_log("info", "[ENABLE_RECORDING] [STEP 3] 框選成功，不需要額外檢查")
         
         return True  # 框選成功，返回 True（後續會點擊確認）
     
@@ -1700,7 +1699,7 @@ class CameraPage(DesktopApp):
             screenshot_path = os.path.join(debug_dir, f"{step_name}_{timestamp}.png")
             img.save(screenshot_path)
             self.logger.info(f"[DRAG] [SCREENSHOT] 拖拽截圖已保存: {screenshot_path}")
-            print(f"[DRAG] [SCREENSHOT] 拖拽截圖已保存: {screenshot_path}")
+            self._safe_log("info", f"[DRAG] [SCREENSHOT] 拖拽截圖已保存: {screenshot_path}")
             print(f"[DRAG] 框選範圍: 起始=({start_x}, {start_y}), 結束=({end_x}, {end_y}), 尺寸={range_width}x{range_height}")
         except Exception as e:
             self.logger.warning(f"[DRAG] [SCREENSHOT] 保存拖拽截圖失敗: {e}")
@@ -1782,14 +1781,14 @@ class CameraPage(DesktopApp):
             img.save(screenshot_path)
             
             self.logger.info(f"[VLM_SCAN] [SCREENSHOT] VLM 掃描區域截圖已保存: {screenshot_path}")
-            print(f"[VLM_SCAN] [SCREENSHOT] VLM 掃描區域截圖已保存: {screenshot_path}")
+            self._safe_log("info", f"[VLM_SCAN] [SCREENSHOT] VLM 掃描區域截圖已保存: {screenshot_path}")
             print(f"[VLM_SCAN] [SCAN_REGION] 掃描區域: ({scan_left}, {scan_top}, {scan_width}, {scan_height})")
             if win:
                 print(f"[VLM_SCAN] [WINDOW] 視窗範圍: ({win.left}, {win.top}, {win.width}, {win.height})")
             
         except Exception as e:
             self.logger.warning(f"[VLM_SCAN] [SCREENSHOT] 保存截圖失敗: {e}")
-            print(f"[VLM_SCAN] [SCREENSHOT] 保存截圖失敗: {e}")
+            self._safe_log("info", f"[VLM_SCAN] [SCREENSHOT] 保存截圖失敗: {e}")
     
     def _save_vlm_error_screenshot(self, step_name, scan_region, win, vlm_x, vlm_y):
         """
@@ -1874,12 +1873,12 @@ class CameraPage(DesktopApp):
             img.save(screenshot_path)
             
             self.logger.info(f"[VLM_SCAN] [SCREENSHOT] VLM 錯誤截圖已保存: {screenshot_path}")
-            print(f"[VLM_SCAN] [SCREENSHOT] VLM 錯誤截圖已保存: {screenshot_path}")
+            self._safe_log("info", f"[VLM_SCAN] [SCREENSHOT] VLM 錯誤截圖已保存: {screenshot_path}")
             print(f"[VLM_SCAN] [ERROR] VLM 返回座標 ({vlm_x}, {vlm_y}) 超出視窗範圍")
             
         except Exception as e:
             self.logger.warning(f"[VLM_SCAN] [SCREENSHOT] 保存錯誤截圖失敗: {e}")
-            print(f"[VLM_SCAN] [SCREENSHOT] 保存錯誤截圖失敗: {e}")
+            self._safe_log("info", f"[VLM_SCAN] [SCREENSHOT] 保存錯誤截圖失敗: {e}")
     
     def _save_vlm_click_coord_screenshot(self, step_name, scan_region, win, click_x, click_y):
         """
@@ -1953,12 +1952,12 @@ class CameraPage(DesktopApp):
             img.save(screenshot_path)
             
             self.logger.info(f"[VLM_SCAN] [SCREENSHOT] 實際點擊座標截圖已保存: {screenshot_path}")
-            print(f"[VLM_SCAN] [SCREENSHOT] 實際點擊座標截圖已保存: {screenshot_path}")
+            self._safe_log("info", f"[VLM_SCAN] [SCREENSHOT] 實際點擊座標截圖已保存: {screenshot_path}")
             print(f"[VLM_SCAN] [CLICK_COORD] 實際點擊座標: ({click_x}, {click_y})")
             
         except Exception as e:
             self.logger.warning(f"[VLM_SCAN] [SCREENSHOT] 保存點擊座標截圖失敗: {e}")
-            print(f"[VLM_SCAN] [SCREENSHOT] 保存點擊座標截圖失敗: {e}")
+            self._safe_log("info", f"[VLM_SCAN] [SCREENSHOT] 保存點擊座標截圖失敗: {e}")
     
     def _save_radio_scan_region_screenshot(self, step_name, scan_region, win):
         """
@@ -2026,12 +2025,12 @@ class CameraPage(DesktopApp):
             img.save(screenshot_path)
             
             self.logger.info(f"[RADIO_VERIFY] [SCREENSHOT] Radio 掃描區域截圖已保存: {screenshot_path}")
-            print(f"[RADIO_VERIFY] [SCREENSHOT] Radio 掃描區域截圖已保存: {screenshot_path}")
+            self._safe_log("info", f"[RADIO_VERIFY] [SCREENSHOT] Radio 掃描區域截圖已保存: {screenshot_path}")
             print(f"[RADIO_VERIFY] [SCAN_REGION] 掃描區域: ({scan_left}, {scan_top}, {scan_width}, {scan_height})")
             
         except Exception as e:
             self.logger.warning(f"[RADIO_VERIFY] [SCREENSHOT] 保存截圖失敗: {e}")
-            print(f"[RADIO_VERIFY] [SCREENSHOT] 保存截圖失敗: {e}")
+            self._safe_log("info", f"[RADIO_VERIFY] [SCREENSHOT] 保存截圖失敗: {e}")
     
     def _save_radio_found_screenshot(self, step_name, scan_region, win, found_x, found_y):
         """
@@ -2104,11 +2103,11 @@ class CameraPage(DesktopApp):
             img.save(screenshot_path)
             
             self.logger.info(f"[RADIO_VERIFY] [SCREENSHOT] Radio 找到座標截圖已保存: {screenshot_path}")
-            print(f"[RADIO_VERIFY] [SCREENSHOT] Radio 找到座標截圖已保存: {screenshot_path}")
+            self._safe_log("info", f"[RADIO_VERIFY] [SCREENSHOT] Radio 找到座標截圖已保存: {screenshot_path}")
             
         except Exception as e:
             self.logger.warning(f"[RADIO_VERIFY] [SCREENSHOT] 保存截圖失敗: {e}")
-            print(f"[RADIO_VERIFY] [SCREENSHOT] 保存截圖失敗: {e}")
+            self._safe_log("info", f"[RADIO_VERIFY] [SCREENSHOT] 保存截圖失敗: {e}")
     
     def _save_radio_not_found_screenshot(self, step_name, scan_region, win):
         """
@@ -2168,11 +2167,11 @@ class CameraPage(DesktopApp):
             img.save(screenshot_path)
             
             self.logger.info(f"[RADIO_VERIFY] [SCREENSHOT] Radio 未找到截圖已保存: {screenshot_path}")
-            print(f"[RADIO_VERIFY] [SCREENSHOT] Radio 未找到截圖已保存: {screenshot_path}")
+            self._safe_log("info", f"[RADIO_VERIFY] [SCREENSHOT] Radio 未找到截圖已保存: {screenshot_path}")
             
         except Exception as e:
             self.logger.warning(f"[RADIO_VERIFY] [SCREENSHOT] 保存截圖失敗: {e}")
-            print(f"[RADIO_VERIFY] [SCREENSHOT] 保存截圖失敗: {e}")
+            self._safe_log("info", f"[RADIO_VERIFY] [SCREENSHOT] 保存截圖失敗: {e}")
     
     def apply_camera_settings(self):
         """
@@ -2220,7 +2219,7 @@ class CameraPage(DesktopApp):
             bottom_region = (win.left, win.top + win.height - bottom_region_height, win.width, bottom_region_height)
             
             self.logger.info(f"[CONFIRM] 限制搜索區域到底部: {bottom_region} (視窗: {win.width}x{win.height})")
-            print(f"[CONFIRM] 底部搜索區域: {bottom_region}")
+            self._safe_log("info", f"[CONFIRM] 底部搜索區域: {bottom_region}")
             
             # 先使用 VLM 在底部區域搜索「確認」
             vlm = self._get_vlm_engine()
@@ -2263,7 +2262,7 @@ class CameraPage(DesktopApp):
         
         # 🎯 如果 VLM 失敗，嘗試使用圖片辨識
         self.logger.info("[CONFIRM] VLM 失敗，嘗試使用圖片辨識或座標保底")
-        print("[CONFIRM] VLM 失敗，嘗試使用圖片辨識或座標保底")
+        self._safe_log("info", "[CONFIRM] VLM 失敗，嘗試使用圖片辨識或座標保底")
         
         if win:
             # 🎯 嘗試使用圖片辨識（如果圖片存在）

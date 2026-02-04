@@ -276,3 +276,35 @@ class BasePage:
         在指定父元素底下尋找子元素。
         """
         return tool.find_child_element(parent_elem, locator)
+    
+    def log_and_print(self, level: str, message: str) -> None:
+        """
+        統一的日誌和終端輸出方法
+        
+        同時輸出到日誌文件和終端（print），確保兩者內容一致。
+        
+        Args:
+            level: 日誌級別 ('debug', 'info', 'warning', 'error', 'critical')
+            message: 要輸出的訊息
+            
+        Example:
+            self.log_and_print('info', '[CLICK_MENU] 限制搜索區域: {menu_region}')
+        """
+        # 輸出到終端
+        print(message)
+        
+        # 輸出到日誌
+        level_lower = level.lower()
+        if level_lower == 'debug':
+            logger.debug(message)
+        elif level_lower == 'info':
+            logger.info(message)
+        elif level_lower == 'warning':
+            logger.warning(message)
+        elif level_lower == 'error':
+            logger.error(message)
+        elif level_lower == 'critical':
+            logger.critical(message)
+        else:
+            # 預設使用 info
+            logger.info(message)

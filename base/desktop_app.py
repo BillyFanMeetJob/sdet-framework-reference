@@ -20,16 +20,26 @@ class DesktopApp:
         self._ocr_engine = None
         self._vlm_engine = None
     
-    def _safe_log(self, level, message):
+    def _safe_log(self, level, message, also_print=True):
         """
         安全輸出日誌，自動清理 emoji 避免 cp950 編碼錯誤
+        
+        同時輸出到日誌文件和終端（print），確保兩者內容一致。
+        
         :param level: 日誌級別 ('info', 'warning', 'error', 'debug')
         :param message: 日誌內容
+        :param also_print: 是否同時輸出到終端（預設 True）
         """
         # 替換常見 emoji 為 ASCII 等效字符
         # 按使用頻率排序，確保所有 emoji 都被清理
         safe_message = message.replace("🟢", "[START]").replace("📸", "[IMG]").replace("🤖", "[VLM]").replace("📝", "[OCR]").replace("📍", "[LOC]").replace("✅", "[OK]").replace("⚠️", "[WARN]").replace("❌", "[ERROR]").replace("⏱️", "[TIMEOUT]").replace("💾", "[SAVE]").replace("⚙️", "[CFG]").replace("🖱️", "[CLICK]").replace("⌨️", "[KEY]").replace("🎬", "[CASE]").replace("🔄", "[SWITCH]").replace("🔍", "[DEBUG]").replace("🎯", "[OK]").replace("📊", "[STAT]").replace("⏳", "[WAIT]").replace("🚀", "[START]").replace("💡", "[TIP]")
+        
+        # 輸出到日誌
         getattr(self.logger, level)(safe_message)
+        
+        # 同時輸出到終端
+        if also_print:
+            print(safe_message)
     
     @classmethod
     def set_reporter(cls, reporter):
