@@ -1382,55 +1382,29 @@ class NxCloudPage(DesktopApp):
         except Exception as e:
             self.logger.warning(f"[NX_CLOUD] [CLEANUP] ⚠️ 清理時發生錯誤: {e}")
             print(f"[NX_CLOUD] [CLEANUP] ⚠️ 清理時發生錯誤: {e}")
+    
+    def playback_recording_pw(self, playback_duration: int = 7) -> bool:
+        """
+        [Playwright] 完整執行 Case 2-2: 調閱錄影事件回放
         
         此方法會：
-        1. 透過 CDP (Chrome DevTools Protocol) 連接到已打開的 Chrome
+        1. 透過 CDP 連接到已打開的 Chrome
         2. 尋找 Nx Cloud 系統管理頁面
-        3. 檢查登錄狀態並執行登錄（如果需要）
+        3. 點擊「查看」頁簽
+        4. 點擊 server
+        5. 點擊 usb-cam
+        6. 驗證影片播放狀態
+        7. 等待影片播放指定時間
+        
+        Args:
+            playback_duration: 影片播放時間 (秒)，默認 7 秒
         
         Returns:
             bool: 操作是否成功
-        
-        Note:
-            - Chrome 必須以 --remote-debugging-port 啟動
-            - 預設連接到 http://localhost:7001
         """
-        self.logger.info("[NX_CLOUD] [PLAYWRIGHT] 嘗試透過 CDP 接管 Chrome 瀏覽器...")
-        
-        # ✅ 關鍵：必須在 sync_playwright() 之前設置環境變量
-        import os
-        import requests
-        os.environ['NODE_TLS_REJECT_UNAUTHORIZED'] = '0'
-        
-        # 🔍 診斷：檢查 Chrome 調試端口是否運行
-        cdp_url = f"http://localhost:{EnvConfig.BROWSER_DEBUG_PORT}"
-        self.logger.info(f"[NX_CLOUD] [PLAYWRIGHT] 目標 CDP 端口: {EnvConfig.BROWSER_DEBUG_PORT}")
-        self.logger.info(f"[NX_CLOUD] [PLAYWRIGHT] 目標 CDP URL: {cdp_url}")
+        self.logger.info(f"[NX_CLOUD] [PW] [CASE_2-2] 開始調閱錄影事件回放 (播放 {playback_duration} 秒)...")
         
         try:
-            self.logger.info("[NX_CLOUD] [PLAYWRIGHT] 🔍 診斷步驟 1: 檢查 CDP 端口是否可訪問...")
-            response = requests.get(f"{cdp_url}/json/version", timeout=3)
-            if response.status_code == 200:
-                version_data = response.json()
-                self.logger.info(f"[NX_CLOUD] [PLAYWRIGHT] ✅ CDP 端口可訪問")
-                self.logger.info(f"[NX_CLOUD] [PLAYWRIGHT]    Browser: {version_data.get('Browser', 'Unknown')}")
-                self.logger.info(f"[NX_CLOUD] [PLAYWRIGHT]    WebSocket: {version_data.get('webSocketDebuggerUrl', 'N/A')[:80]}...")
-            else:
-                self.logger.error(f"[NX_CLOUD] [PLAYWRIGHT] ❌ CDP 端口返回錯誤狀態碼: {response.status_code}")
-                self.logger.error(f"[NX_CLOUD] [PLAYWRIGHT] 請確保已運行: python start_chrome_debug.py")
-                return False
-        except requests.exceptions.ConnectionError:
-            self.logger.error(f"[NX_CLOUD] [PLAYWRIGHT] ❌ 無法連接到 CDP 端口 {EnvConfig.BROWSER_DEBUG_PORT}")
-            self.logger.error(f"[NX_CLOUD] [PLAYWRIGHT] Chrome 調試模式未運行！")
-            self.logger.error(f"[NX_CLOUD] [PLAYWRIGHT] 請先運行: python start_chrome_debug.py")
-            self.logger.error(f"[NX_CLOUD] [PLAYWRIGHT] 然後保持 Chrome 窗口運行，再重新執行測試")
-            return False
-        except Exception as e:
-            self.logger.error(f"[NX_CLOUD] [PLAYWRIGHT] ❌ 檢查 CDP 端口時發生錯誤: {e}")
-            return False
-        
-        try:
-            self.logger.info("[NX_CLOUD] [PLAYWRIGHT] 🔍 診斷步驟 2: 嘗試透過 Playwright 連接...")
             
             # ================================================================
             # 🎯 關鍵修改：不使用 with 語句，改用類別變數保持實例
