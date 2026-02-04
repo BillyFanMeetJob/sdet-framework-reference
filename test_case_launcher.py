@@ -501,6 +501,13 @@ class TestCaseLauncher:
         :return: True (Pass) / False (Fail)
         """
         try:
+            # 從 test_cases 中找到對應的 test_case 序號
+            test_case = ""
+            for test_info in self.test_cases:
+                if test_info.get('test_name') == test_name:
+                    test_case = test_info.get('test_case', '')
+                    break
+            
             # 取得專案根目錄
             project_root = EnvConfig.PROJECT_ROOT
             test_file = os.path.join(project_root, "tests", "test_runner.py")
@@ -570,7 +577,15 @@ class TestCaseLauncher:
                 
                 # 清理測試名稱，移除不適合作為文件名的字符（與 TestReporter 一致）
                 safe_test_name = test_name.replace("/", "_").replace("\\", "_")
-                test_dir = os.path.join(report_base, safe_test_name)
+                
+                # 如果有 test_case 序號，加入前綴（例如：case1-1-測試名稱）
+                if test_case:
+                    safe_test_case = test_case.lower().replace(" ", "")  # 轉小寫並移除空格
+                    folder_name = f"{safe_test_case}-{safe_test_name}"
+                else:
+                    folder_name = safe_test_name
+                
+                test_dir = os.path.join(report_base, folder_name)
                 
                 # 使用執行時間建立資料夾（與 TestReporter 相同的格式）
                 # 注意：這裡使用一個固定的時間戳，確保與 TestReporter 使用相同的目錄
@@ -613,6 +628,9 @@ class TestCaseLauncher:
             # 設置報告目錄環境變數，讓 TestReporter 使用相同的目錄
             if report_dir:
                 env['TEST_REPORT_DIR'] = report_dir
+            # 傳遞 test_case 序號給 TestReporter
+            if test_case:
+                env['TEST_CASE_ID'] = test_case
             
             self.log(f"PYTHONPATH: {env['PYTHONPATH']}", "INFO")
             if log_file:

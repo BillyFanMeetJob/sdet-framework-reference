@@ -62,7 +62,7 @@ class TestReporter:
         建立報告目錄結構
         
         report/
-        └── <TestName>/
+        └── <TestCaseID-TestName>/
             └── <YYYY-MM-DD_HH-MM-SS>/
         
         如果環境變數 TEST_REPORT_DIR 已設置，則使用該目錄（確保與 test_case_launcher 使用相同的目錄）
@@ -85,7 +85,16 @@ class TestReporter:
         
         # 使用測試名稱建立資料夾（清理特殊字元）
         safe_test_name = self.test_name.replace("/", "_").replace("\\", "_")
-        test_dir = os.path.join(report_base, safe_test_name)
+        
+        # 檢查是否有 test_case 序號（從環境變數獲取）
+        test_case = os.environ.get('TEST_CASE_ID', '')
+        if test_case:
+            safe_test_case = test_case.lower().replace(" ", "")  # 轉小寫並移除空格
+            folder_name = f"{safe_test_case}-{safe_test_name}"
+        else:
+            folder_name = safe_test_name
+        
+        test_dir = os.path.join(report_base, folder_name)
         
         # 使用執行時間建立資料夾
         time_str = self.start_time.strftime("%Y-%m-%d_%H-%M-%S")
