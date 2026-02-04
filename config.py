@@ -622,6 +622,18 @@ class LocatorConfig:
     DATE_FALLBACK_OFFSET_X: int = 0
     DATE_FALLBACK_OFFSET_Y: int = 0
     
+    # ==================== SettingsPage 定位器 ====================
+    
+    # 外觀分頁簽
+    APPEARANCE_TAB: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.1686,
+        y_ratio=0.0720,
+        image_path="desktop_settings/appearance_tab.png",
+        use_ok_script=True,
+        use_vlm=False,
+        timeout=3
+    ))
+    
     # ==================== CameraPage 定位器 ====================
     
     # 伺服器節點（右鍵點擊以打開添加攝影機對話框）
