@@ -74,26 +74,17 @@ class MainPage(DesktopApp):
         menu_region = (0, 0, 500, 800)
         self.logger.debug(f"[MAIN_PAGE] [REGION] Search region limited to: {menu_region}")
         
-        # 🎯 從 LocatorConfig 獲取配置，保留原值作為預設值（安全備案）
-        locator = getattr(EnvConfig, 'LOCATOR_CONFIG', None)
-        local_settings_x_ratio = getattr(locator, 'LOCAL_SETTINGS_X_RATIO', 0.1) if locator else 0.1
-        local_settings_y_ratio = getattr(locator, 'LOCAL_SETTINGS_Y_RATIO', 0.32) if locator else 0.32
+        # 🎯 使用 UILocator：簡潔且易讀
+        locator_config = EnvConfig.LOCATOR_CONFIG
         
-        # 使用配置中的資源路徑（避免硬編碼）
-        # 優先使用圖片辨識，如果失敗則嘗試 OCR/VLM（限制在選單區域）
         # 注意：UI 顯示的是「本地设置」（簡體中文），不是「本機設定」（繁體中文）
         target_texts = ["本地设置", "本地設置", "本機設定", "Local Settings"]  # 多個候選文字，優先簡體中文
-        self.logger.info(f"[MAIN_PAGE] [CALL] Calling smart_click with image='{EnvConfig.APP_PATHS.LOCAL_SETTINGS}', text='{target_texts[0]}' (fallback: {target_texts[1:]})...")
-        self.logger.info(f"[MAIN_PAGE] [STRATEGY] Using image-first strategy (use_vlm=False)")
-        success = self.smart_click(
-            x_ratio=local_settings_x_ratio, 
-            y_ratio=local_settings_y_ratio,
-            target_text=target_texts[0],  # 優先使用簡體中文「本地设置」
-            image_path=EnvConfig.APP_PATHS.LOCAL_SETTINGS,
-            timeout=5,  # 增加到 5 秒，給辨識和點擊足夠時間
-            region=menu_region,  # 關鍵修改：限制搜尋區域到左上角
-            use_vlm=False  # 啟用圖片優先模式：圖片 > VLM > OCR
-        )
+        self.logger.info(f"[MAIN_PAGE] [CALL] Using UILocator: LOCAL_SETTINGS with text='{target_texts[0]}'")
+        self.logger.info(f"[MAIN_PAGE] [STRATEGY] Using image-first strategy")
+        
+        # 使用 UILocator 並添加文字
+        local_settings_locator = locator_config.LOCAL_SETTINGS.with_text(target_texts[0])
+        success = self.click_with_locator(local_settings_locator)
         
         self.logger.info(f"[MAIN_PAGE] [RESULT] smart_click returned: {success}")
         

@@ -625,16 +625,42 @@ class LocatorConfig:
     # ==================== CameraPage 定位器 ====================
     
     # 伺服器節點（右鍵點擊以打開添加攝影機對話框）
+    SERVER_NODE: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.05,
+        y_ratio=0.15,
+        image_path="desktop_main/server_node.png",
+        click_type='right',
+        timeout=3
+    ))
+    
+    # 向後兼容
     SERVER_NODE_X_RATIO: float = 0.05
     SERVER_NODE_Y_RATIO: float = 0.15
     SERVER_NODE_IMAGE: str = "desktop_main/server_node.png"
     
     # 添加攝影機選單項目（右鍵選單中）
+    ADD_CAMERA_MENU: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.1,
+        y_ratio=0.2,
+        image_path="desktop_main/add_camera_menu.png",
+        is_relative=True,
+        timeout=3
+    ))
+    
+    # 向後兼容
     ADD_CAMERA_MENU_X_RATIO: float = 0.1
     ADD_CAMERA_MENU_Y_RATIO: float = 0.2
     ADD_CAMERA_MENU_IMAGE: str = "desktop_main/add_camera_menu.png"
     
     # 攝影機設定選單項目（右鍵選單中）
+    CAMERA_SETTINGS_MENU: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.22,
+        y_ratio=0.38,
+        image_path="desktop_main/camera_settings_menu.png",
+        timeout=3
+    ))
+    
+    # 向後兼容
     CAMERA_SETTINGS_MENU_X_RATIO: float = 0.22
     CAMERA_SETTINGS_MENU_Y_RATIO: float = 0.38
     CAMERA_SETTINGS_MENU_IMAGE: str = "desktop_main/camera_settings_menu.png"
