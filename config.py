@@ -622,6 +622,26 @@ class LocatorConfig:
     DATE_FALLBACK_OFFSET_X: int = 0
     DATE_FALLBACK_OFFSET_Y: int = 0
     
+    # 暫停按鈕（時間軸控制）
+    PAUSE_BUTTON: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.5,  # 時間軸中心
+        y_ratio=0.95,  # 時間軸位置
+        image_path="desktop_main/timeline_pause.png",
+        use_ok_script=True,
+        use_vlm=False,
+        timeout=2
+    ))
+    
+    # 播放按鈕（時間軸控制）
+    PLAY_BUTTON: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.5,  # 時間軸中心
+        y_ratio=0.95,  # 時間軸位置
+        image_path="desktop_main/timeline_play.png",
+        use_ok_script=True,
+        use_vlm=False,
+        timeout=2
+    ))
+    
     # ==================== SettingsPage 定位器 ====================
     
     # 外觀分頁簽

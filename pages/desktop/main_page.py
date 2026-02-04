@@ -1676,29 +1676,16 @@ class MainPage(DesktopApp):
         app_paths = EnvConfig.APP_PATHS
         thresholds = EnvConfig.THRESHOLDS
         
+        # 🎯 使用 UILocator：簡潔且易讀
+        locator_config = EnvConfig.LOCATOR_CONFIG
+        
         # 優先使用圖片辨識暫停按鈕
-        success = self.smart_click(
-            x_ratio=timeline_config.TIMELINE_CENTER_X_RATIO,
-            y_ratio=timeline_config.TIMELINE_Y_RATIO,
-            target_text=None,  # 不使用文字辨識
-            image_path=app_paths.TIMELINE_PAUSE,  # 使用配置中的路徑
-            use_ok_script=True,
-            use_vlm=False,  # 圖片優先模式
-            timeout=2
-        )
+        success = self.click_with_locator(locator_config.PAUSE_BUTTON)
         
         # 如果暫停按鈕圖片不存在，嘗試播放按鈕圖片（可能當前是播放狀態）
         if not success:
             self.logger.info("[PAUSE] 暫停按鈕圖片未找到，嘗試播放按鈕圖片...")
-            success = self.smart_click(
-                x_ratio=timeline_config.TIMELINE_CENTER_X_RATIO,
-                y_ratio=timeline_config.TIMELINE_Y_RATIO,
-                target_text=None,
-                image_path=app_paths.TIMELINE_PLAY,  # 使用配置中的路徑
-                use_ok_script=True,
-                use_vlm=False,
-                timeout=2
-            )
+            success = self.click_with_locator(locator_config.PLAY_BUTTON)
         
         if success:
             self.logger.info("[PAUSE] [OK] 成功點擊暫停/播放按鈕")
