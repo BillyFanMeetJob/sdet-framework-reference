@@ -1698,8 +1698,7 @@ class MainPage(DesktopApp):
             # 備選：點擊畫面中央（通常也會觸發暫停）
             win = self.get_nx_window()
             if win:
-                center_x = win.left + (win.width // 2)
-                center_y = win.top + (win.height // 2)
+                center_x, center_y = win.center
                 pyautogui.click(center_x, center_y)
                 self.logger.info("[PAUSE] 已點擊畫面中央作為備選")
                 time.sleep(thresholds.CLICK_WAIT_TIME)
