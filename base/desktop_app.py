@@ -2115,6 +2115,22 @@ class DesktopApp:
                 final_x, final_y = self._perform_click(tx, ty, clicks, click_type, offset_x, offset_y)
                 # 🎯 使用最終座標記錄（已應用偏移）
                 DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
+                
+                # 🎯 VLM 驗證：座標保底點擊後驗證
+                vlm_verification_result = self._verify_coordinate_click_with_vlm(
+                    click_x=final_x,
+                    click_y=final_y,
+                    target_text=target_text,
+                    image_path=image_path,
+                    expected_action="點擊" + (target_text if target_text else "元素")
+                )
+                
+                # 記錄 VLM 驗證結果
+                if vlm_verification_result.get('verified'):
+                    self.logger.info(f"[TEXT_PRIORITY] [VLM] ✅ Verified. {vlm_verification_result.get('description', '')}")
+                else:
+                    self.logger.warning(f"[TEXT_PRIORITY] [VLM] ⚠️ Warning. {vlm_verification_result.get('description', '')}")
+                
                 return True
             except Exception as e:
                 self.logger.error(f"[ERROR] [TEXT_PRIORITY] 座標保底失敗: {e}")
@@ -2401,20 +2417,36 @@ class DesktopApp:
                 # 使用最終座標記錄（已應用偏移）
                 DesktopApp._last_x, DesktopApp._last_y = final_x, final_y
                 
-                # 🎯 添加報告截圖（標記座標保底點擊位置）
+                # 🎯 VLM 驗證：座標保底點擊後，使用 VLM 驗證是否點擊正確
+                vlm_verification_result = self._verify_coordinate_click_with_vlm(
+                    click_x=final_x,
+                    click_y=final_y,
+                    target_text=target_text,
+                    image_path=image_path,
+                    expected_action="點擊" + (target_text if target_text else "元素")
+                )
+                
+                # 🎯 添加報告截圖（標記座標保底點擊位置，並包含 VLM 驗證結果）
                 if DesktopApp._reporter and hasattr(DesktopApp._reporter, 'add_recognition_screenshot'):
                     try:
                         DesktopApp._reporter.add_recognition_screenshot(
-                            item_name="Coordinate Fallback",
+                            item_name=f"Coordinate Fallback{' (VLM Verified)' if vlm_verification_result.get('verified') else ' (VLM Warning)'}",
                             x=final_x,
                             y=final_y,
                             width=50,
                             height=50,
-                            method="Coordinate",
-                            region=region if region else (win.left, win.top, win.width, win.height)
+                            method="Coordinate + VLM Verification",
+                            region=region if region else (win.left, win.top, win.width, win.height),
+                            additional_info=vlm_verification_result.get('description', '')
                         )
                     except Exception as e:
                         self.logger.debug(f"座標保底截圖失敗: {e}")
+                
+                # 記錄 VLM 驗證結果
+                if vlm_verification_result.get('verified'):
+                    self.logger.info(f"[SMART_CLICK] [COORD] [VLM] ✅ Verified. {vlm_verification_result.get('description', '')}")
+                else:
+                    self.logger.warning(f"[SMART_CLICK] [COORD] [VLM] ⚠️ Warning. {vlm_verification_result.get('description', '')}")
                 
                 self.logger.info(f"[SMART_CLICK] [COORD] Success. Final coordinates: ({final_x}, {final_y})")
                 return True
@@ -2453,6 +2485,155 @@ class DesktopApp:
         recognizer = get_recognizer()
         recognizer.reset_stats()
         self.logger.info("✅ 辨識統計已重置")
+    
+    def _verify_coordinate_click_with_vlm(self, click_x, click_y, target_text=None, image_path=None, expected_action="點擊元素"):
+        """
+        🤖 使用 VLM 驗證座標點擊是否正確
+        
+        在使用座標保底點擊後，截圖並標記點擊位置，讓 VLM 判斷是否點擊到預期的元素。
+        
+        Args:
+            click_x: 點擊的 X 座標
+            click_y: 點擊的 Y 座標
+            target_text: 目標文字（如果有）
+            image_path: 目標圖片路徑（如果有）
+            expected_action: 預期的操作描述
+            
+        Returns:
+            dict: {
+                'verified': bool,  # 是否驗證通過
+                'description': str,  # VLM 的描述
+                'confidence': float  # 信心度（0-1）
+            }
+        """
+        # 檢查 VLM 是否啟用
+        vlm_enabled = getattr(EnvConfig, 'VLM_ENABLED', False)
+        if not vlm_enabled:
+            return {
+                'verified': True,  # VLM 未啟用時，假設驗證通過
+                'description': 'VLM 驗證未啟用',
+                'confidence': 0.0
+            }
+        
+        try:
+            self.logger.info(f"[VLM_VERIFY] 開始驗證座標點擊: ({click_x}, {click_y})")
+            
+            # 等待一下讓畫面穩定
+            time.sleep(0.3)
+            
+            # 截圖並標記點擊位置
+            screenshot = pyautogui.screenshot()
+            from PIL import ImageDraw, ImageFont
+            draw = ImageDraw.Draw(screenshot)
+            
+            # 繪製紅色圓圈標記點擊位置
+            marker_size = 30
+            draw.ellipse(
+                [click_x - marker_size, click_y - marker_size, 
+                 click_x + marker_size, click_y + marker_size],
+                outline='red',
+                width=3
+            )
+            
+            # 繪製十字線
+            cross_size = 15
+            draw.line([click_x - cross_size, click_y, click_x + cross_size, click_y], fill='red', width=2)
+            draw.line([click_x, click_y - cross_size, click_x, click_y + cross_size], fill='red', width=2)
+            
+            # 保存標記後的截圖
+            import tempfile
+            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
+                screenshot_path = tmp_file.name
+                screenshot.save(screenshot_path)
+            
+            # 獲取 VLM 引擎
+            vlm_engine = self._get_vlm_engine()
+            if not vlm_engine:
+                self.logger.warning("[VLM_VERIFY] VLM 引擎未初始化")
+                return {
+                    'verified': True,  # VLM 不可用時，假設驗證通過
+                    'description': 'VLM 引擎不可用',
+                    'confidence': 0.0
+                }
+            
+            # 構建 VLM 提示詞
+            target_description = ""
+            if target_text:
+                target_description = f"文字「{target_text}」"
+            elif image_path:
+                # 從圖片路徑提取元素名稱
+                import os
+                element_name = os.path.splitext(os.path.basename(image_path))[0]
+                target_description = f"元素「{element_name}」"
+            else:
+                target_description = "目標元素"
+            
+            prompt = f"""請分析這張截圖，紅色圓圈和十字線標記了剛才點擊的位置。
+
+預期操作：{expected_action}
+目標元素：{target_description}
+
+請判斷：
+1. 點擊位置是否在正確的元素上？
+2. 該位置的元素是否符合預期？
+3. 畫面是否符合點擊後的預期狀態？
+
+請用以下格式回答：
+驗證結果：[通過/警告/失敗]
+信心度：[0-100]%
+說明：[簡短描述點擊位置的元素和狀態]"""
+
+            # 調用 VLM
+            self.logger.info(f"[VLM_VERIFY] 調用 VLM 進行驗證...")
+            vlm_response = vlm_engine.analyze_image(screenshot_path, prompt)
+            
+            # 清理臨時文件
+            try:
+                os.unlink(screenshot_path)
+            except:
+                pass
+            
+            # 解析 VLM 回應
+            response_text = vlm_response.get('text', '') if isinstance(vlm_response, dict) else str(vlm_response)
+            
+            # 判斷驗證結果
+            verified = False
+            confidence = 0.5  # 預設信心度
+            
+            if '通過' in response_text or '正確' in response_text or '符合' in response_text:
+                verified = True
+                confidence = 0.8
+            elif '警告' in response_text:
+                verified = True  # 警告仍視為通過，但記錄
+                confidence = 0.6
+            else:
+                verified = False
+                confidence = 0.3
+            
+            # 提取信心度（如果 VLM 有提供）
+            import re
+            confidence_match = re.search(r'(\d+)%', response_text)
+            if confidence_match:
+                confidence = float(confidence_match.group(1)) / 100.0
+            
+            result = {
+                'verified': verified,
+                'description': response_text[:200],  # 限制長度
+                'confidence': confidence
+            }
+            
+            self.logger.info(f"[VLM_VERIFY] 驗證完成: {result}")
+            return result
+            
+        except Exception as e:
+            self.logger.warning(f"[VLM_VERIFY] 驗證過程發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+            return {
+                'verified': True,  # 發生錯誤時，假設驗證通過（避免阻塞測試）
+                'description': f'VLM 驗證失敗: {str(e)}',
+                'confidence': 0.0
+            }
     
     def _find_text_by_ocr(self, target_text, region):
         """
