@@ -6,7 +6,7 @@
 
 from typing import Optional
 from toolkit.logger import get_logger
-from config_enhanced import ConfigManager, PlatformType
+from config import ConfigManager, PlatformType
 
 
 class UnifiedPage:
@@ -163,7 +163,7 @@ class ExampleLoginPage(PlatformSpecificPage):
 
 
 if __name__ == "__main__":
-    from config_enhanced import ConfigManager, PlatformType
+    from config import ConfigManager, PlatformType
     
     print("=== 統一 Page 基類測試 ===\n")
     

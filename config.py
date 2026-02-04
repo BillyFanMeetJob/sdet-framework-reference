@@ -1,6 +1,39 @@
 # 相對路徑: config.py
 import os
 import sys
+from enum import Enum
+from typing import Optional
+
+
+class PlatformType(Enum):
+    """平台類型枚舉"""
+    DESKTOP = "desktop"
+    WEB = "web"
+    ANDROID = "android"
+
+
+class ConfigManager:
+    """配置管理器 - 管理當前運行平台"""
+    
+    _current_platform: Optional[PlatformType] = None
+    
+    @classmethod
+    def set_platform(cls, platform: PlatformType) -> None:
+        """設置當前平台"""
+        cls._current_platform = platform
+    
+    @classmethod
+    def get_current_platform(cls) -> PlatformType:
+        """獲取當前平台，默認為 DESKTOP"""
+        if cls._current_platform is None:
+            # 從環境變數讀取，默認為 DESKTOP
+            platform_str = os.getenv("TEST_PLATFORM", "desktop").lower()
+            try:
+                cls._current_platform = PlatformType(platform_str)
+            except ValueError:
+                cls._current_platform = PlatformType.DESKTOP
+        return cls._current_platform
+
 
 def get_project_root():
     """
@@ -447,16 +480,16 @@ class LocatorConfig:
     
     # 語言切換相關
     # 語言下拉按鈕：<button id="dropdownMenuButton">
-    WEB_LANGUAGE_DROPDOWN_XPATHS: list = [
+    WEB_LANGUAGE_DROPDOWN_XPATHS: List[str] = field(default_factory=lambda: [
         "//button[@id='dropdownMenuButton']",
         "//button[contains(@class, 'btn-dropdown-toggle')]",
         "//button[contains(@class, 'legacy-btn') and contains(@class, 'dropdown')]",
         "//div[contains(@class, 'language')]//button",
         "//*[contains(@class, 'locale-selector')]",
-    ]
+    ])
     
     # 繁體中文選項：<ul aria-labelledby="dropdownMenuButton"><a><span>繁体中文</span></a></ul>
-    WEB_CHINESE_OPTION_XPATHS: list = [
+    WEB_CHINESE_OPTION_XPATHS: List[str] = field(default_factory=lambda: [
         "//ul[@aria-labelledby='dropdownMenuButton']//span[contains(text(), '繁体中文')]",
         "//ul[@aria-labelledby='dropdownMenuButton']//span[contains(text(), '繁體中文')]",
         "//ul[@aria-labelledby='dropdownMenuButton']//a[contains(@class, 'dropdown-item')]//span[contains(text(), '繁')]",
@@ -465,7 +498,7 @@ class LocatorConfig:
         "//*[contains(text(), '繁體中文')]",
         "//*[contains(text(), '繁体中文')]",
         "//*[contains(text(), 'Traditional Chinese')]",
-    ]
+    ])
 
 
 # 創建全局配置實例（追加到現有配置）
