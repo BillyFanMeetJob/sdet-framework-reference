@@ -23,15 +23,13 @@ class ServerSettingsPage(DesktopApp):
         """
         self.logger.info("🖱️ 在 Server 圖示上點擊右鍵...")
         
+        # 🎯 使用 UILocator：簡潔且易讀
+        from config import EnvConfig
+        locator_config = EnvConfig.LOCATOR_CONFIG
+        
         # 使用圖片優先策略，因為圖示圖片辨識更可靠
-        success = self.smart_click_priority_image(
-            x_ratio=0.08,
-            y_ratio=0.08,
-            target_text="Server",  # 作為備選文字辨識
-            image_path="desktop_main/server_icon.png",  # 圖片辨識優先
-            click_type='right',
-            timeout=3
-        )
+        server_locator = locator_config.SERVER_ICON_RIGHT_CLICK.with_text("Server")
+        success = self.click_with_locator(server_locator)
         
         if success:
             # 智能等待右鍵選單出現（增加等待時間，確保選單完全展開）
@@ -52,15 +50,12 @@ class ServerSettingsPage(DesktopApp):
         """
         self.logger.info("🖱️ 點擊「伺服器設定」選單項目...")
         
+        # 🎯 使用 UILocator：簡潔且易讀
+        locator_config = EnvConfig.LOCATOR_CONFIG
+        
         # 使用圖片優先策略，因為右鍵選單項目通常圖片辨識更可靠
-        success = self.smart_click_priority_image(
-            x_ratio=0.15,
-            y_ratio=0.25,
-            target_text="伺服器設定",  # 作為備選文字辨識
-            image_path="desktop_main/server_settings_menu.png",  # 圖片辨識優先
-            is_relative=False,
-            timeout=3
-        )
+        settings_menu_locator = locator_config.SERVER_SETTINGS_MENU_ITEM.with_text("伺服器設定")
+        success = self.click_with_locator(settings_menu_locator)
         self.logger.info(f"[DEBUG] smart_click_priority_image 返回: {success}")
         
         if success:
@@ -165,14 +160,9 @@ class ServerSettingsPage(DesktopApp):
         if was_already_checked:
             # 流程 2: checkbox 已勾選，直接點擊「確認」按鈕
             self.logger.info("✅ Checkbox 已勾選，直接點擊「確認」按鈕...")
-            success = self.smart_click_priority_image(
-                x_ratio=0.84,
-                y_ratio=0.06,
-                target_text="確認",
-                image_path="desktop_settings/ok_btn.png",
-                from_bottom=True,
-                timeout=2
-            )
+            locator_config = EnvConfig.LOCATOR_CONFIG
+            ok_btn_locator = locator_config.OK_BTN_BOTTOM_RIGHT.with_text("確認")
+            success = self.click_with_locator(ok_btn_locator)
             
             if success:
                 self.logger.info("✅ 成功點擊「確認」按鈕")
