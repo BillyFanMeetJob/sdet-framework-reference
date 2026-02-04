@@ -252,14 +252,10 @@ class ServerSettingsPage(DesktopApp):
             
             # 步驟 2: 點擊「套用」按鈕（第一次）
             self.logger.info("🖱️ 點擊「套用」按鈕...")
-            apply_clicked = self.smart_click_priority_image(
-                x_ratio=0.72,
-                y_ratio=0.06,
-                target_text="套用",
-                image_path="desktop_settings/apply_btn.png",
-                from_bottom=True,
-                timeout=0.5
-            )
+            from config import EnvConfig
+            locator_config = EnvConfig.LOCATOR_CONFIG
+            apply_btn_locator = locator_config.APPLY_BTN_BOTTOM_RIGHT.with_text("套用")
+            apply_clicked = self.click_with_locator(apply_btn_locator)
             
             if not apply_clicked:
                 self.logger.error("❌ 點擊「套用」按鈕失敗")
@@ -369,14 +365,10 @@ class ServerSettingsPage(DesktopApp):
             time.sleep(0.5)
             
             self.logger.info("🔄 密碼確認後，再次點擊「確認」按鈕...")
-            confirm_clicked = self.smart_click_priority_image(
-                x_ratio=0.84,
-                y_ratio=0.06,
-                target_text="確認",
-                image_path="desktop_settings/ok_btn.png",
-                from_bottom=True,
-                timeout=1
-            )
+            from config import EnvConfig
+            locator_config = EnvConfig.LOCATOR_CONFIG
+            confirm_btn_locator = locator_config.OK_BTN_BOTTOM_RIGHT.with_text("確認")
+            confirm_clicked = self.click_with_locator(confirm_btn_locator)
             
             if confirm_clicked:
                 self.logger.info("✅ 成功點擊「確認」按鈕")
