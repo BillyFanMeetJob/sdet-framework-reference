@@ -866,23 +866,23 @@ class MainPage(DesktopApp):
     
     def select_date_with_recording(self):
         """
-        🎯 在日曆中選擇有錄影事件的日期（優先使用視覺驅動方式）
+        🎯 在日曆中選擇有錄影事件的日期
         
-        策略優先級：
-        1. 優先使用「視覺驅動」方式自動尋找有綠色標記的日期（select_first_date_with_recording）
-        2. 如果視覺驅動失敗，使用「區域網格法」點擊日期 17 號（click_date_17）
-        3. 如果網格法失敗，回退到 VLM/OCR 方法
+        業務邏輯：點擊**任何有綠色底線的日期**（不是固定的某個日期）
+        
+        策略：
+        1. 使用視覺驅動方式自動尋找有綠色標記的日期
+        2. 如果失敗，拋出錯誤（不使用備選方案，避免點錯日期）
         """
         self._log_method_entry("select_date_with_recording")
-        self.logger.info("[CALENDAR] 選擇有錄影事件的日期...")
+        self.logger.info("[CALENDAR] 選擇有錄影事件的日期（尋找綠色底線）...")
         
-        # 🎯 優先使用「視覺驅動」方式自動尋找有綠色標記的日期
-        self.logger.info("[CALENDAR] 優先使用視覺驅動方式尋找有錄影標記的日期...")
+        # 使用視覺驅動方式自動尋找有綠色標記的日期
         try:
             date_coord = self.select_first_date_with_recording()
             if date_coord:
                 click_x, click_y = date_coord
-                self.logger.info(f"[CALENDAR] 視覺驅動成功找到日期，點擊座標: ({click_x}, {click_y})")
+                self.logger.info(f"[CALENDAR] ✅ 視覺驅動成功找到有綠色標記的日期，點擊座標: ({click_x}, {click_y})")
                 
                 # 確保窗口處於活動狀態
                 win = self.get_nx_window()
@@ -896,281 +896,18 @@ class MainPage(DesktopApp):
                 # 執行點擊
                 pyautogui.click(click_x, click_y)
                 self.logger.info(f"[CALENDAR] 成功點擊日期座標 ({click_x}, {click_y})")
-                # 使用配置中的等待時間（避免硬編碼）
                 time.sleep(EnvConfig.THRESHOLDS.CLICK_WAIT_TIME)
                 
-                # 🎯 移除多餘的時間軸點擊（不需要多點擊一下時間軸中間）
-                # self.click_timeline(position="center")  # 已移除
-                
-                return True
-        except Exception as e:
-            self.logger.warning(f"[CALENDAR] 視覺驅動方式失敗: {e}，嘗試備選方法...")
-        
-        # 🎯 備選方案 1: 使用「區域網格法」點擊日期 17 號
-        self.logger.info("[CALENDAR] 優先嘗試使用區域網格法點擊日期 17 號...")
-        try:
-            if self.click_date_17():
-                self.logger.info("[CALENDAR] 區域網格法成功選擇日期 17 號")
                 return True
             else:
-                self.logger.warning("[CALENDAR] 區域網格法失敗，回退到 VLM/OCR 方法...")
-        except Exception as e:
-            self.logger.warning(f"[CALENDAR] 區域網格法發生異常: {e}，回退到 VLM/OCR 方法...")
-        
-        # 如果網格法失敗，使用原有的 VLM/OCR 方法作為備選
-        self.logger.info("[CALENDAR] 使用 VLM/OCR 方法選擇日期...")
-        
-        # 🎯 直接強制優先尋找並點擊 17 號
-        target_date = "17"
-        
-        # 使用動態錨點定位獲取日曆區域
-        calendar_region = self._get_calendar_region_by_anchor()
-        calendar_left, calendar_top, calendar_width, calendar_height = calendar_region
-        
-        # 計算日曆區域的中心位置（用於 smart_click 的 x_ratio, y_ratio）
-        # 注意：這裡的 ratio 是相對於視窗的，不是相對於日曆區域的
-        win = self.get_nx_window()
-        if win:
-            # 計算日曆區域中心在視窗中的比例位置
-            calendar_center_x = calendar_left + calendar_width // 2
-            calendar_center_y = calendar_top + calendar_height // 2
-            
-            # 轉換為視窗比例（相對於視窗左上角）
-            calendar_x_ratio = (calendar_center_x - win.left) / win.width
-            calendar_y_ratio = (calendar_center_y - win.top) / win.height
-            
-            self.logger.info(f"[CALENDAR] 日曆區域中心: ({calendar_center_x}, {calendar_center_y})")
-            self.logger.info(f"[CALENDAR] 視窗比例位置: x_ratio={calendar_x_ratio:.3f}, y_ratio={calendar_y_ratio:.3f}")
-            self.logger.info(f"[CALENDAR] 鎖定搜尋區域: {calendar_region}")
-        else:
-            # 如果無法獲取窗口，使用默認值
-            calendar_x_ratio = 0.75
-            calendar_y_ratio = 0.45
-            self.logger.warning("[CALENDAR] 無法獲取視窗，使用默認比例位置")
-        
-        # 🎯 優先尋找並點擊 17 號
-        self.logger.info(f"[CALENDAR] 優先尋找日期 {target_date}...")
-        self.logger.info(f"[CALENDAR] [COORD] Using calendar region for search: {calendar_region}")
-        self.logger.info(f"[CALENDAR] [COORD] Note: VLM/OCR will return coordinates relative to calendar region, then add region offset to get screen absolute coordinates")
-        
-        # 🎯 從 LocatorConfig 獲取日期點擊偏移配置，保留原值作為預設值（安全備案）
-        locator = getattr(EnvConfig, 'LOCATOR_CONFIG', None)
-        date_offset_x = getattr(locator, 'DATE_CLICK_OFFSET_X', 5) if locator else 5
-        date_offset_y = getattr(locator, 'DATE_CLICK_OFFSET_Y', 15) if locator else 15
-        
-        # 使用 smart_click 尋找並點擊日期，鎖定搜尋區域在日曆視窗內部
-        # 🎯 修正日期點選：點擊日期 "17" 時，傳入 offset_y=15, offset_x=5
-        # 理由：補償 VLM 常見的偏左上誤差，確保點中數字的正中心
-        # 🎯 重要：region 參數會限制 VLM/OCR 的搜尋範圍，返回的座標會自動加上 region 偏移
-        success = self.smart_click(
-            x_ratio=calendar_x_ratio,
-            y_ratio=calendar_y_ratio,
-            target_text=target_date,
-            timeout=3,  # 增加超時時間，確保有足夠時間辨識
-            offset_x=date_offset_x,  # 🎯 向右偏移，補償 VLM 常見的偏左誤差
-            offset_y=date_offset_y,  # 🎯 向下偏移，補償 VLM 常見的偏上誤差
-            region=calendar_region  # 🎯 鎖定搜尋區域，避免 VLM 全屏掃描偏移
-        )
-        
-        if success:
-            self.logger.info(f"[CALENDAR] 成功選擇日期 {target_date}")
-            time.sleep(0.5)  # 等待日期選擇生效
-            return True
-        
-        # 🎯 從 LocatorConfig 獲取備選日期點擊偏移配置，保留原值作為預設值（安全備案）
-        date_fallback_offset_x = getattr(locator, 'DATE_FALLBACK_OFFSET_X', 0) if locator else 0
-        date_fallback_offset_y = getattr(locator, 'DATE_FALLBACK_OFFSET_Y', 0) if locator else 0
-        
-        # 如果 17 號找不到，嘗試其他日期（18, 19, 20）作為備選
-        self.logger.warning(f"[CALENDAR] 無法找到日期 {target_date}，嘗試其他日期...")
-        fallback_dates = ["18", "19", "20"]
-        
-        for date_num in fallback_dates:
-            self.logger.info(f"[CALENDAR] 嘗試尋找日期 {date_num}...")
-            
-            success = self.smart_click(
-                x_ratio=calendar_x_ratio,
-                y_ratio=calendar_y_ratio,
-                target_text=date_num,
-                timeout=2,
-                offset_x=date_fallback_offset_x,
-                offset_y=date_fallback_offset_y,
-                region=calendar_region  # 🎯 鎖定搜尋區域
-            )
-            
-            if success:
-                self.logger.info(f"[CALENDAR] 成功選擇日期 {date_num}")
-                time.sleep(0.5)
-                return True
-        
-        # 如果所有日期都找不到，使用座標保底
-        self.logger.warning("[CALENDAR] 無法找到任何日期，使用座標保底")
-        # 🎯 使用備選偏移配置
-        success = self.smart_click(
-            x_ratio=calendar_x_ratio,
-            y_ratio=calendar_y_ratio,
-            timeout=2,
-            offset_x=date_fallback_offset_x,
-            offset_y=date_fallback_offset_y,
-            region=calendar_region  # 🎯 鎖定搜尋區域
-        )
-        
-        if success:
-            time.sleep(0.5)
-            self.logger.info("[CALENDAR] 使用座標保底選擇日期")
-        
-        return success
-    
-    def click_date_17(self):
-        """
-        🎯 使用「區域網格法」點擊日期 17 號
-        採用圖像識別錨點 + 網格座標計算的方式，避免 UIA 定位失效問題
-        
-        邏輯：
-        1. 尋找錨點：使用 locateOnScreen('calendar_header.png') 找到日曆視窗的頂部
-        2. 建立座標系：設定日曆每個「日期格」的寬度約為 40px，高度約 30px
-        3. 計算點擊點：使用 datetime 確認 2026年1月17日是星期六，計算它在日曆網格中的 (Row, Col) 索引
-        4. 執行與驗證：點擊後檢查下方時間軸是否出現綠色區塊變化
-        
-        Returns:
-            bool: 點擊是否成功
-        """
-        self._log_method_entry("click_date_17")
-        self.logger.info("[CALENDAR_GRID] 使用區域網格法點擊日期 17 號...")
-        
-        # 獲取窗口資訊
-        win = self.get_nx_window()
-        if not win:
-            self.logger.error("[CALENDAR_GRID] 無法獲取窗口")
-            return False
-        
-        # 步驟 1: 尋找錨點 - 日曆視窗頂部（calendar_header.png）
-        self.logger.info("[CALENDAR_GRID] 步驟 1: 尋找日曆錨點...")
-        calendar_header_path = os.path.join(EnvConfig.RES_PATH, "desktop_main", "calendar_header.png")
-        
-        anchor_x, anchor_y = None, None
-        
-        # 嘗試使用 locateOnScreen 找到日曆標題
-        try:
-            # 如果圖片存在，使用圖片識別
-            if os.path.exists(calendar_header_path):
-                self.logger.info(f"[CALENDAR_GRID] 使用圖片識別: {calendar_header_path}")
-                location = pyautogui.locateOnScreen(calendar_header_path, confidence=0.8)
-                if location:
-                    # 錨點設為圖片底部中心（日曆標題下方，即日期網格開始的位置）
-                    anchor_x = location.left + location.width // 2
-                    anchor_y = location.top + location.height
-                    self.logger.info(f"[CALENDAR_GRID] 找到日曆錨點（圖片識別）: ({anchor_x}, {anchor_y})")
-            else:
-                self.logger.warning(f"[CALENDAR_GRID] 圖片不存在: {calendar_header_path}")
-                self.logger.info("[CALENDAR_GRID] 使用座標估算作為備選方案...")
-        except Exception as e:
-            self.logger.warning(f"[CALENDAR_GRID] 圖片識別失敗: {e}")
-        
-        # 如果圖片識別失敗，使用座標估算（日曆視窗大約在右下角）
-        if anchor_x is None or anchor_y is None:
-            self.logger.info("[CALENDAR_GRID] 使用座標估算作為備選方案...")
-            # 日曆視窗大約在螢幕右下角
-            # 假設日曆視窗左上角在 (win.width * 0.60, win.height * 0.25)
-            # 日曆標題高度約 30px，所以錨點在標題下方
-            anchor_x = win.left + int(win.width * 0.60) + int(win.width * 0.15)  # 日曆視窗中心 X
-            anchor_y = win.top + int(win.height * 0.25) + 30  # 日曆標題下方約 30px
-            self.logger.info(f"[CALENDAR_GRID] 使用估算錨點: ({anchor_x}, {anchor_y})")
-        
-        # 步驟 2: 建立座標系 - 設定日曆每個「日期格」的尺寸
-        # 根據常見日曆 UI，每個日期格大約：寬度 40px，高度 30px
-        cell_width = 40
-        cell_height = 30
-        
-        # 日曆網格通常從星期天開始（索引 0），到星期六結束（索引 6）
-        # 第一行是星期標題，第二行開始是日期
-        # 所以日期網格的第一行（第二行）Y 座標 = anchor_y + cell_height
-        
-        # 步驟 3: 計算點擊點 - 確認 2026年1月17日在日曆網格中的位置
-        target_date = date(2026, 1, 17)
-        
-        # 計算 1月1日的位置（作為參考點）
-        first_day = date(2026, 1, 1)
-        first_weekday = first_day.weekday()  # Python weekday(): 0=Monday, 6=Sunday
-        # 轉換為日曆格式（Sunday=0, Monday=1, ..., Saturday=6）
-        first_calendar_col = (first_weekday + 1) % 7  # 1月1日是 Thursday=3，轉換後為 4
-        
-        # 計算 17 號距離 1 號的天數
-        days_diff = (target_date - first_day).days  # 16 天
-        
-        # 計算 17 號在日曆網格中的位置
-        # 1號在第 1 行（row=1），第 first_calendar_col 列
-        # 17號 = 1號 + 16天 = 1號 + 2週 + 2天
-        # 所以 17號在 row = 1 + 2 = 3，col = (4 + 2) % 7 = 6（Saturday）
-        calendar_row = 1 + (days_diff + first_calendar_col) // 7
-        calendar_col = (first_calendar_col + days_diff) % 7
-        
-        self.logger.info(f"[CALENDAR_GRID] 2026年1月17日是 {target_date.strftime('%A')}")
-        self.logger.info(f"[CALENDAR_GRID] 日曆網格位置: Row={calendar_row}, Col={calendar_col} (Sunday=0, Saturday=6)")
-        
-        # 計算點擊座標
-        # 假設錨點是日曆標題下方中心點
-        # 日曆通常有 7 列，中心對齊，所以左側第一列在 anchor_x - (3 * cell_width)
-        # 點擊座標 = 儲存格左上角 + 儲存格中心偏移
-        click_x = anchor_x - (3 * cell_width) + (calendar_col * cell_width) + (cell_width // 2)
-        click_y = anchor_y + cell_height + ((calendar_row - 1) * cell_height) + (cell_height // 2)
-        
-        self.logger.info(f"[CALENDAR_GRID] 計算出的點擊座標: ({click_x}, {click_y})")
-        self.logger.info(f"[CALENDAR_GRID] 錨點: ({anchor_x}, {anchor_y}), 網格位置: Row={calendar_row}, Col={calendar_col}")
-        
-        # 步驟 4: 執行點擊
-        self.logger.info(f"[CALENDAR_GRID] 移動滑鼠到 ({click_x}, {click_y}) 並點擊...")
-        
-        # 確保窗口處於活動狀態
-        try:
-            win.activate()
-            time.sleep(0.2)
-        except:
-            pass
-        
-        # 移動滑鼠並點擊
-        try:
-            pyautogui.moveTo(click_x, click_y, duration=0.3)
-            time.sleep(0.1)
-            pyautogui.click(click_x, click_y)
-            self.logger.info(f"[CALENDAR_GRID] 成功點擊座標 ({click_x}, {click_y})")
-            
-            # 記錄點擊座標到報告系統
-            reporter = self.get_reporter()
-            if reporter:
-                try:
-                    reporter.add_recognition_screenshot(
-                        item_name="日期17號（網格法）",
-                        x=click_x,
-                        y=click_y,
-                        width=cell_width,
-                        height=cell_height,
-                        method="Grid Calculation"
-                    )
-                except Exception as e:
-                    self.logger.debug(f"報告截圖失敗: {e}")
-            
-            # 等待日期選擇生效
-            time.sleep(0.5)
-            
-            # 驗證：檢查下方時間軸是否出現綠色區塊變化
-            self.logger.info("[CALENDAR_GRID] 驗證：檢查時間軸是否出現綠色區塊...")
-            time.sleep(0.5)  # 等待時間軸更新
-            
-            # 可以調用現有的顏色偵測方法來驗證
-            green_segment = self._find_recording_segment_by_color()
-            if green_segment:
-                self.logger.info("[CALENDAR_GRID] 驗證成功：時間軸出現綠色錄影段")
-                return True
-            else:
-                self.logger.warning("[CALENDAR_GRID] 驗證警告：未檢測到綠色錄影段，但點擊已執行")
-                return True  # 即使驗證失敗，也返回 True（因為點擊已執行）
+                # 如果沒有找到綠色標記，拋出錯誤
+                error_msg = "日曆中找不到有綠色底線的日期。請確認是否有錄影事件。"
+                self.logger.error(f"[CALENDAR] ❌ {error_msg}")
+                raise RuntimeError(error_msg)
                 
         except Exception as e:
-            self.logger.error(f"[CALENDAR_GRID] 點擊失敗: {e}")
-            import traceback
-            traceback.print_exc()
-            return False
+            self.logger.error(f"[CALENDAR] ❌ 視覺驅動方式失敗: {e}")
+            raise
     
     def _find_recording_segment_by_color(self):
         """
