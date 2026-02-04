@@ -40,32 +40,21 @@ class LicenseSettingsPage(DesktopApp):
         else:
             self.logger.info("🖱️ 在 LAPTOP 上右鍵開啟站點管理...")
             
-            # 在 LAPTOP-QRJN5735 上點擊右鍵（admin 上方的那個，不是 Server）
-            # 從截圖看，LAPTOP 位置約在 y_ratio=0.10
-            if not self.smart_click(
-                x_ratio=0.08,
-                y_ratio=0.10,
-                target_text="LAPTOP",
-                click_type='right',
-                timeout=3
-            ):
+            # 🎯 使用 UILocator：簡潔且易讀
+            locator_config = EnvConfig.LOCATOR_CONFIG
+            
+            # 在 LAPTOP-QRJN5735 上點擊右鍵
+            laptop_locator = locator_config.LAPTOP_SERVER.with_text("LAPTOP")
+            if not self.click_with_locator(laptop_locator):
                 self.logger.error("❌ 右鍵點擊 LAPTOP 圖示失敗")
                 return False
             
             # 等待右鍵選單出現
             time.sleep(0.8)
             
-            # 點擊右鍵選單中的「站點管理」（第 3 項）
-            # 右鍵選單：1.開啟網頁用戶端 2.合併站點 3.站點管理
-            # 每項約 32px 高度，第三項相對於點擊位置約 +64px
-            # 使用 OCR 優先找 "站點管理" 文字
-            success = self.smart_click(
-                x_ratio=0.12,
-                y_ratio=0.16,  # 相對於視窗，第三項約在這個位置
-                target_text="站點管理",
-                image_path="desktop_settings/system_admin_menu.png",
-                timeout=3
-            )
+            # 點擊右鍵選單中的「站點管理」
+            site_admin_locator = locator_config.SITE_ADMIN_MENU.with_text("站點管理")
+            success = self.click_with_locator(site_admin_locator)
         
         if success:
             self.logger.info("✅ 成功點擊系統管理選項")
@@ -90,16 +79,14 @@ class LicenseSettingsPage(DesktopApp):
         """
         self.logger.info("🖱️ 點擊「授權」分頁...")
         
+        # 🎯 使用 UILocator：簡潔且易讀
+        locator_config = EnvConfig.LOCATOR_CONFIG
+        
         # 分頁通常在視窗上方，水平排列
         # 根據截圖：一般、使用者管理、更新、授權、Email、安全性...
-        # 授權是第 4 個分頁，約在 x_ratio=0.25 的位置
-        success = self.smart_click(
-            x_ratio=0.28,
-            y_ratio=0.08,
-            target_text="授權",
-            image_path="desktop_settings/license_tab.png",
-            timeout=2
-        )
+        # 授權是第 4 個分頁
+        license_tab_locator = locator_config.LICENSE_TAB.with_text("授權")
+        success = self.click_with_locator(license_tab_locator)
         
         if success:
             self.logger.info("✅ 成功切換到授權分頁")

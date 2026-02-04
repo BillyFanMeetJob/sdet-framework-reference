@@ -702,6 +702,70 @@ class LocatorConfig:
     RECORDING_TAB_Y_RATIOS: List[float] = field(default_factory=lambda: [0.10, 0.12, 0.15, 0.08])  # 嘗試多個垂直位置
     RECORDING_TAB_IMAGE: str = "desktop_settings/recording_tab.png"
     
+    # ==================== ServerSettingsPage 定位器 ====================
+    
+    # Server 圖標（右鍵點擊）
+    SERVER_ICON_RIGHT_CLICK: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.08,
+        y_ratio=0.08,
+        image_path="desktop_main/server_icon.png",
+        click_type='right',
+        timeout=3
+    ))
+    
+    # 伺服器設定選單項目
+    SERVER_SETTINGS_MENU_ITEM: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.15,
+        y_ratio=0.25,
+        image_path="desktop_main/server_settings_menu.png",
+        is_relative=False,
+        timeout=3
+    ))
+    
+    # USB Checkbox
+    USB_CHECKBOX: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.3,
+        y_ratio=0.42,
+        image_path="desktop_settings/usb_checkbox.png",
+        timeout=3
+    ))
+    
+    # 確認按鈕（右下角）
+    OK_BTN_BOTTOM_RIGHT: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.84,
+        y_ratio=0.06,
+        image_path="desktop_settings/ok_btn.png",
+        from_bottom=True,
+        timeout=2
+    ))
+    
+    # 套用按鈕（右下角）
+    APPLY_BTN_BOTTOM_RIGHT: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.72,
+        y_ratio=0.06,
+        image_path="desktop_settings/apply_btn.png",
+        from_bottom=True,
+        timeout=2
+    ))
+    
+    # ==================== LicenseSettingsPage 定位器 ====================
+    
+    # LAPTOP 伺服器圖標（右鍵點擊）
+    LAPTOP_SERVER: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.08,
+        y_ratio=0.10,
+        click_type='right',
+        timeout=3
+    ))
+    
+    # 站點管理選單項目
+    SITE_ADMIN_MENU: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.12,
+        y_ratio=0.16,
+        image_path="desktop_settings/system_admin_menu.png",
+        timeout=3
+    ))
+    
     # ==================== LicenseSettingsPage 定位器 ====================
     
     # 系統管理選單項目
