@@ -2158,6 +2158,25 @@ class DesktopApp:
         
         return False
 
+    def click_with_locator(self, locator):
+        """
+        🎯 使用 UILocator 進行智能點擊
+        
+        這是一個便捷方法，接受 UILocator 對象並自動展開其屬性。
+        
+        Args:
+            locator: UILocator 實例，包含所有點擊所需的參數
+            
+        Returns:
+            bool: 點擊是否成功
+            
+        Example:
+            from config import EnvConfig
+            locator = EnvConfig.LOCATOR_CONFIG.MENU_ICON
+            self.click_with_locator(locator)
+        """
+        return self.smart_click(**locator.to_smart_click_kwargs())
+    
     def smart_click(self, x_ratio, y_ratio, target_text=None, image_path=None, timeout=3, is_relative=False, from_bottom=False, clicks=1, click_type='left', window_obj=None, use_ok_script=True, use_vlm=None, offset_x=0, offset_y=0, region=None):
         """ 
         🎯 智能點擊：優先級 OK Script > VLM > OCR 文字 > 座標保底

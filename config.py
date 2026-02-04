@@ -242,7 +242,124 @@ EnvConfig = get_current_config()
 # ==================== 新增配置類（追加模式，不覆蓋現有內容）====================
 
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Optional
+
+
+@dataclass
+class UILocator:
+    """
+    UI 元素定位器
+    
+    封裝 UI 元素的所有定位相關屬性，包括座標比例、偏移量、圖片路徑等。
+    使用此類可以避免在方法中傳入大量參數，提高代碼可讀性。
+    
+    Attributes:
+        x_ratio: X 軸座標比例 (0.0 - 1.0)
+        y_ratio: Y 軸座標比例 (0.0 - 1.0)
+        image_path: 圖片路徑（相對於 RES_PATH）
+        offset_x: X 軸偏移量（像素）
+        offset_y: Y 軸偏移量（像素）
+        target_text: 目標文字（用於 OCR/VLM）
+        is_relative: 是否使用相對座標
+        from_bottom: 是否從底部計算 Y 座標
+        timeout: 超時時間（秒）
+        use_ok_script: 是否使用 OK Script 圖片識別
+        use_vlm: 是否使用 VLM 識別
+        click_type: 點擊類型（'left', 'right'）
+        clicks: 點擊次數（1=單擊, 2=雙擊）
+        
+    Example:
+        # 創建定位器
+        menu_locator = UILocator(
+            x_ratio=0.02,
+            y_ratio=0.03,
+            image_path="desktop_main/menu_icon.png",
+            timeout=3
+        )
+        
+        # 使用定位器
+        self.click_with_locator(menu_locator)
+    """
+    x_ratio: float
+    y_ratio: float
+    image_path: Optional[str] = None
+    offset_x: int = 0
+    offset_y: int = 0
+    target_text: Optional[str] = None
+    is_relative: bool = False
+    from_bottom: bool = False
+    timeout: float = 3.0
+    use_ok_script: bool = True
+    use_vlm: Optional[bool] = None
+    click_type: str = 'left'
+    clicks: int = 1
+    
+    def to_smart_click_kwargs(self) -> dict:
+        """
+        轉換為 smart_click 方法的參數字典
+        
+        Returns:
+            dict: 包含所有 smart_click 參數的字典
+        """
+        return {
+            'x_ratio': self.x_ratio,
+            'y_ratio': self.y_ratio,
+            'image_path': self.image_path,
+            'offset_x': self.offset_x,
+            'offset_y': self.offset_y,
+            'target_text': self.target_text,
+            'is_relative': self.is_relative,
+            'from_bottom': self.from_bottom,
+            'timeout': self.timeout,
+            'use_ok_script': self.use_ok_script,
+            'use_vlm': self.use_vlm,
+            'click_type': self.click_type,
+            'clicks': self.clicks
+        }
+    
+    def with_offset(self, offset_x: int = 0, offset_y: int = 0) -> 'UILocator':
+        """
+        創建一個帶有額外偏移的新定位器
+        
+        Args:
+            offset_x: 額外的 X 軸偏移
+            offset_y: 額外的 Y 軸偏移
+            
+        Returns:
+            UILocator: 新的定位器實例
+        """
+        from copy import copy
+        new_locator = copy(self)
+        new_locator.offset_x += offset_x
+        new_locator.offset_y += offset_y
+        return new_locator
+    
+    def with_text(self, target_text: str) -> 'UILocator':
+        """
+        創建一個帶有目標文字的新定位器
+        
+        Args:
+            target_text: 目標文字
+            
+        Returns:
+            UILocator: 新的定位器實例
+        """
+        from copy import copy
+        new_locator = copy(self)
+        new_locator.target_text = target_text
+        return new_locator
+    
+    def as_relative(self) -> 'UILocator':
+        """
+        創建一個使用相對座標的新定位器
+        
+        Returns:
+            UILocator: 新的定位器實例
+        """
+        from copy import copy
+        new_locator = copy(self)
+        new_locator.is_relative = True
+        return new_locator
 
 
 @dataclass
@@ -381,16 +498,24 @@ class LocatorConfig:
     """
     定位器配置（Locator Configuration）
     
-    收納所有在 MainPage 和 CameraPage 中硬編碼的比例（x_ratio, y_ratio）與偏移量（offset）。
-    使用具備業務意義的變數命名，例如 RECORDING_TAB_REGION 或 CALENDAR_OPEN_BTN。
+    使用 UILocator 類封裝所有 UI 元素的定位信息。
+    提供更好的可讀性和可維護性。
     
-    注意：所有 image_path 都應該相對於 RES_PATH，在 Page 層統一拼接。
+    注意：所有 image_path 都應該相對於 RES_PATH。
     """
     
     # ==================== LoginPage 定位器 ====================
     
     # 伺服器入口（Server Tile）
     # 使用真實記錄的座標：x_ratio=0.4995, y_ratio=0.6375 (來自 1920x1200 視窗)
+    SERVER_TILE: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.4995,
+        y_ratio=0.6375,
+        image_path="desktop_login/server_tile.png",
+        timeout=3
+    ))
+    
+    # 向後兼容：保留舊的屬性名稱
     SERVER_TILE_X_RATIO: float = 0.4995
     SERVER_TILE_Y_RATIO: float = 0.6375
     SERVER_TILE_IMAGE: str = "desktop_login/server_tile.png"
@@ -399,17 +524,44 @@ class LocatorConfig:
     
     # 語言下拉選單
     # 使用真實記錄的座標：x_ratio=0.5793, y_ratio=0.1936 (來自 706x847 視窗)
+    LANGUAGE_DROPDOWN: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.5793,
+        y_ratio=0.1936,
+        image_path="desktop_settings/language_dropdown.png",
+        timeout=1.5
+    ))
+    
+    # 向後兼容
     LANGUAGE_DROPDOWN_X_RATIO: float = 0.5793
     LANGUAGE_DROPDOWN_Y_RATIO: float = 0.1936
     LANGUAGE_DROPDOWN_IMAGE: str = "desktop_settings/language_dropdown.png"
     
     # 繁體中文選項（相對於語言下拉選單）
-    TRADITIONAL_CHINESE_OFFSET_X: int = 0  # 保持 X 座標不變
-    TRADITIONAL_CHINESE_OFFSET_Y: int = 40  # 向下偏移 40 像素
+    TRADITIONAL_CHINESE: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0,
+        y_ratio=40,
+        image_path="desktop_settings/traditional_chinese.png",
+        is_relative=True,
+        use_ok_script=True,
+        use_vlm=False,
+        timeout=2
+    ))
+    
+    # 向後兼容
+    TRADITIONAL_CHINESE_OFFSET_X: int = 0
+    TRADITIONAL_CHINESE_OFFSET_Y: int = 40
     TRADITIONAL_CHINESE_IMAGE: str = "desktop_settings/traditional_chinese.png"
     
     # 套用按鈕
     # 使用真實記錄的座標：x_ratio=0.7351, y_ratio=0.9445 (來自 706x847 視窗)
+    APPLY_BTN: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.7351,
+        y_ratio=0.9445,
+        image_path="desktop_settings/apply_btn.png",
+        timeout=1.5
+    ))
+    
+    # 向後兼容
     APPLY_BTN_X_RATIO: float = 0.7351
     APPLY_BTN_Y_RATIO: float = 0.9445
     APPLY_BTN_IMAGE: str = "desktop_settings/apply_btn.png"
@@ -417,20 +569,49 @@ class LocatorConfig:
     # ==================== MainPage 定位器 ====================
     
     # 主選單圖標（左上角）
+    MENU_ICON: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.02,
+        y_ratio=0.03,
+        image_path="desktop_main/menu_icon.png",
+        timeout=3
+    ))
+    
+    # 向後兼容
     MENU_ICON_X_RATIO: float = 0.02
     MENU_ICON_Y_RATIO: float = 0.03
     MENU_ICON_IMAGE: str = "desktop_main/menu_icon.png"
     
     # 本地設置選單項目
+    LOCAL_SETTINGS: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.1,
+        y_ratio=0.32,
+        image_path="desktop_main/local_settings.png",
+        is_relative=True,
+        timeout=3
+    ))
+    
+    # 向後兼容
     LOCAL_SETTINGS_X_RATIO: float = 0.1
     LOCAL_SETTINGS_Y_RATIO: float = 0.32
-    # 注意：LOCAL_SETTINGS_IMAGE 已在 AppPaths 中定義，這裡不重複
     
     # 日曆圖標（右下角）
-    CALENDAR_ICON_X_RATIO: float = 0.92  # 視窗寬度 92% 處
-    CALENDAR_ICON_Y_RATIO: float = 0.04  # 視窗底部向上 4% 處
-    CALENDAR_ICON_OFFSET_X: int = 0  # 向右偏移（從原本的 -10 改為 0）
-    CALENDAR_ICON_OFFSET_Y: int = 0  # Y 軸不需要偏移
+    CALENDAR_ICON: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.92,
+        y_ratio=0.04,
+        image_path="desktop_main/calendar_icon.png",
+        offset_x=0,
+        offset_y=0,
+        from_bottom=True,
+        use_ok_script=False,
+        use_vlm=False,
+        timeout=3
+    ))
+    
+    # 向後兼容
+    CALENDAR_ICON_X_RATIO: float = 0.92
+    CALENDAR_ICON_Y_RATIO: float = 0.04
+    CALENDAR_ICON_OFFSET_X: int = 0
+    CALENDAR_ICON_OFFSET_Y: int = 0
     CALENDAR_ICON_IMAGE: str = "desktop_main/calendar_icon.png"
     
     # 日期點擊偏移（補償 VLM 常見的偏左上誤差）
