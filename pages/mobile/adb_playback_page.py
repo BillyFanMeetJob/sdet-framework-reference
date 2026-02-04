@@ -11,6 +11,7 @@ Nx Witness 移動端播放頁面 (ADB 版本)
 遵循 SOLID 原則：
 - SRP: 只負責播放頁面的元素操作，不包含業務邏輯
 - OCP: 通過配置參數擴展，不修改核心邏輯
+- ISP: 繼承 MobileApp 獲取基礎設施
 """
 
 import time
@@ -19,12 +20,12 @@ from typing import Optional, Tuple, List
 import cv2
 import numpy as np
 
-from toolkit.adb_toolkit import AdbController, SmartLocator
-from toolkit.logger import get_logger
+from base.mobile_app import MobileApp
+from toolkit.adb_toolkit import AdbController
 from config import EnvConfig
 
 
-class AdbPlaybackPage:
+class AdbPlaybackPage(MobileApp):
     """
     Nx Witness 移動端播放頁面 (ADB 版本)
     
@@ -44,9 +45,7 @@ class AdbPlaybackPage:
         Args:
             adb: AdbController 實例，如果為 None 則自動創建
         """
-        self.adb = adb or AdbController()
-        self.locator = SmartLocator(self.adb)
-        self.logger = get_logger(self.__class__.__name__)
+        super().__init__(adb)
         
         # 從配置讀取座標（Data-Driven 原則）
         self._calendar_coords = EnvConfig.CASE4_2_CALENDAR_ICON_COORDINATES

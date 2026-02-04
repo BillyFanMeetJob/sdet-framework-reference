@@ -11,6 +11,7 @@ Nx Witness 移動端登錄頁面 (ADB 版本)
 遵循 SOLID 原則：
 - SRP: 只負責登錄頁面的元素操作，不包含業務邏輯
 - OCP: 通過配置參數擴展，不修改核心邏輯
+- ISP: 繼承 MobileApp 獲取基礎設施
 """
 
 import os
@@ -20,11 +21,11 @@ from typing import Optional, Tuple
 import cv2
 import numpy as np
 
+from base.mobile_app import MobileApp
 from toolkit.adb_toolkit import AdbController
-from toolkit.logger import get_logger
 
 
-class AdbLoginPage:
+class AdbLoginPage(MobileApp):
     """
     Nx Witness 移動端登錄頁面 (ADB 版本)
     
@@ -44,30 +45,7 @@ class AdbLoginPage:
         Args:
             adb: AdbController 實例，如果為 None 則自動創建
         """
-        self.adb = adb or AdbController()
-        self.logger = get_logger(self.__class__.__name__)
-        self._width, self._height = self.adb.get_screen_size()
-    
-    def _imread_unicode(self, img_path: str) -> Optional[np.ndarray]:
-        """
-        讀取圖片文件，支持中文路徑
-        
-        使用 np.fromfile + cv2.imdecode 繞過 OpenCV 的路徑編碼問題
-        
-        Args:
-            img_path: 圖片路徑（可包含中文字符）
-            
-        Returns:
-            numpy 數組或 None（如果讀取失敗）
-        """
-        try:
-            # 使用 numpy 讀取文件字節，再用 cv2 解碼
-            img_array = np.fromfile(img_path, dtype=np.uint8)
-            img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-            return img
-        except Exception as e:
-            self.logger.error(f"[ADB_LOGIN] 無法讀取圖片 {img_path}: {e}")
-            return None
+        super().__init__(adb)
     
     # ==================== 頁面狀態檢測 ====================
     
@@ -87,7 +65,7 @@ class AdbLoginPage:
         Returns:
             str: 'logged_in' | 'login_page' | 'email_input' | 'unknown'
         """
-        img = self._imread_unicode(img_path)
+        img = self.imread_unicode(img_path)
         if img is None:
             self.logger.warning(f"[ADB_LOGIN] 無法讀取圖片: {img_path}")
             return 'unknown'
@@ -184,7 +162,7 @@ class AdbLoginPage:
         Returns:
             Optional[Tuple[int, int]]: 按鈕中心座標 (x, y)，未找到返回 None
         """
-        img = self._imread_unicode(img_path)
+        img = self.imread_unicode(img_path)
         if img is None:
             self.logger.warning(f"[ADB_LOGIN] 無法讀取圖片: {img_path}")
             return None
