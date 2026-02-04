@@ -17,22 +17,11 @@ class MainPage(DesktopApp):
         """點擊左上角菜單圖標"""
         self.logger.info("[MAIN_PAGE] [CLICK] Clicking top-left menu icon...")
         
-        # 🎯 從 LocatorConfig 獲取配置，保留原值作為預設值（安全備案）
-        locator = getattr(EnvConfig, 'LOCATOR_CONFIG', None)
-        menu_x_ratio = getattr(locator, 'MENU_ICON_X_RATIO', 0.02) if locator else 0.02
-        menu_y_ratio = getattr(locator, 'MENU_ICON_Y_RATIO', 0.03) if locator else 0.03
-        menu_image = getattr(locator, 'MENU_ICON_IMAGE', "desktop_main/menu_icon.png") if locator else "desktop_main/menu_icon.png"
+        # 🎯 使用 UILocator：簡潔且易讀
+        locator_config = EnvConfig.LOCATOR_CONFIG
+        self.logger.info(f"[MAIN_PAGE] [PARAM] Using UILocator: MENU_ICON")
         
-        # 注意：image_path 傳入相對路徑（相對於 res/），smart_click 內部會統一由 RES_PATH 拼接
-        self.logger.info(f"[MAIN_PAGE] [PARAM] Parameters: image='{menu_image}', timeout=3s")
-        
-        success = self.smart_click(
-            x_ratio=menu_x_ratio, 
-            y_ratio=menu_y_ratio,
-            target_text=None,  # 菜單圖標不需要 OCR，加快速度
-            image_path=menu_image,  # 傳入相對路徑，smart_click 內部會統一由 RES_PATH 拼接
-            timeout=3  # 增加超時時間，確保圖片辨識有足夠時間
-        )
+        success = self.click_with_locator(locator_config.MENU_ICON)
         
         if success:
             self.logger.info("[MAIN_PAGE] [SUCCESS] Main menu opened successfully")
