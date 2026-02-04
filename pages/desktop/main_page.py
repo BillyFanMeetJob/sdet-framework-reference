@@ -1423,135 +1423,14 @@ class MainPage(DesktopApp):
             traceback.print_exc()
             return None
     
-    def seek_to_first_recording(self) -> Optional[Tuple[int, int]]:
-        """
-        🎯 [視覺驅動] 線性掃描時間軸，尋找第一個錄影區段並點擊
-        
-        ROI 設定：鎖定螢幕下方時間軸區域（例如 Y=1100~1150）
-        掃描方式：從左向右 (X=100 -> 1800)，步長 10px
-        判斷：一旦發現像素顏色為「亮綠色」，立即點擊該座標，並 break 迴圈
-        
-        日誌：必須印出 [TIMELINE] 找到錄影區段於座標 (x, y)，顏色 RGB(...)
-        
-        Returns:
-            tuple[int, int] | None: 找到的錄影區段座標 (x, y)，如果找不到則返回 None
-        """
-        self._log_method_entry("seek_to_first_recording")
-        self.logger.info("[TIMELINE] 開始線性掃描時間軸，尋找第一個錄影區段...")
-        
-        win = self.get_nx_window()
-        if not win:
-            self.logger.error("[TIMELINE] 無法獲取窗口")
-            return None
-        
-        try:
-            # ROI 設定：鎖定螢幕下方時間軸區域（例如 Y=1100~1150）
-            # 使用配置中的時間軸掃描區域比例（避免硬編碼）
-            timeline_config = EnvConfig.TIMELINE_SETTINGS
-            timeline_left = win.left + int(win.width * timeline_config.TIMELINE_SCAN_LEFT_RATIO)
-            timeline_right = win.left + int(win.width * timeline_config.TIMELINE_SCAN_RIGHT_RATIO)
-            
-            # 時間軸高度：從底部向上約 10-20% 的區域
-            # 鎖定在 Y=1100~1150 左右（根據視窗大小動態計算）
-            timeline_bottom = win.top + win.height - int(win.height * 0.10)
-            timeline_top = win.top + win.height - int(win.height * 0.20)
-            
-            # 計算掃描的 Y 座標（時間軸中心）
-            scan_y = timeline_top + (timeline_bottom - timeline_top) // 2
-            
-            self.logger.info(f"[TIMELINE] 掃描區域: X={timeline_left}~{timeline_right}, Y={scan_y}")
-            self.logger.info(f"[TIMELINE] 從左向右掃描，步長 10px...")
-            
-            # 目標顏色：亮綠色 RGB(0, 255, 0) 附近，容許值 tolerance=30
-            target_r, target_g, target_b = 0, 255, 0
-            tolerance = 30
-            
-            # 從左向右掃描，步長 10px
-            step_size = 10
-            for x in range(timeline_left, timeline_right, step_size):
-                try:
-                    # 讀取像素顏色
-                    pixel_color = pyautogui.pixel(x, scan_y)
-                    r, g, b = pixel_color
-                    
-                    # 檢查 RGB 值是否在容許範圍內
-                    r_diff = abs(int(r) - target_r)
-                    g_diff = abs(int(g) - target_g)
-                    b_diff = abs(int(b) - target_b)
-                    
-                    if r_diff <= tolerance and g_diff <= tolerance and b_diff <= tolerance:
-                        # 找到符合的綠色像素，立即點擊該座標並 break 迴圈
-                        click_x = x
-                        click_y = scan_y
-                        
-                        self.logger.info(f"[TIMELINE] ✅ 找到錄影區段於座標 ({click_x}, {click_y})，顏色 RGB({r}, {g}, {b})")
-                        
-                        # 執行點擊
-                        pyautogui.click(click_x, click_y)
-                        self.logger.info(f"[TIMELINE] 已點擊座標 ({click_x}, {click_y})")
-                        
-                        # 記錄到報告系統
-                        reporter = self.get_reporter()
-                        if reporter:
-                            try:
-                                timeline_region = (timeline_left, timeline_top, timeline_right - timeline_left, timeline_bottom - timeline_top)
-                                reporter.add_recognition_screenshot(
-                                    item_name="錄影區段（線性掃描）",
-                                    x=click_x,
-                                    y=click_y,
-                                    width=50,
-                                    height=20,
-                                    method="線性掃描",
-                                    region=timeline_region
-                                )
-                            except Exception as e:
-                                self.logger.debug(f"報告截圖失敗: {e}")
-                        
-                        return (click_x, click_y)
-                        
-                except Exception as e:
-                    # 如果讀取像素失敗（例如座標超出螢幕），跳過該點
-                    self.logger.debug(f"[TIMELINE] 讀取座標 ({x}, {scan_y}) 的像素失敗: {e}")
-                    continue
-            
-            # 如果掃描完整個區域都沒找到綠色像素
-            self.logger.warning(f"[TIMELINE] 線性掃描未找到任何錄影區段")
-            self.logger.warning(f"[TIMELINE] 掃描區域: X={timeline_left}~{timeline_right}, Y={scan_y}")
-            
-            # 取幾個樣本像素的顏色作為參考
-            sample_colors = []
-            sample_x_positions = [
-                timeline_left + (timeline_right - timeline_left) // 4,  # 左側 1/4
-                timeline_left + (timeline_right - timeline_left) // 2,  # 中心
-                timeline_left + (timeline_right - timeline_left) * 3 // 4,  # 右側 3/4
-            ]
-            
-            for sample_x in sample_x_positions:
-                try:
-                    pixel_color = pyautogui.pixel(sample_x, scan_y)
-                    r, g, b = pixel_color
-                    sample_colors.append(f"({sample_x}, {scan_y}): RGB({r}, {g}, {b})")
-                except:
-                    pass
-            
-            self.logger.warning(f"[TIMELINE] 實際顏色範例: {', '.join(sample_colors) if sample_colors else '無法讀取樣本顏色'}")
-            return None
-                
-        except Exception as e:
-            self.logger.error(f"[TIMELINE] 線性掃描過程中發生錯誤: {e}")
-            import traceback
-            traceback.print_exc()
-            return None
-    
     def click_green_timeline_segment(self) -> bool:
         """
         🎯 [重構版] 在底部進度條中點擊綠色的錄影時段
         
         策略優先級：
         1. 像素顏色偵測（最快）
-        2. VLM 文字標籤（鎖定底部區域）
-        3. 線性掃描（從左到右掃描時間軸）
-        4. 快速失敗（如果所有方法都失敗，不點擊並拋出錯誤）
+        2. 線性掃描（從左到右掃描時間軸）
+        3. 快速失敗（如果所有方法都失敗，不點擊並拋出錯誤）
         
         Returns:
             bool: 點擊是否成功
@@ -1575,84 +1454,23 @@ class MainPage(DesktopApp):
             time.sleep(1.0)
             return True
 
-        # --- 策略 2: 直接掃描 (移除 VLM 文字搜尋) ---
-        self.logger.info("[TIMELINE] ⚠️ 顏色偵測失敗，嘗試直接掃描時間軸...")
+        # --- 策略 2: 線性掃描 ---
+        self.logger.info("[TIMELINE] ⚠️ 顏色偵測失敗，嘗試線性掃描時間軸...")
         
-        # 🎯 直接呼叫 scan_timeline_for_green，不再使用 VLM 文字搜尋
         green_coord = self.scan_timeline_for_green(step_size=20)
         if green_coord:
             x, y = green_coord
-            self.logger.info(f"[TIMELINE] ✅ 直接掃描成功，點擊座標: ({x}, {y})")
+            self.logger.info(f"[TIMELINE] ✅ 線性掃描成功，點擊座標: ({x}, {y})")
             self._perform_click(x, y, clicks=1)
             time.sleep(1.0)
             return True
-        
-        # --- 策略 3: 線性掃描 (備選) ---
-        self.logger.info("[TIMELINE] ⚠️ 直接掃描失敗，嘗試線性掃描...")
-        green_coord = self.scan_timeline_for_green(step_size=20)
-        if green_coord:
-            x, y = green_coord
-            self.logger.info(f"[SCAN_FALLBACK] ✅ 線性掃描成功，點擊座標: ({x}, {y})")
-            self._perform_click(x, y, clicks=1)
-            time.sleep(EnvConfig.THRESHOLDS.SETTINGS_WAIT_TIME)
-            return True
 
-        # --- 策略 4: 快速失敗 ---
+        # --- 策略 3: 快速失敗 ---
         # 如果所有辨識方法都失敗，不點擊任何位置，直接拋出錯誤
         error_msg = "找不到時間軸上的錄影段。所有辨識方法都失敗（顏色偵測、直接掃描、線性掃描）。停止測試。"
         self.logger.error(f"[TIMELINE] ❌ {error_msg}")
         raise RuntimeError(error_msg)
     
-    def click_timeline(self, position: str = "center") -> bool:
-        """
-        點擊時間軸（幾何定位：點擊視窗底部中央）
-        
-        使用幾何定位方式點擊時間軸，比圖片辨識更穩定，因為時間軸位置固定。
-        此方法使用配置中的時間軸位置比例，避免硬編碼。
-        
-        Args:
-            position: 點擊位置，可選值：
-                - "center": 水平中央（預設）
-                - "left": 左側 1/4 位置
-                - "right": 右側 3/4 位置
-        
-        Returns:
-            bool: 點擊是否成功。如果無法獲取視窗則返回 False。
-        
-        Note:
-            - 使用配置中的時間軸位置比例（避免硬編碼）
-            - 使用配置中的點擊等待時間（避免硬編碼）
-        """
-        self.logger.info(f"[TIMELINE] 點擊時間軸位置: {position}")
-        
-        win = self.get_nx_window()
-        if not win:
-            self.logger.error("[TIMELINE] 無法獲取視窗")
-            return False
-        
-        # 🎯 使用配置中的時間軸位置比例（避免硬編碼）
-        timeline_config = EnvConfig.TIMELINE_SETTINGS
-        thresholds = EnvConfig.THRESHOLDS
-        
-        # 🎯 避免點擊到小箭頭：Y 座標向下偏移 15px（小箭頭通常在時間軸上方）
-        timeline_y_base = win.top + int(win.height * timeline_config.TIMELINE_Y_RATIO)
-        timeline_y = timeline_y_base + 15  # 向下偏移 15px，避免點擊到小箭頭
-        
-        # 根據位置參數選擇對應的 X 比例
-        position_map = {
-            "center": timeline_config.TIMELINE_CENTER_X_RATIO,
-            "left": timeline_config.TIMELINE_LEFT_X_RATIO,
-            "right": timeline_config.TIMELINE_RIGHT_X_RATIO
-        }
-        timeline_x_ratio = position_map.get(position, timeline_config.TIMELINE_CENTER_X_RATIO)
-        timeline_x = win.left + int(win.width * timeline_x_ratio)
-        
-        self.logger.info(f"[TIMELINE] 點擊座標: ({timeline_x}, {timeline_y}) (原始 Y={timeline_y_base}, 向下偏移 15px 避免小箭頭)")
-        pyautogui.click(timeline_x, timeline_y)
-        # 使用配置中的點擊等待時間（避免硬編碼）
-        time.sleep(thresholds.CLICK_WAIT_TIME)
-        
-        return True
     
     def click_pause(self) -> bool:
         """
