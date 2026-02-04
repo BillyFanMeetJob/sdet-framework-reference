@@ -1470,19 +1470,59 @@ class NxCloudWebPage(BasePage):
             self.driver.get(target_url)
             time.sleep(3)
             
-            # Step 1.5: 自動置頂瀏覽器視窗
-            self.logger.info("[NX_CLOUD_WEB] [LOGIN] Step 1.5: 自動置頂瀏覽器視窗...")
+            # Step 1.5: 自動置頂瀏覽器視窗（強力模式）
+            self.logger.info("[NX_CLOUD_WEB] [LOGIN] Step 1.5: 自動置頂瀏覽器視窗（強力模式）...")
             try:
                 import pygetwindow as gw
                 import win32gui
                 import win32con
+                import win32process
+                
+                # 方法 1: 使用 pygetwindow 查找 Chrome 視窗
                 chrome_windows = gw.getWindowsWithTitle('Chrome')
                 if chrome_windows:
-                    hwnd = chrome_windows[0]._hWnd
-                    win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
-                    win32gui.SetForegroundWindow(hwnd)
-                    win32gui.BringWindowToTop(hwnd)
-                    self.logger.info("[NX_CLOUD_WEB] [LOGIN] ✅ 瀏覽器視窗已置頂")
+                    for chrome_win in chrome_windows:
+                        try:
+                            hwnd = chrome_win._hWnd
+                            
+                            # 🎯 強力置頂序列
+                            # 1. 先恢復視窗（如果被最小化）
+                            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+                            time.sleep(0.1)
+                            
+                            # 2. 最大化視窗
+                            win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+                            time.sleep(0.1)
+                            
+                            # 3. 強制置頂（多次嘗試）
+                            for _ in range(3):
+                                win32gui.SetForegroundWindow(hwnd)
+                                win32gui.BringWindowToTop(hwnd)
+                                # 使用 SetWindowPos 確保置頂
+                                win32gui.SetWindowPos(
+                                    hwnd,
+                                    win32con.HWND_TOPMOST,  # 設為最頂層
+                                    0, 0, 0, 0,
+                                    win32con.SWP_NOMOVE | win32con.SWP_NOSIZE
+                                )
+                                time.sleep(0.05)
+                            
+                            # 4. 取消永久置頂（但保持在前景）
+                            win32gui.SetWindowPos(
+                                hwnd,
+                                win32con.HWND_NOTOPMOST,  # 取消永久置頂
+                                0, 0, 0, 0,
+                                win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW
+                            )
+                            
+                            self.logger.info(f"[NX_CLOUD_WEB] [LOGIN] ✅ 瀏覽器視窗已強力置頂: {chrome_win.title}")
+                            break  # 只處理第一個 Chrome 視窗
+                        except Exception as e:
+                            self.logger.warning(f"[NX_CLOUD_WEB] [LOGIN] 置頂視窗失敗（嘗試下一個）: {e}")
+                            continue
+                else:
+                    self.logger.warning("[NX_CLOUD_WEB] [LOGIN] 未找到 Chrome 視窗")
+                    
             except Exception as e:
                 self.logger.warning(f"[NX_CLOUD_WEB] [LOGIN] 置頂視窗失敗: {e}")
             
