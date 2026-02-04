@@ -1,6 +1,7 @@
 # 相對路徑: pages/desktop/license_settings_page.py
 
 from base.desktop_app import DesktopApp
+from config import EnvConfig
 import time
 
 class LicenseSettingsPage(DesktopApp):
@@ -25,24 +26,17 @@ class LicenseSettingsPage(DesktopApp):
             self.logger.info("🖱️ 透過左上角選單開啟系統管理...")
             
             # 點擊左上角三條線選單
-            if not self.smart_click(
-                x_ratio=0.02,
-                y_ratio=0.02,
-                image_path="desktop_main/menu_icon.png",
-                timeout=3
-            ):
+            locator_config = EnvConfig.LOCATOR_CONFIG
+            if not self.click_with_locator(locator_config.MENU_ICON):
                 self.logger.error("❌ 點擊選單圖示失敗")
                 return False
             
             time.sleep(0.5)
             
             # 點擊「系統管理」選項
-            success = self.smart_click(
-                x_ratio=0.1,
-                y_ratio=0.2,
-                target_text="系統管理",
-                timeout=2
-            )
+            locator_config = EnvConfig.LOCATOR_CONFIG
+            system_admin_locator = locator_config.SYSTEM_ADMIN_MENU.with_text("系統管理")
+            success = self.click_with_locator(system_admin_locator)
         else:
             self.logger.info("🖱️ 在 LAPTOP 上右鍵開啟站點管理...")
             

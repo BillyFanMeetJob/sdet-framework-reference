@@ -670,6 +670,46 @@ class LocatorConfig:
     RECORDING_TAB_Y_RATIOS: List[float] = field(default_factory=lambda: [0.10, 0.12, 0.15, 0.08])  # 嘗試多個垂直位置
     RECORDING_TAB_IMAGE: str = "desktop_settings/recording_tab.png"
     
+    # ==================== LicenseSettingsPage 定位器 ====================
+    
+    # 系統管理選單項目
+    SYSTEM_ADMIN_MENU: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.12,
+        y_ratio=0.16,
+        timeout=2
+    ))
+    
+    # 授權分頁簽
+    LICENSE_TAB: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.28,
+        y_ratio=0.08,
+        image_path="desktop_settings/license_tab.png",
+        timeout=3
+    ))
+    
+    # 啟動試用授權按鈕
+    ACTIVATE_FREE_LICENSE_BTN: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.2,
+        y_ratio=0.35,
+        timeout=2
+    ))
+    
+    # 確認按鈕（彈窗）
+    CONFIRM_BTN: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.65,
+        y_ratio=0.85,
+        image_path="desktop_settings/ok_btn.png",
+        timeout=2
+    ))
+    
+    # 系統管理視窗確認按鈕
+    SYSTEM_ADMIN_OK_BTN: UILocator = field(default_factory=lambda: UILocator(
+        x_ratio=0.72,
+        y_ratio=0.95,
+        image_path="desktop_settings/ok_btn.png",
+        timeout=2
+    ))
+    
     # Radio Button 'Y' 位置（錄影分頁簽中的啟用錄影選項）
     RADIO_Y_X_RATIO: float = 0.10  # 左上角偏左一點
     RADIO_Y_Y_RATIO: float = 0.15  # 分頁簽下方
