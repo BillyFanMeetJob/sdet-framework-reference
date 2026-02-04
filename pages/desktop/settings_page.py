@@ -10,30 +10,17 @@ class SettingsPage(DesktopApp):
         """點擊「外觀」或「界面」分頁 - 圖片優先，VLM 為輔"""
         self.logger.info("🖱️ 點擊「外觀」分頁...")
         
-        # 🎯 策略：圖片優先，VLM 為輔
-        # 設置 use_vlm=False 以啟用「圖片優先」模式
-        # 在圖片優先模式下，smart_click 會先嘗試圖片，失敗後再嘗試 VLM
-        success = self.smart_click(
-            x_ratio=0.1686,
-            y_ratio=0.0720,
-            target_text="界面外观",  # 保留文字，作為 VLM 備選
-            image_path="desktop_settings/appearance_tab.png",  # 圖片優先
-            use_ok_script=True,  # 啟用圖片辨識
-            use_vlm=False,  # 設置為 False 以啟用「圖片優先」模式（VLM 作為備選）
-            timeout=3.0
-        )
+        # 🎯 使用 UILocator：簡潔且易讀
+        locator_config = EnvConfig.LOCATOR_CONFIG
+        
+        # 嘗試簡體中文
+        appearance_locator = locator_config.APPEARANCE_TAB.with_text("界面外观")
+        success = self.click_with_locator(appearance_locator)
         
         # 如果失敗，嘗試繁體中文
         if not success:
-            success = self.smart_click(
-                x_ratio=0.1686,
-                y_ratio=0.0720,
-                target_text="界面外觀",  # 保留文字，作為 VLM 備選
-                image_path="desktop_settings/appearance_tab.png",  # 圖片優先
-                use_ok_script=True,  # 啟用圖片辨識
-                use_vlm=False,  # 設置為 False 以啟用「圖片優先」模式
-                timeout=3.0
-            )
+            appearance_locator = locator_config.APPEARANCE_TAB.with_text("界面外觀")
+            success = self.click_with_locator(appearance_locator)
         
         if success:
             self.logger.info("✅ 成功點擊外觀分頁")
@@ -53,21 +40,9 @@ class SettingsPage(DesktopApp):
         # 1. 點擊語言下拉選單
         self.logger.info("🖱️ 點擊語言下拉選單...")
         
-        # 🎯 從 LocatorConfig 獲取配置
-        from config import EnvConfig
-        locator = getattr(EnvConfig, 'LOCATOR_CONFIG', None)
-        dropdown_x = getattr(locator, 'LANGUAGE_DROPDOWN_X_RATIO', 0.5793) if locator else 0.5793
-        dropdown_y = getattr(locator, 'LANGUAGE_DROPDOWN_Y_RATIO', 0.1936) if locator else 0.1936
-        dropdown_image = getattr(locator, 'LANGUAGE_DROPDOWN_IMAGE', "desktop_settings/language_dropdown.png") if locator else "desktop_settings/language_dropdown.png"
-        
-        success = self.smart_click(
-            x_ratio=dropdown_x,
-            y_ratio=dropdown_y,
-            target_text=None,  # 移除 OCR，優先圖片辨識
-            image_path=dropdown_image,
-            is_relative=False,  # 使用比例座標而非相對座標
-            timeout=1.5
-        )
+        # 🎯 使用 UILocator：簡潔且易讀
+        locator_config = EnvConfig.LOCATOR_CONFIG
+        success = self.click_with_locator(locator_config.LANGUAGE_DROPDOWN)
         
         if success:
             self.logger.info("✅ 成功點擊語言下拉選單")
@@ -90,22 +65,10 @@ class SettingsPage(DesktopApp):
         if "繁體" in language or "Traditional" in language:
             self.logger.info("[語言選擇] 嘗試圖片辨識：traditional_chinese.png")
             
-            # 🎯 從 LocatorConfig 獲取配置
-            offset_x = getattr(locator, 'TRADITIONAL_CHINESE_OFFSET_X', 0) if locator else 0
-            offset_y = getattr(locator, 'TRADITIONAL_CHINESE_OFFSET_Y', 40) if locator else 40
-            chinese_image = getattr(locator, 'TRADITIONAL_CHINESE_IMAGE', "desktop_settings/traditional_chinese.png") if locator else "desktop_settings/traditional_chinese.png"
-            
-            # 使用相對座標，從上次點擊位置（語言下拉選單）向下偏移
-            success = self.smart_click(
-                x_ratio=offset_x,  # 保持 X 座標不變（相對於上次點擊）
-                y_ratio=offset_y,  # 向下偏移（第一個選項位置）
-                target_text=None,  # 禁用文字辨識，優先圖片
-                image_path=chinese_image,
-                is_relative=True,  # 使用相對座標
-                use_ok_script=True,
-                use_vlm=False,  # 圖片優先模式
-                timeout=2
-            )
+            # 🎯 使用 UILocator：簡潔且易讀
+            locator_config = EnvConfig.LOCATOR_CONFIG
+            chinese_locator = locator_config.TRADITIONAL_CHINESE.as_relative()
+            success = self.click_with_locator(chinese_locator)
         
         # 策略 2: 如果圖片失敗，嘗試 VLM（理解自然語言）
         if not success:
@@ -171,19 +134,9 @@ class SettingsPage(DesktopApp):
         # 3. 點擊套用按鈕
         self.logger.info("🖱️ 點擊套用按鈕...")
         
-        # 🎯 從 LocatorConfig 獲取配置
-        apply_x = getattr(locator, 'APPLY_BTN_X_RATIO', 0.7351) if locator else 0.7351
-        apply_y = getattr(locator, 'APPLY_BTN_Y_RATIO', 0.9445) if locator else 0.9445
-        apply_image = getattr(locator, 'APPLY_BTN_IMAGE', "desktop_settings/apply_btn.png") if locator else "desktop_settings/apply_btn.png"
-        
-        self.smart_click(
-            x_ratio=apply_x,
-            y_ratio=apply_y,
-            target_text=None,  # 移除 OCR，優先圖片辨識
-            image_path=apply_image,
-            from_bottom=False,  # 使用比例座標
-            timeout=1.5
-        )
+        # 🎯 使用 UILocator：簡潔且易讀
+        locator_config = EnvConfig.LOCATOR_CONFIG
+        self.click_with_locator(locator_config.APPLY_BTN)
         
         # 4. 智能等待重啟彈窗出現（檢測新視窗）
         self.logger.info("⏳ 等待重啟彈窗...")
