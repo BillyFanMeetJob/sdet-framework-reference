@@ -721,7 +721,7 @@ class LocatorConfig:
         image_path="desktop_main/server_settings_menu.png",
         is_relative=False,
         timeout=5,  # 增加超時時間，確保選單完全展開
-        use_vlm=False  # 關閉 VLM，優先使用圖片識別
+        use_vlm=True  # ✅ 啟用 VLM，文字選單項目適合使用 VLM 識別
     ))
     
     # USB Checkbox
