@@ -34,10 +34,13 @@ class ServerSettingsPage(DesktopApp):
         if success:
             # 智能等待右鍵選單出現（增加等待時間，確保選單完全展開）
             time.sleep(0.8)  # 增加等待時間，確保選單完全展開
-            win = self.get_nx_window()
-            if win:
-                region = (win.left, win.top, win.width, win.height)
-                self.wait_for_screen_change(region, max_wait=1.0)
+            try:
+                win = self.get_nx_window()
+                if win:
+                    region = (win.left, win.top, win.width, win.height)
+                    self.wait_for_screen_change(region, max_wait=1.0)
+            except Exception as e:
+                self.logger.warning(f"⚠️ 等待螢幕變化時發生異常: {e}")
         else:
             self.logger.warning("⚠️ 右鍵點擊 Server 圖示失敗")
         

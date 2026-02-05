@@ -165,8 +165,9 @@ class CameraActions(BaseAction):
                 )
                 self.logger.info("✅ 選單驗證成功（文字匹配）")
                 return True
-        except AssertionError:
-            self.logger.warning("⚠️ 選單驗證失敗，但繼續執行")
+        except Exception as e:
+            # 捕獲所有異常，不僅僅是 AssertionError
+            self.logger.warning(f"⚠️ 選單驗證失敗: {e}，但繼續執行")
             return False
     
     def _click_server_settings_menu(self, reporter, step_no: int) -> bool:
