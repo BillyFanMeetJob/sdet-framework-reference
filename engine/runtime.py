@@ -14,6 +14,3 @@ def get_config():
 def get_datatable():
     """ 獲取位於 toolkit 的共享數據容器 """
     return shared_dt
-
-def set_ctx(ctx):
-    pass
