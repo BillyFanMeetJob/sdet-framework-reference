@@ -319,15 +319,48 @@ class NxMobileActions(BaseAction):
             # ========== 步驟 3: 輸入 Email ==========
             step_no += 1
             log_step(f"步驟 {step_no}: 輸入 Email...")
+            log_step(f"  [DEBUG] Email 長度: {len(email)}")
             
             email_x, email_y = width // 2, int(height * 0.46)
+            log_step(f"  [DEBUG] Email 輸入框座標: ({email_x}, {email_y})")
             
             marked_screenshot = os.path.join(screenshot_dir, f"step_{step_no:03d}_input_email.png")
             self._take_marked_screenshot_adb(adb, marked_screenshot, email_x, email_y, "Email 輸入框")
             
+            # 點擊 Email 輸入框
+            log_step(f"  [DEBUG] 點擊 Email 輸入框...")
             adb.tap(email_x, email_y, wait=0.5)
-            adb.clear_input(email_x, email_y)
-            adb.input_text(email)
+            
+            # 按 ESC 關閉自動填寫推薦框（如果有）
+            log_step(f"  [DEBUG] 按 ESC 關閉自動填寫框...")
+            adb.run_cmd(['shell', 'input', 'keyevent', '111'], silent=True)  # KEYCODE_ESCAPE
+            time.sleep(0.2)
+            
+            # 按返回鍵關閉鍵盤（如果有）
+            log_step(f"  [DEBUG] 按返回鍵關閉鍵盤...")
+            adb.run_cmd(['shell', 'input', 'keyevent', '4'], silent=True)  # KEYCODE_BACK
+            time.sleep(0.3)
+            
+            # 再次點擊 Email 輸入框，確保焦點
+            log_step(f"  [DEBUG] 再次點擊 Email 輸入框確保焦點...")
+            adb.tap(email_x, email_y, wait=0.3)
+            
+            # 使用 ADB 強制清空並輸入 Email（避免自動填寫干擾）
+            log_step(f"  [DEBUG] 清空 Email 輸入框...")
+            for _ in range(30):  # Email 可能較長，多刪除幾次
+                adb.run_cmd(['shell', 'input', 'keyevent', '67'], silent=True)  # KEYCODE_DEL
+                time.sleep(0.02)
+            
+            log_step(f"  [DEBUG] 開始逐字符輸入 Email...")
+            for i, char in enumerate(email):
+                escaped_char = char.replace('\\', '\\\\').replace('"', '\\"')
+                adb.run_cmd(['shell', 'input', 'text', escaped_char], silent=True)
+                time.sleep(0.05)
+                
+                if (i + 1) % 10 == 0:  # 每 10 個字符記錄一次進度
+                    log_step(f"  [DEBUG] 已輸入 {i+1}/{len(email)} 個字符")
+            
+            log_step(f"  [DEBUG] Email 輸入完成（共 {len(email)} 個字符）")
             log_step(f"  已輸入: {email}")
             time.sleep(0.5)
             
