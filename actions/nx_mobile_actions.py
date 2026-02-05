@@ -371,8 +371,17 @@ class NxMobileActions(BaseAction):
                 )
             
             log_step("  智能等待密碼頁面...")
-            page_stable = adb.wait_for_page_stable(timeout=10.0, check_interval=0.3, stability_threshold=0.98)
-            log_step(f"  [DEBUG] 頁面穩定狀態: {page_stable}")
+            try:
+                page_stable = adb.wait_for_page_stable(timeout=10.0, check_interval=0.3, stability_threshold=0.98)
+                log_step(f"  [DEBUG] 頁面穩定狀態: {page_stable}")
+            except Exception as e:
+                log_step(f"  [ERROR] 等待頁面穩定時發生異常: {e}")
+                import traceback
+                log_step(f"  [ERROR] 詳細錯誤:\n{traceback.format_exc()}")
+                # 使用固定等待作為備選
+                log_step(f"  [DEBUG] 使用固定等待 3 秒作為備選...")
+                time.sleep(3)
+                page_stable = False
             
             # ========== 步驟 5: 輸入密碼 ==========
             step_no += 1
