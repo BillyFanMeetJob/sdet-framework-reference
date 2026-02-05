@@ -54,6 +54,7 @@ class ServerSettingsPage(DesktopApp):
         self.logger.info("🖱️ 點擊「伺服器設定」選單項目...")
         
         # 🎯 使用 UILocator：簡潔且易讀
+        from config import EnvConfig
         locator_config = EnvConfig.LOCATOR_CONFIG
         
         # 使用圖片優先策略，因為右鍵選單項目通常圖片辨識更可靠
@@ -163,6 +164,7 @@ class ServerSettingsPage(DesktopApp):
         if was_already_checked:
             # 流程 2: checkbox 已勾選，直接點擊「確認」按鈕
             self.logger.info("✅ Checkbox 已勾選，直接點擊「確認」按鈕...")
+            from config import EnvConfig
             locator_config = EnvConfig.LOCATOR_CONFIG
             ok_btn_locator = locator_config.OK_BTN_BOTTOM_RIGHT.with_text("確認")
             success = self.click_with_locator(ok_btn_locator)
