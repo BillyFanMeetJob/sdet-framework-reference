@@ -334,12 +334,11 @@ class NxMobileActions(BaseAction):
             # 按 ESC 關閉自動填寫推薦框（如果有）
             log_step(f"  [DEBUG] 按 ESC 關閉自動填寫框...")
             adb.run_cmd(['shell', 'input', 'keyevent', '111'], silent=True)  # KEYCODE_ESCAPE
-            time.sleep(0.2)
-            
-            # 按返回鍵關閉鍵盤（如果有）
-            log_step(f"  [DEBUG] 按返回鍵關閉鍵盤...")
-            adb.run_cmd(['shell', 'input', 'keyevent', '4'], silent=True)  # KEYCODE_BACK
             time.sleep(0.3)
+            
+            # 點擊畫面上方空白區域關閉鍵盤（避免使用返回鍵導致頁面返回）
+            log_step(f"  [DEBUG] 點擊畫面上方關閉鍵盤...")
+            adb.tap(width // 2, int(height * 0.15), wait=0.3)
             
             # 再次點擊 Email 輸入框，確保焦點
             log_step(f"  [DEBUG] 再次點擊 Email 輸入框確保焦點...")
@@ -429,10 +428,9 @@ class NxMobileActions(BaseAction):
             adb.run_cmd(['shell', 'input', 'keyevent', '111'], silent=True)  # KEYCODE_ESCAPE
             time.sleep(0.3)
             
-            # 按返回鍵關閉鍵盤（如果有）
-            log_step(f"  [DEBUG] 按返回鍵關閉鍵盤...")
-            adb.run_cmd(['shell', 'input', 'keyevent', '4'], silent=True)  # KEYCODE_BACK
-            time.sleep(0.3)
+            # 點擊畫面上方空白區域關閉鍵盤（避免使用返回鍵導致頁面返回）
+            log_step(f"  [DEBUG] 點擊畫面上方關閉鍵盤...")
+            adb.tap(width // 2, int(height * 0.15), wait=0.3)
             
             # 再次點擊密碼輸入框，確保焦點在輸入框
             log_step(f"  [DEBUG] 再次點擊密碼輸入框確保焦點...")
