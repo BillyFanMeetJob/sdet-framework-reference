@@ -1103,6 +1103,51 @@ class DesktopApp:
             except Exception as e:
                 self._safe_log("warning", f"[DEBUG] 再次激活窗口失敗: {e}")
             
+            # 🔧 檢查視窗是否被最小化（位置為 -32000 是 Windows 最小化視窗的特殊標記）
+            if password_window.left <= -32000 or password_window.top <= -32000:
+                self._safe_log("warning", f"[WARN] 密碼彈窗被最小化！位置=({password_window.left}, {password_window.top})")
+                self._safe_log("info", "[FIX] 嘗試還原視窗...")
+                
+                try:
+                    import win32gui
+                    import win32con
+                    
+                    # 根據標題查找視窗句柄
+                    hwnd = win32gui.FindWindow(None, password_window.title)
+                    if hwnd:
+                        # 還原視窗（從最小化狀態恢復）
+                        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+                        time.sleep(0.5)  # 等待視窗還原動畫完成
+                        
+                        # 將視窗置頂
+                        win32gui.SetForegroundWindow(hwnd)
+                        time.sleep(0.3)
+                        
+                        # 重新獲取視窗信息（還原後位置會更新）
+                        password_window = self.find_window(
+                            title_keywords=[password_window.title],
+                            max_width=600,
+                            max_height=400
+                        )
+                        
+                        if password_window and password_window.left > -32000 and password_window.top > -32000:
+                            self._safe_log("info", f"[OK] 視窗已還原！新位置=({password_window.left}, {password_window.top}), 尺寸={password_window.width}x{password_window.height}")
+                        else:
+                            self._safe_log("error", "[ERROR] 視窗還原後仍然無法獲取正確位置")
+                            return False
+                    else:
+                        self._safe_log("error", f"[ERROR] 無法找到視窗句柄: {password_window.title}")
+                        return False
+                        
+                except ImportError:
+                    self._safe_log("error", "[ERROR] 缺少 pywin32 模組，無法還原視窗")
+                    return False
+                except Exception as e:
+                    self._safe_log("error", f"[ERROR] 還原視窗時發生異常: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    return False
+            
             # 計算輸入框位置（密碼輸入框通常在彈窗中間偏下位置）
             input_x = password_window.left + int(password_window.width * input_x_ratio)
             input_y = password_window.top + int(password_window.height * input_y_ratio)
