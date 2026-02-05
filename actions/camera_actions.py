@@ -108,34 +108,49 @@ class CameraActions(BaseAction):
         Returns:
             bool: 是否成功
         """
-        if not self.server_settings_page.right_click_server_icon():
+        try:
+            if not self.server_settings_page.right_click_server_icon():
+                if reporter:
+                    reporter.add_step(
+                        step_no=step_no,
+                        step_name="右鍵點擊 Server 圖示",
+                        status="fail",
+                        message="右鍵點擊 Server 圖示失敗",
+                        verification_items=[self.server_settings_page.create_verification_item("Server 圖示")]
+                    )
+                return False
+            
+            # 驗證選單出現
+            time.sleep(0.8)
+            menu_verified = self._verify_context_menu()
+            
+            if reporter:
+                reporter.add_step(
+                    step_no=step_no,
+                    step_name="右鍵點擊 Server 圖示",
+                    status="pass" if menu_verified else "warning",
+                    message="成功右鍵點擊 Server 圖示" + ("，選單已驗證" if menu_verified else "，選單驗證未通過但繼續執行"),
+                    verification_items=[
+                        self.server_settings_page.create_verification_item("Server 圖示"),
+                        self.server_settings_page.create_verification_item("右鍵選單")
+                    ]
+                )
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"❌ 右鍵點擊 Server 圖示時發生異常: {e}")
+            import traceback
+            self.logger.error(traceback.format_exc())
             if reporter:
                 reporter.add_step(
                     step_no=step_no,
                     step_name="右鍵點擊 Server 圖示",
                     status="fail",
-                    message="右鍵點擊 Server 圖示失敗",
+                    message=f"右鍵點擊過程中發生異常: {str(e)}",
                     verification_items=[self.server_settings_page.create_verification_item("Server 圖示")]
                 )
             return False
-        
-        # 驗證選單出現
-        time.sleep(0.8)
-        menu_verified = self._verify_context_menu()
-        
-        if reporter:
-            reporter.add_step(
-                step_no=step_no,
-                step_name="右鍵點擊 Server 圖示",
-                status="pass" if menu_verified else "warning",
-                message="成功右鍵點擊 Server 圖示" + ("，選單已驗證" if menu_verified else "，選單驗證未通過但繼續執行"),
-                verification_items=[
-                    self.server_settings_page.create_verification_item("Server 圖示"),
-                    self.server_settings_page.create_verification_item("右鍵選單")
-                ]
-            )
-        
-        return True
     
     def _verify_context_menu(self) -> bool:
         """驗證右鍵選單是否出現
