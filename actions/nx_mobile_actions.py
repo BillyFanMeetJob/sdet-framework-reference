@@ -434,14 +434,72 @@ class NxMobileActions(BaseAction):
             
             # 等待一下讓輸入生效
             time.sleep(0.5)
-            time.sleep(0.5)
+            
+            # 使用 VLM 驗證是否成功輸入密碼（檢查是否還在密碼頁面）
+            log_step(f"  [DEBUG] 使用 VLM 驗證密碼輸入狀態...")
+            verify_screenshot = os.path.join(screenshot_dir, f"step_{step_no:03d}_verify_password.png")
+            adb.screenshot(verify_screenshot)
+            
+            # 檢查是否還在密碼頁面（如果還在，說明密碼沒有成功輸入）
+            still_on_password_page = self._check_still_on_password_page(verify_screenshot)
+            
+            if still_on_password_page:
+                log_step(f"  [WARN] VLM 檢測到仍在密碼頁面，密碼可能未成功輸入，重試一次...")
+                
+                # 重試：再次點擊密碼輸入框並輸入密碼
+                log_step(f"  [RETRY] 重新點擊密碼輸入框...")
+                adb.tap(password_x, password_y, wait=0.3)
+                
+                # 再次關閉可能的干擾
+                log_step(f"  [RETRY] 關閉自動填寫框和鍵盤...")
+                adb.run_cmd(['shell', 'input', 'keyevent', '111'], silent=True)  # ESC
+                time.sleep(0.2)
+                adb.run_cmd(['shell', 'input', 'keyevent', '4'], silent=True)  # BACK
+                time.sleep(0.3)
+                adb.tap(password_x, password_y, wait=0.3)
+                
+                # 清空並重新輸入
+                log_step(f"  [RETRY] 清空輸入框...")
+                for _ in range(20):
+                    adb.run_cmd(['shell', 'input', 'keyevent', '67'], silent=True)
+                    time.sleep(0.02)
+                
+                log_step(f"  [RETRY] 重新輸入密碼...")
+                for i, char in enumerate(password):
+                    escaped_char = char.replace('\\', '\\\\').replace('"', '\\"')
+                    adb.run_cmd(['shell', 'input', 'text', escaped_char], silent=True)
+                    time.sleep(0.05)
+                
+                log_step(f"  [RETRY] 密碼重新輸入完成")
+                time.sleep(0.5)
+                
+                # 再次驗證
+                verify_screenshot2 = os.path.join(screenshot_dir, f"step_{step_no:03d}_verify_password_retry.png")
+                adb.screenshot(verify_screenshot2)
+                still_on_password_page2 = self._check_still_on_password_page(verify_screenshot2)
+                
+                if still_on_password_page2:
+                    log_step(f"  [ERROR] 重試後仍在密碼頁面，密碼輸入失敗")
+                    if reporter:
+                        reporter.add_step(
+                            step_no=step_no,
+                            step_name="輸入密碼（失敗）",
+                            status="fail",
+                            message="兩次嘗試後仍無法輸入密碼",
+                            screenshot_path=verify_screenshot2
+                        )
+                    raise Exception("密碼輸入失敗：兩次嘗試後仍在密碼頁面")
+                else:
+                    log_step(f"  [OK] 重試成功，已離開密碼頁面")
+            else:
+                log_step(f"  [OK] VLM 確認已離開密碼頁面，密碼輸入成功")
             
             if reporter:
                 reporter.add_step(
                     step_no=step_no,
                     step_name="輸入密碼",
                     status="pass",
-                    message="密碼已輸入",
+                    message="密碼已輸入並驗證",
                     screenshot_path=marked_screenshot
                 )
             
@@ -1047,3 +1105,46 @@ class NxMobileActions(BaseAction):
             import traceback
             traceback.print_exc()
             raise AssertionError(f"[ERROR] Case 4-2 播放流程失敗: {e}")
+    
+    def _check_still_on_password_page(self, screenshot_path: str) -> bool:
+        """
+        使用 VLM 檢查是否還在密碼輸入頁面
+        
+        Args:
+            screenshot_path: 截圖路徑
+            
+        Returns:
+            bool: True 表示還在密碼頁面，False 表示已離開
+        """
+        try:
+            from toolkit.vlm_engine import UnifiedVLM
+            
+            vlm = UnifiedVLM()
+            
+            # 構建 VLM 提示詞
+            prompt = """請分析這個手機應用截圖，判斷當前是否在密碼輸入頁面。
+
+判斷標準：
+1. 如果畫面中有「Password」或「密碼」輸入框 → 回答 YES
+2. 如果畫面中有「Enter password」或「輸入密碼」提示 → 回答 YES
+3. 如果畫面顯示的是 Cloud 列表、Server 列表或其他頁面 → 回答 NO
+4. 如果畫面顯示「Connecting」或「連接中」→ 回答 NO
+
+請只回答 YES 或 NO，不需要其他說明。"""
+
+            response = vlm.find_element_by_text(screenshot_path, "Password", prompt)
+            
+            if response and isinstance(response, dict):
+                # 檢查回應中是否包含 YES
+                answer = str(response.get('answer', '')).upper()
+                self.logger.info(f"[VLM_VERIFY] VLM 回應: {answer}")
+                return 'YES' in answer
+            
+            # 如果 VLM 失敗，保守策略：假設不在密碼頁面（避免無限重試）
+            self.logger.warning(f"[VLM_VERIFY] VLM 驗證失敗，假設密碼已輸入")
+            return False
+            
+        except Exception as e:
+            self.logger.warning(f"[VLM_VERIFY] VLM 驗證時發生異常: {e}")
+            # 異常時保守策略：假設不在密碼頁面
+            return False
