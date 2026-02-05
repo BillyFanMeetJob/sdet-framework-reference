@@ -84,7 +84,7 @@ class DevConfig(BaseConfig):
     # AI Vision Learning Mode (VLM 自癒機制)
     # ================================================================
     # 是否啟用 VLM 學習模式（用於 UI 變動觀測與自動修復建議）
-    ENABLE_VLM_LEARNING: bool = False  # 預設關閉，避免消耗 API Token
+    ENABLE_VLM_LEARNING: bool = True  # 預設關閉，避免消耗 API Token
     
     # VLM API 配置（根據使用的模型選擇）
     VLM_PROVIDER: str = "gemini"  # 可選: "gemini", "ollama", "openai"
