@@ -387,32 +387,44 @@ class NxMobileActions(BaseAction):
             self._take_marked_screenshot_adb(adb, marked_screenshot, password_x, password_y, "密碼輸入框")
             log_step(f"  [DEBUG] 已保存標記截圖: {marked_screenshot}")
             
-            # 第一次點擊密碼輸入框
-            log_step(f"  [DEBUG] 第一次點擊密碼輸入框...")
+            # 點擊密碼輸入框
+            log_step(f"  [DEBUG] 點擊密碼輸入框...")
             adb.tap(password_x, password_y, wait=0.5)
+            
+            # 按 ESC 鍵關閉自動填寫推薦框（如果有）
+            log_step(f"  [DEBUG] 按 ESC 鍵關閉自動填寫推薦框...")
+            adb.run_cmd(['shell', 'input', 'keyevent', '111'], silent=True)  # KEYCODE_ESCAPE
+            time.sleep(0.3)
             
             # 按返回鍵關閉鍵盤（如果有）
             log_step(f"  [DEBUG] 按返回鍵關閉鍵盤...")
-            adb.run_cmd(['shell', 'input', 'keyevent', '4'], silent=True)
+            adb.run_cmd(['shell', 'input', 'keyevent', '4'], silent=True)  # KEYCODE_BACK
             time.sleep(0.3)
             
-            # 第二次點擊密碼輸入框
-            log_step(f"  [DEBUG] 第二次點擊密碼輸入框...")
+            # 再次點擊密碼輸入框，確保焦點在輸入框
+            log_step(f"  [DEBUG] 再次點擊密碼輸入框確保焦點...")
             adb.tap(password_x, password_y, wait=0.3)
             
-            # 清空輸入框
-            log_step(f"  [DEBUG] 清空密碼輸入框...")
+            # 使用 ADB 強制輸入密碼（逐字符輸入，避免被自動填寫干擾）
+            log_step(f"  [DEBUG] 使用 ADB 強制輸入密碼（逐字符）...")
             try:
-                adb.clear_input(password_x, password_y)
-                log_step(f"  [DEBUG] 清空輸入框成功")
-            except Exception as e:
-                log_step(f"  [ERROR] 清空輸入框失敗: {e}")
-            
-            # 輸入密碼
-            log_step(f"  [DEBUG] 開始輸入密碼（長度: {len(password)}）...")
-            try:
-                adb.input_text(password)
-                log_step(f"  [DEBUG] 密碼輸入完成")
+                # 先清空可能存在的內容
+                for _ in range(20):  # 最多刪除 20 個字符
+                    adb.run_cmd(['shell', 'input', 'keyevent', '67'], silent=True)  # KEYCODE_DEL
+                    time.sleep(0.02)
+                
+                log_step(f"  [DEBUG] 開始逐字符輸入密碼...")
+                # 逐字符輸入密碼
+                for i, char in enumerate(password):
+                    # 使用 ADB 直接輸入字符（不會被自動填寫框干擾）
+                    escaped_char = char.replace('\\', '\\\\').replace('"', '\\"')
+                    adb.run_cmd(['shell', 'input', 'text', escaped_char], silent=True)
+                    time.sleep(0.05)  # 每個字符之間稍微等待
+                    
+                    if (i + 1) % 5 == 0:  # 每 5 個字符記錄一次進度
+                        log_step(f"  [DEBUG] 已輸入 {i+1}/{len(password)} 個字符")
+                
+                log_step(f"  [DEBUG] 密碼輸入完成（共 {len(password)} 個字符）")
             except Exception as e:
                 log_step(f"  [ERROR] 密碼輸入失敗: {e}")
                 import traceback
