@@ -139,9 +139,26 @@ class AdbController:
             text: 要輸入的文字
         """
         logger.info(f"[ADB_TOOLKIT] 輸入文字: {text}")
+        logger.debug(f"[ADB_TOOLKIT] [DEBUG] 原始文字長度: {len(text)}")
+        
         # 轉義特殊字符
         escaped_text = text.replace(' ', '%s').replace('@', '\\@').replace('!', '\\!')
-        self.run_cmd(['shell', 'input', 'text', escaped_text], silent=True)
+        logger.debug(f"[ADB_TOOLKIT] [DEBUG] 轉義後文字: {escaped_text}")
+        
+        try:
+            result = self.run_cmd(['shell', 'input', 'text', escaped_text], silent=True)
+            logger.debug(f"[ADB_TOOLKIT] [DEBUG] ADB 命令執行完成，返回碼: {result.returncode}")
+            if result.returncode != 0:
+                stderr = result.stderr.decode('utf-8', errors='ignore') if result.stderr else ''
+                logger.error(f"[ADB_TOOLKIT] [ERROR] 輸入文字失敗，錯誤: {stderr}")
+            else:
+                logger.debug(f"[ADB_TOOLKIT] [DEBUG] 輸入文字成功")
+        except Exception as e:
+            logger.error(f"[ADB_TOOLKIT] [ERROR] 輸入文字時發生異常: {e}")
+            import traceback
+            logger.error(f"[ADB_TOOLKIT] [ERROR] 詳細錯誤: {traceback.format_exc()}")
+            raise
+        
         time.sleep(0.5)
     
     def press_keycode(self, keycode: int) -> None:
@@ -178,13 +195,20 @@ class AdbController:
             y: 輸入框 Y 座標
         """
         logger.info(f"[ADB_TOOLKIT] 清空輸入框: ({x}, {y})")
+        logger.debug(f"[ADB_TOOLKIT] [DEBUG] 開始三擊選中文字...")
+        
         # 三擊選中全部文字
-        for _ in range(3):
+        for i in range(3):
+            logger.debug(f"[ADB_TOOLKIT] [DEBUG] 第 {i+1} 次點擊...")
             self.run_cmd(['shell', 'input', 'tap', str(x), str(y)], silent=True)
             time.sleep(0.1)
+        
         time.sleep(0.3)
+        logger.debug(f"[ADB_TOOLKIT] [DEBUG] 三擊完成，按刪除鍵...")
+        
         # 刪除選中文字
         self.press_delete()
+        logger.debug(f"[ADB_TOOLKIT] [DEBUG] 刪除鍵已按下")
         time.sleep(0.3)
     
     def get_screen_size(self) -> Tuple[int, int]:

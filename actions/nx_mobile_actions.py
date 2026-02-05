@@ -371,24 +371,56 @@ class NxMobileActions(BaseAction):
                 )
             
             log_step("  智能等待密碼頁面...")
-            adb.wait_for_page_stable(timeout=10.0, check_interval=0.3, stability_threshold=0.98)
+            page_stable = adb.wait_for_page_stable(timeout=10.0, check_interval=0.3, stability_threshold=0.98)
+            log_step(f"  [DEBUG] 頁面穩定狀態: {page_stable}")
             
             # ========== 步驟 5: 輸入密碼 ==========
             step_no += 1
             log_step(f"步驟 {step_no}: 輸入密碼...")
+            log_step(f"  [DEBUG] 密碼長度: {len(password)}")
             
             password_x, password_y = width // 2, int(height * 0.47)
+            log_step(f"  [DEBUG] 密碼輸入框座標: ({password_x}, {password_y})")
             
             marked_screenshot = os.path.join(screenshot_dir, f"step_{step_no:03d}_input_password.png")
             self._take_marked_screenshot_adb(adb, marked_screenshot, password_x, password_y, "密碼輸入框")
+            log_step(f"  [DEBUG] 已保存標記截圖: {marked_screenshot}")
             
+            # 第一次點擊密碼輸入框
+            log_step(f"  [DEBUG] 第一次點擊密碼輸入框...")
             adb.tap(password_x, password_y, wait=0.5)
+            
+            # 按返回鍵關閉鍵盤（如果有）
+            log_step(f"  [DEBUG] 按返回鍵關閉鍵盤...")
             adb.run_cmd(['shell', 'input', 'keyevent', '4'], silent=True)
             time.sleep(0.3)
+            
+            # 第二次點擊密碼輸入框
+            log_step(f"  [DEBUG] 第二次點擊密碼輸入框...")
             adb.tap(password_x, password_y, wait=0.3)
-            adb.clear_input(password_x, password_y)
-            adb.input_text(password)
+            
+            # 清空輸入框
+            log_step(f"  [DEBUG] 清空密碼輸入框...")
+            try:
+                adb.clear_input(password_x, password_y)
+                log_step(f"  [DEBUG] 清空輸入框成功")
+            except Exception as e:
+                log_step(f"  [ERROR] 清空輸入框失敗: {e}")
+            
+            # 輸入密碼
+            log_step(f"  [DEBUG] 開始輸入密碼（長度: {len(password)}）...")
+            try:
+                adb.input_text(password)
+                log_step(f"  [DEBUG] 密碼輸入完成")
+            except Exception as e:
+                log_step(f"  [ERROR] 密碼輸入失敗: {e}")
+                import traceback
+                log_step(f"  [ERROR] 詳細錯誤: {traceback.format_exc()}")
+            
             log_step(f"  已輸入密碼")
+            
+            # 等待一下讓輸入生效
+            time.sleep(0.5)
             time.sleep(0.5)
             
             if reporter:
