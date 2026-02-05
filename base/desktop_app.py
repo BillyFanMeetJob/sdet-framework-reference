@@ -1889,18 +1889,24 @@ class DesktopApp:
                     self._safe_log("info", f"[STAT] [座標庫] 比例座標: x_ratio={ratio_x:.4f}, y_ratio={ratio_y:.4f} | 視窗尺寸: {win.width}x{win.height} | 絕對座標: ({final_x}, {final_y})")
                 except Exception as win_err:
                     # 視窗資訊不可用（可能句柄失效），但仍記錄辨識成功
-                    action_type = "雙擊" if clicks == 2 else "點擊"
-                    image_name = os.path.basename(image_path)
-                    self._safe_log("info", f"[OK] {result.method.upper()} 辨識成功並{action_type}: {image_name} (信心: {result.confidence:.2f}, 耗時: {result.time_ms:.1f}ms)")
-                    self._safe_log("warning", f"[WARN] 無法計算比例座標（視窗資訊不可用）: {type(win_err).__name__}: {win_err}")
-                    self._safe_log("info", f"[STAT] [座標庫] 絕對座標: ({center_x}, {center_y})")
+                    try:
+                        action_type = "雙擊" if clicks == 2 else "點擊"
+                        image_name = os.path.basename(image_path)
+                        self._safe_log("info", f"[OK] {result.method.upper()} 辨識成功並{action_type}: {image_name} (信心: {result.confidence:.2f}, 耗時: {result.time_ms:.1f}ms)")
+                        self._safe_log("warning", f"[WARN] 無法計算比例座標（視窗資訊不可用）: {type(win_err).__name__}: {win_err}")
+                        self._safe_log("info", f"[STAT] [座標庫] 絕對座標: ({center_x}, {center_y})")
+                    except Exception as log_err:
+                        # 日誌輸出也失敗，使用 print 輸出
+                        print(f"[ERROR] 日誌輸出失敗: {log_err}")
+                        import traceback
+                        traceback.print_exc()
                 
                 DesktopApp._last_x, DesktopApp._last_y = center_x, center_y
                 recognizer.record_image_recognition_success()
                 
                 # 自動截圖並標註（如果有 reporter）
-                if DesktopApp._reporter and hasattr(DesktopApp._reporter, 'add_recognition_screenshot'):
-                    try:
+                try:
+                    if DesktopApp._reporter and hasattr(DesktopApp._reporter, 'add_recognition_screenshot'):
                         item_name = os.path.basename(image_path)
                         # 使用實際辨識到的物件尺寸
                         width = result.width if hasattr(result, 'width') and result.width > 0 else 50
@@ -1915,8 +1921,8 @@ class DesktopApp:
                             method=result.method.upper() if hasattr(result, 'method') else "OK Script",
                             region=region  # 傳入搜尋區域，用於在截圖上標記
                         )
-                    except Exception as e:
-                        self.logger.debug(f"自動截圖失敗: {e}")
+                except Exception as e:
+                    self.logger.debug(f"自動截圖失敗: {e}")
                 
                 return True
         except Exception as e:
