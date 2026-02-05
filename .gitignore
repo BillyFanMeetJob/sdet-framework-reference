@@ -3,3 +3,6 @@ __pycache__/
 logs/
 .env
 report/
+all_code.txt
+all_code.py
+*.exe
